@@ -58,11 +58,20 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 # zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # Aliases
+alias reload='source ~/.zshrc'
+alias zshconf='nvim ~/.zshrc'
+## List
 alias ls='ls --color'
-alias ll='ls -la'
+alias ll='ls -lha'
+## Nvim
 alias vim='nvim'
 alias vi='nvim'
+alias v='nvim'
+## Git
 alias lg='lazygit'
+alias gs='git status'
+## Misc
+alias k='kubectl'
 
 # Shell integrations
 # eval "$(fzf --zsh)"
