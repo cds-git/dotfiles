@@ -1,6 +1,6 @@
 # Use custom format
 format = """
-[╭─](white)$username$hostname in $directory$git_branch$battery$cmd_duration
+[╭─](white)$username$hostname in $directory$git_branch$git_status$battery
 [╰─](white)$character """
 
 # palette = "catppuccin_mocha"
