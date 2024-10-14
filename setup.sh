@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List of common packages for both Ubuntu and Arch
-COMMON_PACKAGES=("zsh" "tmux" "ripgrep" "fzf" "zoxide" "fd-find" "jq")
+COMMON_PACKAGES=("zsh" "tmux" "unzip" "ripgrep" "fzf" "zoxide" "fd-find" "jq")
 
 # Helper functions
 install_common_packages_ubuntu() {
@@ -93,10 +93,12 @@ install_lazygit_ubuntu() {
     # Get the latest version of lazygit
     LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
 
-    # Download and extract lazygit
-    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
-    tar xf lazygit.tar.gz lazygit
-
+    # Download and extract the correct tar.gz file
+    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+    
+    # Extract the tarball
+    tar -xzf lazygit.tar.gz
+    
     # Install lazygit
     sudo install lazygit /usr/local/bin
 
@@ -109,6 +111,7 @@ install_lazygit_ubuntu() {
     echo "LazyGit is already installed."
   fi
 }
+
 
 # Install lazygit on Arch
 install_lazygit_arch() {
@@ -158,6 +161,9 @@ install_dotnet_sdk_arch() {
   fi
 }
 
+# create the .config directory
+mkdir ~/.config
+
 # Detect the Linux distribution
 if [ -f /etc/os-release ]; then
   . /etc/os-release
@@ -193,7 +199,6 @@ if [ "$SHELL" != "$(command -v zsh)" ]; then
   echo "Setting Zsh as the default shell..."
   chsh -s "$(command -v zsh)"
 fi
-
 
 # Create symlinks for dotfiles
 ln -sf ~/dotfiles/.zshrc ~/.zshrc
