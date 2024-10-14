@@ -1,9 +1,9 @@
 # Use custom format
 format = """
-[╭─](white)$username$hostname in $directory$git_branch$git_status$battery
+[╭─](white)$username$hostname in $directory$git_branch$battery
 [╰─](white)$character """
 
-# palette = "catppuccin_mocha"
+palette = "catppuccin_mocha"
 # add_newline = false
 
 # Username settings
@@ -26,6 +26,7 @@ ssh_symbol = " "
 read_only = " 󰌾"
 truncation_length = 8
 truncation_symbol = "…/"
+style = "bold pink"
 format = "[$read_only]($read_only_style)[$path]($style) "
 disabled = false
 
@@ -43,6 +44,7 @@ format = "took [$duration]($style)"
 
 [git_branch]
 symbol = " "
+style = "bold mauve"
 truncation_length = 17
 truncation_symbol = ""
 
