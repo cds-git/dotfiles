@@ -35,3 +35,4 @@ New-Item -ItemType SymbolicLink -Path "~/AppData/Local/nvim" -Target "~/dotfiles
 
 # Get nvim submodule
 git submodule update --init --recursive
+
