@@ -141,15 +141,11 @@ install_nvm_and_node() {
 
 # Install the latest .NET SDK
 install_dotnet_sdk_ubuntu() {
-  if ! command_exists dotnet; then
     echo "Installing the latest .NET SDK on Ubuntu..."
     wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
     sudo dpkg -i packages-microsoft-prod.deb
     sudo apt update
-    sudo apt install -y dotnet-sdk-8.0
-  else
-    echo ".NET SDK is already installed."
-  fi
+    sudo apt install -y dotnet-sdk-9.0
 }
 
 install_dotnet_sdk_arch() {
