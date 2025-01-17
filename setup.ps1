@@ -11,6 +11,9 @@ winget install wez.wezterm
 # Install starship prompt
 winget install Starship.Starship
 
+# Install chocolatey
+winget install chocolatey.chocolatey
+
 # Install Neovim
 winget install Neovim.Neovim
 
@@ -18,6 +21,8 @@ winget install Neovim.Neovim
 winget install BurntSushi.ripgrep.MSVC
 winget install fzf
 winget install sharkdp.fd
+choco install make
+choco install mingw
 
 # Zig as a C compiler
 winget install zig.zig
