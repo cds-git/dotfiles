@@ -123,40 +123,6 @@ install_lazygit_arch() {
   fi
 }
 
-# Install NVM and the latest Node.js
-install_nvm_and_node() {
-  if ! command_exists nvm; then
-    echo "Installing Node Version Manager (nvm)..."
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-  else
-    echo "NVM is already installed."
-  fi
-
-  # Install the latest Node.js version
-  echo "Installing the latest version of Node.js..."
-  nvm install node
-}
-
-# Install the latest .NET SDK
-install_dotnet_sdk_ubuntu() {
-    echo "Installing the latest .NET SDK on Ubuntu..."
-    wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-    sudo dpkg -i packages-microsoft-prod.deb
-    sudo apt update
-    sudo apt install -y dotnet-sdk-9.0
-}
-
-install_dotnet_sdk_arch() {
-  if ! command_exists dotnet; then
-    echo "Installing the latest .NET SDK on Arch..."
-    sudo pacman -S --noconfirm dotnet-sdk
-  else
-    echo ".NET SDK is already installed."
-  fi
-}
-
 # create the .config directory
 mkdir ~/.config
 
@@ -169,16 +135,12 @@ if [ -f /etc/os-release ]; then
       install_starship_ubuntu
       install_neovim_ubuntu
       install_lazygit_ubuntu
-      install_nvm_and_node
-      install_dotnet_sdk_ubuntu
       ;;
     arch)
       install_common_packages_arch
       install_starship_arch
       install_neovim_arch
       install_lazygit_arch
-      install_nvm_and_node
-      install_dotnet_sdk_arch
       ;;
     *)
       echo "Unsupported distribution: $ID"
@@ -201,6 +163,9 @@ ln -sf ~/dotfiles/.zshrc ~/.zshrc
 ln -sf ~/dotfiles/tmux/tmux.conf ~/.tmux.conf
 ln -sf ~/dotfiles/nvim ~/.config/nvim
 ln -sf ~/dotfiles/starship/starship.toml ~/.config/starship.toml
+
+# Get nvim submodule
+git submodule update --init --recursive
 
 echo "Setup completed successfully."
 
