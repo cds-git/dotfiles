@@ -11,6 +11,9 @@ winget install wez.wezterm
 # Install starship prompt
 winget install Starship.Starship
 
+# Install lazygit
+winget install JesseDuffield.lazygit
+
 # Install chocolatey
 winget install chocolatey.chocolatey
 
@@ -21,11 +24,8 @@ winget install Neovim.Neovim
 winget install BurntSushi.ripgrep.MSVC
 winget install fzf
 winget install sharkdp.fd
-choco install make
-choco install mingw
-
-# Zig as a C compiler
-winget install zig.zig
+choco install make -y
+choco install mingw -y
 
 # Create Symlinks
 New-Item -ItemType Directory -Force ~/.config
