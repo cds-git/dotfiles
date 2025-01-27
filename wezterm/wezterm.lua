@@ -1,13 +1,15 @@
 -- Pull in the wezterm API
-local wezterm = require 'wezterm'
+local wezterm = require("wezterm")
 
 -- This will hold the configuration.
 local config = wezterm.config_builder()
 
-config.color_scheme = 'catppuccin-mocha'
+config.color_scheme = "catppuccin-mocha"
 
-config.font = wezterm.font 'FiraCode Nerd Font'
-config.font_size = 13.0
+config.font = wezterm.font("FiraCode Nerd Font")
+config.font_size = 13.2
+
+config.window_padding = { bottom = 0 }
 
 config.front_end = "OpenGL"
 config.max_fps = 144
