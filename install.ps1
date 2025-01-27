@@ -5,6 +5,9 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     exit 1
 }
 
+# Update nvim submodule
+git submodule update --init --recursive
+
 # Install wezterm
 winget install wez.wezterm
 
@@ -32,7 +35,4 @@ New-Item -ItemType Directory -Force ~/.config
 New-Item -ItemType SymbolicLink -Path "~/.config/starship.toml" -Target "~/dotfiles/starship/starship.toml"
 New-Item -ItemType SymbolicLink -Path "~/.wezterm.lua" -Target "~/dotfiles/wezterm/wezterm.lua"
 New-Item -ItemType SymbolicLink -Path "~/AppData/Local/nvim" -Target "~/dotfiles/nvim"
-
-# Get nvim submodule
-git submodule update --init --recursive
 
