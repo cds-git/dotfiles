@@ -33,6 +33,8 @@ config.keys = {
 	{ key = "V", mods = "CTRL", action = act.PasteFrom("Clipboard") },
 	-- paste from the primary selection
 	{ key = "V", mods = "CTRL", action = act.PasteFrom("PrimarySelection") },
+    -- copy to clipboad
+	{ key = "C", mods = "CTRL", action = wezterm.action.CopyTo("ClipboardAndPrimarySelection") },
 }
 -- and finally, return the configuration to wezterm
 return config
