@@ -1,5 +1,6 @@
 -- Pull in the wezterm API
 local wezterm = require("wezterm")
+local act = wezterm.action
 
 -- This will hold the configuration.
 local config = wezterm.config_builder()
@@ -27,5 +28,11 @@ config.use_fancy_tab_bar = false
 
 config.default_prog = { "powershell.exe", "-NoLogo" }
 
+config.keys = {
+	-- paste from the clipboard
+	{ key = "V", mods = "CTRL", action = act.PasteFrom("Clipboard") },
+	-- paste from the primary selection
+	{ key = "V", mods = "CTRL", action = act.PasteFrom("PrimarySelection") },
+}
 -- and finally, return the configuration to wezterm
 return config
