@@ -21,8 +21,8 @@ config.prefer_egl = true
 config.term = "xterm-256color" -- Set the terminal type
 
 -- tabs
-config.hide_tab_bar_if_only_one_tab = true
-config.use_fancy_tab_bar = false
+config.hide_tab_bar_if_only_one_tab = false
+config.use_fancy_tab_bar = true
 
 -- config.window_decorations = "NONE | RESIZE"
 
