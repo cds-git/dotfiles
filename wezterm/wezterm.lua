@@ -26,15 +26,48 @@ config.use_fancy_tab_bar = true
 
 -- config.window_decorations = "NONE | RESIZE"
 
+-- config.default_domain = 'WSL:Ubuntu'
 config.default_prog = { "powershell.exe", "-NoLogo" }
+-- config.default_prog = { "wsl.exe", "-d", "Ubuntu" }
 
 config.keys = {
-	-- paste from the clipboard
-	{ key = "V", mods = "CTRL", action = act.PasteFrom("Clipboard") },
-	-- paste from the primary selection
-	{ key = "V", mods = "CTRL", action = act.PasteFrom("PrimarySelection") },
-    -- copy to clipboad
-	{ key = "C", mods = "CTRL", action = wezterm.action.CopyTo("ClipboardAndPrimarySelection") },
+	{
+		key = "c",
+		mods = "CTRL",
+		action = wezterm.action_callback(function(window, pane)
+			local has_selection = window:get_selection_text_for_pane(pane) ~= ""
+			if has_selection then
+				window:perform_action(act.CopyTo("ClipboardAndPrimarySelection"), pane)
+
+				window:perform_action(act.ClearSelection, pane)
+			else
+				window:perform_action(act.SendKey({ key = "c", mods = "CTRL" }), pane)
+			end
+		end),
+	},
+	-- Ctrl+V: paste from clipboard
+	{
+		key = "v",
+		mods = "CTRL",
+		action = wezterm.action.PasteFrom("Clipboard"),
+	},
+	-- Create a new tab in the same domain as the current pane.
+	-- This is usually what you want.
+	-- {
+	--     key = 't',
+	--     mods = 'SHIFT|ALT',
+	--     action = act.SpawnTab 'CurrentPaneDomain',
+	-- },
+	-- Create a new tab in the default domain
+	{ key = "t", mods = "CTRL|SHIFT", action = act.SpawnTab("DefaultDomain") },
+	-- Create a tab in a named domain
+	{
+		key = "t",
+		mods = "SHIFT|ALT",
+		action = act.SpawnTab({
+			DomainName = "WSL:Ubuntu",
+		}),
+	},
 }
 -- and finally, return the configuration to wezterm
 return config
