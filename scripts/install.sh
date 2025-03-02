@@ -187,9 +187,10 @@ fi
 git submodule update --init --recursive
 
 # Create symlinks for dotfiles
-ln -sf ~/dotfiles/.zshrc ~/.zshrc
+ln -sf ~/dotfiles/zsh/zshrc ~/.zshrc
 ln -sf ~/dotfiles/tmux/tmux.conf ~/.tmux.conf
 ln -sf ~/dotfiles/nvim ~/.config/nvim
 ln -sf ~/dotfiles/starship/starship.toml ~/.config/starship.toml
 
+source ~/.zshrc
 echo "Setup completed successfully."
