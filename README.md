@@ -5,10 +5,12 @@ Personal dotfiles
 
 ### Linux
 To install and configure everything for Ubuntu or Arch, just run the `install.sh` script
+
 `sudo ./scripts/install.sh && ./scripts/install_roslyn_lsp.sh`
 
 ### Windows
 Run the following command in Powershell as Administrator.
+
 `.\scripts\install.ps1 && .\scripts\install_sdks.ps1`
 
 ## Update Roslyn LSP

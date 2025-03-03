@@ -50,10 +50,12 @@ if (Test-Path '$dotfilesProfile') {
 "@
 # Check if the custom profile is already in $PROFILE.
 if (-not (Select-String -Path $PROFILE -Pattern ([regex]::Escape($dotfilesProfile)) -Quiet)) {
-    Add-Content -Path $PROFILE -Value $snippet
-    Write-Host "Dotfiles profile has been added to $PROFILE"
+    # Append a new line followed by the snippet
+    "`r`n$snippet" | Out-File -Append -Encoding utf8 -FilePath $PROFILE
+    Write-Host "Dotfiles profile has been appended to $PROFILE"
     # Reload profile
     . $PROFILE
 } else {
     Write-Host "Dotfiles profile already present in $PROFILE"
 }
+
