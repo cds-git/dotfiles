@@ -31,6 +31,7 @@ config.tab_bar_at_bottom = false
 -- Launch menu for easy shell switching (primarily for Windows)
 -- On Linux/Mac, this will show the system shells
 if wezterm.target_triple == "x86_64-pc-windows-msvc" then
+	config.default_prog = { "powershell.exe", "-NoLogo" }
 	config.launch_menu = {
 		{
 			label = "PowerShell",
