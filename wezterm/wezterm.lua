@@ -12,13 +12,14 @@ config.font_size = 13.2
 config.window_padding = { bottom = 0 }
 
 -- Performance
-config.front_end = "WebGpu" -- Try WebGpu first, fallback to OpenGL if issues
-config.max_fps = 60
+config.front_end = "OpenGL" -- Try WebGpu first, fallback to OpenGL if issues
+config.max_fps = 144
 config.animation_fps = 1
 config.cursor_blink_rate = 500
+config.prefer_egl = true
 
--- Terminal type - better for modern features
-config.term = "wezterm"
+-- Terminal type
+config.term = "xterm-256color"
 
 -- Cursor
 config.default_cursor_style = "BlinkingBlock"
