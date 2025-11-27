@@ -54,10 +54,12 @@ vim.opt.scrolloff = 5
 vim.opt.cursorline = true
 
 -- Cursor shape configuration for different modes
-vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50"
-
--- Blink cursor in normal mode
---vim.opt.guicursor = 'n:blinkon300-blinkwait200-blinkoff300'
+-- n-v-c: block in normal, visual, command modes
+-- i-ci-ve: vertical bar (25% width) in insert modes
+-- r-cr: horizontal bar (20% height) in replace modes
+-- o: horizontal bar (50% height) in operator-pending mode
+-- Add blinking to all modes
+vim.opt.guicursor = "n-v-c:block-blinkon300-blinkwait200-blinkoff300,i-ci-ve:ver25-blinkon300-blinkwait200-blinkoff300,r-cr:hor20,o:hor50"
 
 vim.opt.termguicolors = true
 
