@@ -53,6 +53,9 @@ vim.opt.scrolloff = 5
 -- Highlight current line
 vim.opt.cursorline = true
 
+-- Cursor shape configuration for different modes
+vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50"
+
 -- Blink cursor in normal mode
 --vim.opt.guicursor = 'n:blinkon300-blinkwait200-blinkoff300'
 
