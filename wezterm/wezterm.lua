@@ -179,6 +179,12 @@ config.key_tables = {
 		{ key = "k", mods = "NONE", action = act.CopyMode("MoveUp") },
 		{ key = "l", mods = "NONE", action = act.CopyMode("MoveRight") },
 
+		-- Arrow key navigation
+		{ key = "LeftArrow", mods = "NONE", action = act.CopyMode("MoveLeft") },
+		{ key = "DownArrow", mods = "NONE", action = act.CopyMode("MoveDown") },
+		{ key = "UpArrow", mods = "NONE", action = act.CopyMode("MoveUp") },
+		{ key = "RightArrow", mods = "NONE", action = act.CopyMode("MoveRight") },
+
 		-- Word movement
 		{ key = "w", mods = "NONE", action = act.CopyMode("MoveForwardWord") },
 		{ key = "b", mods = "NONE", action = act.CopyMode("MoveBackwardWord") },
