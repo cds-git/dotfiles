@@ -123,6 +123,18 @@ config.keys = {
 		action = act.ScrollByPage(0.5),
 	},
 
+	-- Alt+Arrow scroll shortcuts (consistent with tmux navigation)
+	{
+		key = "UpArrow",
+		mods = "ALT",
+		action = act.ScrollByLine(-1),
+	},
+	{
+		key = "DownArrow",
+		mods = "ALT",
+		action = act.ScrollByLine(1),
+	},
+
 	-- TAB MANAGEMENT
 	-- Create new tab with default shell
 	{ key = "t", mods = "CTRL|SHIFT", action = act.SpawnTab("CurrentPaneDomain") },

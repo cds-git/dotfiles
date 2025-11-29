@@ -1,0 +1,150 @@
+# ============================================================================
+# Git Configuration - Standard Settings (Tracked in Dotfiles)
+# ============================================================================
+# 
+# This file contains your standard git configuration shared across all machines.
+# It is INCLUDED by your machine's ~/.gitconfig (not symlinked).
+#
+# This allows you to safely use 'git config --global' commands without breaking
+# your dotfiles setup.
+#
+# DO NOT add personal information (name, email) or machine-specific settings here.
+# Those go in your machine's ~/.gitconfig file.
+# ============================================================================
+
+[core]
+	autocrlf = false
+	editor = nvim
+	pager = delta
+	fileMode = true
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = false
+
+[push]
+	default = simple
+	autoSetupRemote = true
+
+[fetch]
+	prune = true
+
+[diff]
+	colorMoved = default
+
+[merge]
+	conflictstyle = diff3
+	tool = diffview
+
+[mergetool]
+	prompt = false
+	keepBackup = false
+
+[mergetool "diffview"]
+	cmd = nvim -n -c "DiffviewOpen" "$MERGE"
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	light = false
+	side-by-side = true
+	line-numbers = true
+	features = catppuccin-mocha
+
+[delta "catppuccin-mocha"]
+	blame-palette = "#1e1e2e #181825 #11111b #313244 #45475a"
+	commit-decoration-style = box ul
+	dark = true
+	file-decoration-style = "#cdd6f4"
+	file-style = "#cdd6f4"
+	hunk-header-decoration-style = box ul
+	hunk-header-file-style = bold
+	hunk-header-line-number-style = bold "#a6adc8"
+	hunk-header-style = file line-number syntax
+	line-numbers-left-style = "#6c7086"
+	line-numbers-minus-style = bold "#f38ba8"
+	line-numbers-plus-style = bold "#a6e3a1"
+	line-numbers-right-style = "#6c7086"
+	line-numbers-zero-style = "#6c7086"
+	# 25% red 75% base
+	minus-emph-style = bold syntax "#53394c"
+	# 10% red 90% base
+	minus-style = syntax "#6f424f"
+	# 25% green 75% base
+	plus-emph-style = bold syntax "#404f4a"
+	# 10% green 90% base
+	plus-style = syntax "#2c3239"
+	map-styles = \
+		bold purple => syntax "#494060", \
+		bold blue => syntax "#384361", \
+		bold cyan => syntax "#384d5d", \
+		bold yellow => syntax "#544f4e"
+	# Should match the name of the bat theme
+	syntax-theme = Catppuccin Mocha
+
+[alias]
+	# View abbreviated SHA, description, and history graph
+	l = log --pretty=oneline -n 20 --graph --abbrev-commit
+	
+	# View the current working tree status using the short format
+	s = status -s
+	
+	# Show verbose output about branches
+	br = branch -v
+	
+	# Show verbose output about tags, branches or remotes
+	tags = tag -l
+	branches = branch --all
+	remotes = remote --verbose
+	
+	# Amend the currently staged files to the latest commit
+	amend = commit --amend --reuse-message=HEAD
+	
+	# Credit an author on the latest commit
+	credit = "!f() { git commit --amend --author \"$1 <$2>\" -C HEAD; }; f"
+	
+	# Interactive rebase with the given number of latest commits
+	reb = "!r() { git rebase -i HEAD~$1; }; r"
+	
+	# Find branches containing commit
+	fb = "!f() { git branch -a --contains $1; }; f"
+	
+	# Find tags containing commit
+	ft = "!f() { git describe --always --contains $1; }; f"
+	
+	# Find commits by source code
+	fc = "!f() { git log --pretty=format:'%C(yellow)%h  %Cblue%ad  %Creset%s%Cgreen  [%cn] %Cred%d' --decorate --date=short -S$1; }; f"
+	
+	# Find commits by commit message
+	fm = "!f() { git log --pretty=format:'%C(yellow)%h  %Cblue%ad  %Creset%s%Cgreen  [%cn] %Cred%d' --decorate --date=short --grep=$1; }; f"
+	
+	# Remove branches that have already been merged with main
+	dm = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
+	
+	# List contributors with number of commits
+	contributors = shortlog --summary --numbered
+
+	# Show the diff between the latest commit and the current state
+	d = !"git diff-index --quiet HEAD -- || clear; git --no-pager diff --patch-with-stat"
+	
+	# Pull in remote changes for the current repository and all its submodules
+	p = pull --recurse-submodules
+	
+	# Clone a repository including all submodules
+	c = clone --recursive
+	
+	# Commit all changes
+	ca = !git add -A && git commit -av
+	
+	# Switch to a branch, creating it if necessary
+	go = "!f() { git checkout -b \"$1\" 2> /dev/null || git checkout \"$1\"; }; f"
+	
+	# Show the user email for the current repository
+	whoami = config user.email
+	
+	# Undo a `git push`
+	undopush = push -f origin HEAD^:main

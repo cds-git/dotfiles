@@ -154,6 +154,26 @@ install_fastfetch() {
     fi
 }
 
+install_delta() {
+    if ! command_exists delta; then
+        echo "Installing git-delta..."
+        if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
+            TMP_DIR=$(mktemp -d)
+            cd "$TMP_DIR" || exit
+            DELTA_VERSION=$(curl -s "https://api.github.com/repos/dandavison/delta/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
+            curl -Lo delta.deb "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_amd64.deb"
+            sudo dpkg -i delta.deb
+            cd - || exit
+            rm -rf "$TMP_DIR"
+            echo "Delta ${DELTA_VERSION} installed successfully."
+        elif [ "$ID" = "arch" ]; then
+            sudo pacman -S --noconfirm git-delta
+        fi
+    else
+        echo "Delta is already installed."
+    fi
+}
+
 # Install all applications
 install_all_applications() {
     echo "Installing all applications..."
@@ -166,6 +186,7 @@ install_all_applications() {
     install_lazydocker
     install_lazysql
     install_fastfetch
+    install_delta
 }
 
 # Detect the Linux distribution
@@ -191,6 +212,63 @@ ln -sf ~/dotfiles/zsh/zshrc ~/.zshrc
 ln -sf ~/dotfiles/tmux/tmux.conf ~/.tmux.conf
 ln -sf ~/dotfiles/nvim ~/.config/nvim
 ln -sf ~/dotfiles/starship/starship.toml ~/.config/starship.toml
+
+# Git config setup
+gitconfig_path="$HOME/.gitconfig"
+dotfiles_git_config="$HOME/dotfiles/git/gitconfig"
+skip_gitconfig=false
+
+# Check if ~/.gitconfig already includes our dotfiles
+if [ -f "$gitconfig_path" ]; then
+    if grep -q "dotfiles/git/gitconfig" "$gitconfig_path"; then
+        echo "~/.gitconfig already includes dotfiles config"
+        skip_gitconfig=true
+    else
+        # Backup existing config
+        echo "Backing up existing ~/.gitconfig to ~/.gitconfig.backup"
+        cp "$gitconfig_path" "$gitconfig_path.backup"
+    fi
+fi
+
+# Create ~/.gitconfig if it doesn't exist
+if [ "$skip_gitconfig" = false ]; then
+    cat > "$gitconfig_path" << EOF
+# Machine-specific git configuration
+# This file is NOT tracked in dotfiles - it's unique per machine
+
+# Include standard settings from dotfiles
+[include]
+	path = $dotfiles_git_config
+
+# Personal information (REQUIRED - update with your info)
+[user]
+	name = your-name
+	email = your-email@example.com
+
+# Machine-specific settings go below this line
+# Examples:
+#   [safe]
+#       directory = /home/user/admin-repo
+#   [core]
+#       sshCommand = ssh -i ~/.ssh/work_key
+EOF
+    
+    echo ""
+    echo "======================================"
+    echo "IMPORTANT: Configure your git identity"
+    echo "======================================"
+    echo "Edit: ~/.gitconfig"
+    echo "Or run: git config --global user.name 'Your Name'"
+    echo "     and: git config --global user.email 'your@email.com'"
+    echo ""
+    echo "You can now safely use 'git config --global' commands!"
+    echo "Your dotfiles settings are loaded via [include]"
+    echo ""
+fi
+
+# Lazygit config symlink
+mkdir -p ~/.config/lazygit
+ln -sf ~/dotfiles/lazygit/config.yml ~/.config/lazygit/config.yml
 
 source ~/.zshrc
 echo "Setup completed successfully."

@@ -1,0 +1,29 @@
+#!/bin/sh
+# Git hook to prepend JIRA ticket ID from branch name to commit message
+# Extracts patterns like ABC-123, PROJECT-456, etc.
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Skip if this is an amend, merge, rebase, or already has a ticket
+if echo "$COMMIT_MSG" | grep -qE "^[A-Z]+-[0-9]+:"; then
+    exit 0
+fi
+
+# Get current branch name
+BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+# Exit if we can't get the branch name
+if [ -z "$BRANCH_NAME" ]; then
+    exit 0
+fi
+
+# Extract JIRA ticket ID (pattern: ABC-123, PROJECT-456, etc.)
+TICKET=$(echo "$BRANCH_NAME" | grep -oE "[A-Z]+-[0-9]+" | head -n1)
+
+# If we found a ticket, prepend it to the commit message
+if [ -n "$TICKET" ]; then
+    echo "$TICKET: $COMMIT_MSG" > "$COMMIT_MSG_FILE"
+fi
+
+exit 0

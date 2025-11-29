@@ -1,87 +1,68 @@
-# Ensure the script is run as administrator
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Error "This script must be run as Administrator!"
-    pause
-    exit 1
+﻿# Master installation script for dotfiles
+# Run as Administrator
+
+#Requires -RunAsAdministrator
+
+Write-Host '╔═══════════════════════════════════════╗' -ForegroundColor Cyan
+Write-Host '║   Dotfiles Installation Script        ║' -ForegroundColor Cyan
+Write-Host '║   Greatest config known to mankind    ║' -ForegroundColor Cyan
+Write-Host '╚═══════════════════════════════════════╝' -ForegroundColor Cyan
+
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ModulesDir = Join-Path $ScriptDir 'modules'
+
+Write-Host ''
+Write-Host 'Loading modules...' -ForegroundColor Yellow
+$modules = @(
+    'git.ps1'
+    'wezterm.ps1'
+    'neovim.ps1'
+    'starship.ps1'
+    'lazygit.ps1'
+    'powershell.ps1'
+    'dev-tools.ps1'
+)
+
+foreach ($module in $modules) {
+    $modulePath = Join-Path $ModulesDir $module
+    if (Test-Path $modulePath) {
+        . $modulePath
+        Write-Host ('  Loaded ' + $module) -ForegroundColor Green
+    } else {
+        Write-Host ('  Missing ' + $module) -ForegroundColor Red
+    }
 }
 
-# Update nvim submodule
-git submodule update --init --recursive
+Write-Host ''
+Write-Host '========================================' -ForegroundColor Cyan
+Write-Host 'Starting installation...' -ForegroundColor Cyan
+Write-Host '========================================' -ForegroundColor Cyan
 
-# Install wezterm
-winget install wez.wezterm --accept-source-agreements --accept-package-agreements
+Write-Host ''
+Write-Host '--- Development Tools ---' -ForegroundColor Magenta
+Install-Chocolatey
+Install-DotNetSDK
+Install-NodeJS
 
-# Install starship prompt
-winget install Starship.Starship --accept-source-agreements --accept-package-agreements
+Write-Host ''
+Write-Host '--- Terminal and Utilities ---' -ForegroundColor Magenta
+Install-Wezterm
+Install-Starship
+Install-Lazygit
+Install-Neovim
 
-# Install lazygit
-winget install JesseDuffield.lazygit --accept-source-agreements --accept-package-agreements
+Write-Host ''
+Write-Host '--- Configurations ---' -ForegroundColor Magenta
+Install-GitConfig
+Install-GitHooks
+Install-PowerShellProfile
 
-# Install chocolatey
-winget install chocolatey.chocolatey --accept-source-agreements --accept-package-agreements
-
-# Install Neovim
-winget install Neovim.Neovim --accept-source-agreements --accept-package-agreements
-# winget install Neovim.Neovim.Nightly --accept-source-agreements --accept-package-agreements
-
-# Ultity for Neovim
-winget install BurntSushi.ripgrep.MSVC --accept-source-agreements --accept-package-agreements
-winget install fzf --accept-source-agreements --accept-package-agreements
-winget install sharkdp.fd --accept-source-agreements --accept-package-agreements
-choco install make -y
-choco install mingw -y
-
-# Create Symlinks
-New-Item -ItemType Directory -Force "$HOME/.config"
-New-Item -ItemType SymbolicLink -Force -Path "$HOME/.config/starship.toml" -Target "$HOME/dotfiles/starship/starship.toml"
-New-Item -ItemType SymbolicLink -Force -Path "$HOME/.wezterm.lua" -Target "$HOME/dotfiles/wezterm/wezterm.lua"
-New-Item -ItemType SymbolicLink -Force -Path "$HOME/AppData/Local/nvim" -Target "$HOME/dotfiles/nvim"
-
-# Add custom profile to the main profile
-$dotfilesProfile = "$HOME/dotfiles/powershell/cds_profile.ps1"
-# Ensure that the main profile exists.
-if (!(Test-Path $PROFILE)) {
-    New-Item -ItemType File -Path $PROFILE -Force | Out-Null
-}
-$snippet = @"
-# Load custom dotfiles profile
-if (Test-Path '$dotfilesProfile') {
-    . '$dotfilesProfile'
-}
-"@
-# Check if the custom profile is already in $PROFILE.
-if (-not (Select-String -Path $PROFILE -Pattern ([regex]::Escape($dotfilesProfile)) -Quiet)) {
-    # Append a new line followed by the snippet
-    "`r`n$snippet" | Out-File -Append -Encoding utf8 -FilePath $PROFILE
-    Write-Host "Dotfiles profile has been appended to $PROFILE"
-    # Reload profile
-    . $PROFILE
-} else {
-    Write-Host "Dotfiles profile already present in $PROFILE"
-}
-
-# Install .NET SDK
-winget install Microsoft.DotNet.SDK.9 --accept-source-agreements --accept-package-agreements
-
-# Install Fast Node Manager (fnm)
-winget install Schniz.fnm --accept-source-agreements --accept-package-agreements
-fnm install 22
-# Ensure the main profile exists
-if (!(Test-Path $PROFILE)) {
-    New-Item -ItemType File -Path $PROFILE -Force | Out-Null
-}
-# Snippet to be added
-$fnmSnippet = @"
-# Initialize fnm 
-fnm env --use-on-cd | Out-String | Invoke-Expression
-"@
-# Check if the snippet is already present
-if (-not (Select-String -Path $PROFILE -Pattern ([regex]::Escape("fnm env --use-on-cd")) -Quiet)) {
-    # Append with a newline above for readability
-    "`r`n$fnmSnippet" | Out-File -Append -Encoding utf8 -FilePath $PROFILE
-    Write-Host "fnm environment setup has been added to $PROFILE"
-    # Immediately reload profile
-    . $PROFILE
-} else {
-    Write-Host "fnm environment setup is already present in $PROFILE"
-}
+Write-Host ''
+Write-Host '========================================' -ForegroundColor Green
+Write-Host 'Installation Complete!' -ForegroundColor Green
+Write-Host '========================================' -ForegroundColor Green
+Write-Host ''
+Write-Host 'Next steps:' -ForegroundColor Yellow
+Write-Host '  1. Configure git identity' -ForegroundColor Cyan
+Write-Host '  2. Reload PowerShell profile' -ForegroundColor Cyan
+Write-Host '  3. Run git init in repos to install hooks' -ForegroundColor Cyan
