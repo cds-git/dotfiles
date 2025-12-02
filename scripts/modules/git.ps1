@@ -52,12 +52,10 @@ function Install-GitHooks {
     $templatesDir = "$HOME/.git-templates/hooks"
     $dotfilesHooksDir = "$HOME/dotfiles/git/hooks"
     
-    # Create templates directory
     if (-not (Test-Path $templatesDir)) {
         New-Item -ItemType Directory -Force -Path $templatesDir | Out-Null
     }
     
-    # Symlink commit-msg hook from dotfiles
     $sourceHook = "$dotfilesHooksDir/commit-msg"
     $targetHook = "$templatesDir/commit-msg"
     
@@ -66,29 +64,19 @@ function Install-GitHooks {
         return
     }
     
+    # CHANGED: Use Copy-Item instead of SymbolicLink for Windows compatibility
     if (Test-Path $targetHook) {
-        $item = Get-Item $targetHook
-        if ($item.LinkType -eq "SymbolicLink") {
-            Write-Host "✓ Commit-msg hook symlink exists" -ForegroundColor Green
-        } else {
-            Write-Host "⚠ Backing up existing hook" -ForegroundColor Yellow
-            Move-Item $targetHook "$targetHook.backup"
-            New-Item -ItemType SymbolicLink -Force -Path $targetHook -Target $sourceHook | Out-Null
-            Write-Host "✓ Created commit-msg hook symlink" -ForegroundColor Green
-        }
-    } else {
-        New-Item -ItemType SymbolicLink -Force -Path $targetHook -Target $sourceHook | Out-Null
-        Write-Host "✓ Created commit-msg hook symlink" -ForegroundColor Green
+        Write-Host "⚠ Updating existing hook" -ForegroundColor Yellow
     }
     
-    # Configure git to use templates
+    Copy-Item $sourceHook $targetHook -Force
+    Write-Host "✓ Installed commit-msg hook" -ForegroundColor Green
+    
     $templatePath = "$HOME/.git-templates" -replace '\\', '/'
     git config --global init.templatedir $templatePath
     
     Write-Host "✓ Configured git template directory" -ForegroundColor Green
     Write-Host "  Example: feature/ABC-123-fix → Commit: 'ABC-123: fix bug'" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "⚠ For existing repos, run: git init (to install hooks)" -ForegroundColor Yellow
 }
 
 # Export functions
