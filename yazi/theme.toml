@@ -1,0 +1,115 @@
+# Catppuccin Mocha theme for Yazi
+# https://github.com/catppuccin/yazi
+
+[flavor]
+use = "mocha"
+
+[mgr]
+cwd = { fg = "green" }
+
+# Hovered
+hovered         = { fg = "black", bg = "yellow" }
+preview_hovered = { underline = true }
+
+# Find
+find_keyword  = { fg = "yellow", italic = true }
+find_position = { fg = "magenta", bg = "reset", italic = true }
+
+# Marker
+marker_selected = { fg = "green", bg = "green" }
+marker_copied   = { fg = "yellow", bg = "yellow" }
+marker_cut      = { fg = "red", bg = "red" }
+
+# Tab
+tab_active   = { fg = "black", bg = "blue" }
+tab_inactive = { fg = "white", bg = "darkgray" }
+tab_width    = 1
+
+# Border
+border_symbol = "│"
+border_style  = { fg = "gray" }
+
+# Highlighting
+syntect_theme = "~/.config/bat/themes/Catppuccin Mocha.tmTheme"
+
+[status]
+separator_open  = ""
+separator_close = ""
+separator_style = { fg = "darkgray", bg = "darkgray" }
+
+# Mode
+mode_normal = { fg = "black", bg = "blue", bold = true }
+mode_select = { fg = "black", bg = "green", bold = true }
+mode_unset  = { fg = "black", bg = "magenta", bold = true }
+
+# Progress
+progress_label  = { bold = true }
+progress_normal = { fg = "blue", bg = "black" }
+progress_error  = { fg = "red", bg = "black" }
+
+# Permissions
+permissions_t = { fg = "green" }
+permissions_r = { fg = "yellow" }
+permissions_w = { fg = "red" }
+permissions_x = { fg = "cyan" }
+permissions_s = { fg = "darkgray" }
+
+[input]
+border   = { fg = "blue" }
+title    = {}
+value    = {}
+selected = { reversed = true }
+
+[select]
+border   = { fg = "blue" }
+active   = { fg = "magenta" }
+inactive = {}
+
+[tasks]
+border  = { fg = "blue" }
+title   = {}
+hovered = { underline = true }
+
+[which]
+cols = 3
+mask            = { bg = "black" }
+cand            = { fg = "cyan" }
+rest            = { fg = "darkgray" }
+desc            = { fg = "magenta" }
+separator       = "  "
+separator_style = { fg = "darkgray" }
+
+[help]
+on      = { fg = "magenta" }
+run     = { fg = "cyan" }
+desc    = { fg = "gray" }
+hovered = { bg = "darkgray", bold = true }
+footer  = { fg = "black", bg = "white" }
+
+[filetype]
+rules = [
+	# Images
+	{ mime = "image/*", fg = "cyan" },
+	
+	# Videos
+	{ mime = "video/*", fg = "yellow" },
+	{ mime = "audio/*", fg = "yellow" },
+	
+	# Archives
+	{ mime = "application/zip", fg = "magenta" },
+	{ mime = "application/gzip", fg = "magenta" },
+	{ mime = "application/x-tar", fg = "magenta" },
+	{ mime = "application/x-bzip", fg = "magenta" },
+	{ mime = "application/x-bzip2", fg = "magenta" },
+	{ mime = "application/x-7z-compressed", fg = "magenta" },
+	{ mime = "application/x-rar", fg = "magenta" },
+	
+	# Documents
+	{ mime = "application/pdf", fg = "red" },
+	{ mime = "application/msword", fg = "blue" },
+	{ mime = "application/vnd.ms-excel", fg = "green" },
+	
+	# Fallback
+	{ name = "*", fg = "white" },
+	{ name = "*/", fg = "blue" }
+]

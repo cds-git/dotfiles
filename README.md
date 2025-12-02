@@ -21,38 +21,41 @@ Greatest dotfiles known to mankind
 Run the following command in PowerShell as Administrator:
 
 ```powershell
-.\scripts\install-new.ps1
+.\scripts\install.ps1
 ```
 
 This will:
-1. Install development tools (Chocolatey, .NET SDK, nvm-windows for Node.js)
-2. Install terminal tools (WezTerm, Neovim, Starship, Lazygit, Git utilities)
-3. Create symlinks/configs for all tools
+1. Install development tools (Chocolatey, .NET SDK, Node.js)
+2. Install terminal tools (WezTerm, Neovim, Starship, Lazygit)
+3. Configure Git with shared settings and useful aliases
 4. Set up PowerShell profile
-5. Install git hooks (JIRA ticket extraction)
+5. Install git hooks (automatic JIRA ticket extraction from branch names)
 
 ### Linux
 
-To install and configure everything for Ubuntu or Arch:
+To install and configure everything:
 
 ```bash
-sudo ./scripts/install.sh
+./scripts/install.sh
 ```
 
 ## Configuration Details
+
+### Git Hooks
+The dotfiles include an automatic JIRA ticket extraction hook that:
+- Extracts ticket IDs from branch names (e.g., `feature/SIR3-1234-description` → `SIR3-1234`)
+- Prepends the ticket ID to your commit messages automatically
+- Supports alphanumeric project codes (e.g., `SIR3-1234`, `ABC-123`, `PROJECT2-456`)
+- Skips prepending if your commit message already starts with a ticket ID
+- To use a different ticket ID, simply start your commit message with it: `git commit -m "SIR3-9999: message"`
+
+**For existing repositories**: Run `git init` to install the hook, or manually copy from `~/.git-templates/hooks/commit-msg` to your repo's `.git/hooks/` directory.
 
 ### Neovim
 - **Plugin Manager**: lazy.nvim
 - **LSP**: Configured for C#, TypeScript, Lua, and more
 - **Fuzzy Finder**: Snacks.nvim picker
-- **Key Features**: Blink completion, Treesitter, Gitsigns, Oil file explorer
-
-### Git
-- **Delta** for beautiful diffs with syntax highlighting
-- **Useful aliases** (see `git/README.md`)
-- **Auto-setup remote** on push
-- **Catppuccin Mocha** theme for delta
-- **Local config** - Personal info (name/email) kept in `~/.gitconfig.local` (not tracked)
+- **Key Features**: Blink completion, Treesitter, Gitsigns, Oil file explorer, Neo-tree, Grapple, Diffview
 
 ### Lazygit
 - **Catppuccin Mocha** theme
@@ -61,30 +64,37 @@ sudo ./scripts/install.sh
 - **Auto-fetch** enabled
 
 ### WezTerm
+- **Catppuccin Mocha** theme
 - Arrow key support in copy mode (for homerow mod users)
 - Vi-style navigation
 - Alt+Arrow scrolling (consistent with tmux)
 
+### Git
+- **Delta** - Syntax-highlighted diffs with side-by-side view
+- **Catppuccin Mocha** theme for delta
+- **Useful aliases** - shortcuts for common git operations
+- **Include-based configuration** - allows machine-specific settings without breaking dotfiles
+
 ## Post-Installation
 
-After running the install script, configure your personal git information:
+### 1. Configure Git Identity
 
-**Windows:**
-```powershell
-notepad ~/.gitconfig.local
-```
+After running the install script, update your personal git information in `~/.gitconfig`:
 
-**Linux:**
 ```bash
-vim ~/.gitconfig.local
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
 ```
 
-Update with your name and email:
-```ini
-[user]
-    name = Your Name
-    email = your.email@example.com
-```
+The dotfiles use an include-based approach where `~/.gitconfig` includes the shared config from `dotfiles/git/gitconfig`. This allows you to safely use `git config --global` commands without modifying tracked files.
+
+### 2. Install Hooks in Existing Repositories
+
+For existing git repositories, install the commit-msg hook by either:
+- Running `git init` in the repository (safe for existing repos)
+- Or manually copying: `cp ~/.git-templates/hooks/commit-msg <repo>/.git/hooks/commit-msg`
+
+New clones will automatically get the hooks via the git template directory.
 
 ## Keybinding Philosophy
 
@@ -93,12 +103,19 @@ Update with your name and email:
 - **Leader key**: Space (Neovim)
 - **Consistent across tools** - similar bindings in Neovim, tmux, lazygit
 
+## Notes
+
+### Windows-Specific
+- Git hooks use file copies instead of symlinks for Windows compatibility
+- SSL verification may need to be disabled for corporate Git servers: `git config --global http.https://your-server.sslVerify false`
+- PowerShell profile is configured for optimal development experience
+
+### Cross-Platform
+- All configurations use Catppuccin Mocha theme for consistency
+- Neovim config is maintained as a submodule for easier updates
+
 ## TODO
 
-- ✅ ~~Add config for git~~
-- ✅ ~~Add config with theming for lazygit~~
-- Split scripts into install packages and symlinks
-- Add pre-commit hook to extract JIRA issue ID from branch
 - Add tiling window manager for Windows
 - Add Windows status bar
 - Add tiling window manager for Linux

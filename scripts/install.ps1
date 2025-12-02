@@ -1,4 +1,4 @@
-﻿# Master installation script for dotfiles
+# Master installation script for dotfiles
 # Run as Administrator
 
 #Requires -RunAsAdministrator
@@ -19,6 +19,8 @@ $modules = @(
     'neovim.ps1'
     'starship.ps1'
     'lazygit.ps1'
+    'yazi.ps1'
+    'opencode.ps1'
     'powershell.ps1'
     'dev-tools.ps1'
 )
@@ -43,6 +45,10 @@ Write-Host '--- Development Tools ---' -ForegroundColor Magenta
 Install-Chocolatey
 Install-DotNetSDK
 Install-NodeJS
+Install-Bat
+Install-Eza
+Install-Yazi
+Install-OpenCode
 
 Write-Host ''
 Write-Host '--- Terminal and Utilities ---' -ForegroundColor Magenta
@@ -55,6 +61,9 @@ Write-Host ''
 Write-Host '--- Configurations ---' -ForegroundColor Magenta
 Install-GitConfig
 Install-GitHooks
+Install-BatConfig
+Install-YaziConfig
+Install-OpenCodeConfig
 Install-PowerShellProfile
 
 Write-Host ''

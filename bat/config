@@ -1,0 +1,15 @@
+# Bat configuration
+# Catppuccin Mocha theme
+--theme="Catppuccin Mocha"
+
+# Show line numbers, Git modifications and file header (but no grid)
+--style="numbers,changes,header"
+
+# Add mouse scrolling support in less (does not work with all terminals)
+--paging=auto
+
+# Use C++ syntax for .h files
+--map-syntax "*.h:C++"
+
+# Use SQL syntax for .ddl files
+--map-syntax "*.ddl:SQL"
