@@ -5,9 +5,9 @@ function Install-OpenCodeConfig {
     
     $opencodeConfigDir = "$HOME\.config\opencode"
     $dotfilesAgents = "$HOME\dotfiles\opencode\AGENTS.md"
-    $dotfilesConfig = "$HOME\dotfiles\opencode\config.json"
+    $dotfilesOpencode = "$HOME\dotfiles\opencode\opencode.json"
     $opencodeAgents = "$opencodeConfigDir\AGENTS.md"
-    $opencodeConfig = "$opencodeConfigDir\config.json"
+    $opencodeOpencode = "$opencodeConfigDir\opencode.json"
     
     # Create config directory if it doesn't exist
     if (-not (Test-Path $opencodeConfigDir)) {
@@ -43,32 +43,32 @@ function Install-OpenCodeConfig {
         }
     }
     
-    # Setup config.json
-    if (Test-Path $opencodeConfig) {
-        $item = Get-Item $opencodeConfig
-        if ($item.LinkType -eq "SymbolicLink" -and $item.Target -eq $dotfilesConfig) {
-            Write-Host "[OK] OpenCode config.json already configured" -ForegroundColor Green
+    # Setup opencode.json
+    if (Test-Path $opencodeOpencode) {
+        $item = Get-Item $opencodeOpencode
+        if ($item.LinkType -eq "SymbolicLink" -and $item.Target -eq $dotfilesOpencode) {
+            Write-Host "[OK] OpenCode opencode.json already configured" -ForegroundColor Green
         } else {
-            Write-Host "[WARN] Backing up existing config.json" -ForegroundColor Yellow
-            Copy-Item $opencodeConfig "$opencodeConfig.backup" -Force
-            Remove-Item $opencodeConfig -Force
+            Write-Host "[WARN] Backing up existing opencode.json" -ForegroundColor Yellow
+            Copy-Item $opencodeOpencode "$opencodeOpencode.backup" -Force
+            Remove-Item $opencodeOpencode -Force
             # Try symlink, fall back to copy
             try {
-                New-Item -ItemType SymbolicLink -Force -Path $opencodeConfig -Target $dotfilesConfig | Out-Null
-                Write-Host "[OK] OpenCode config.json configured (symlink)" -ForegroundColor Green
+                New-Item -ItemType SymbolicLink -Force -Path $opencodeOpencode -Target $dotfilesOpencode | Out-Null
+                Write-Host "[OK] OpenCode opencode.json configured (symlink)" -ForegroundColor Green
             } catch {
-                Copy-Item $dotfilesConfig $opencodeConfig -Force
-                Write-Host "[OK] OpenCode config.json configured (copy)" -ForegroundColor Green
+                Copy-Item $dotfilesOpencode $opencodeOpencode -Force
+                Write-Host "[OK] OpenCode opencode.json configured (copy)" -ForegroundColor Green
             }
         }
     } else {
         # Try symlink, fall back to copy
         try {
-            New-Item -ItemType SymbolicLink -Force -Path $opencodeConfig -Target $dotfilesConfig | Out-Null
-            Write-Host "[OK] OpenCode config.json configured (symlink)" -ForegroundColor Green
+            New-Item -ItemType SymbolicLink -Force -Path $opencodeOpencode -Target $dotfilesOpencode | Out-Null
+            Write-Host "[OK] OpenCode opencode.json configured (symlink)" -ForegroundColor Green
         } catch {
-            Copy-Item $dotfilesConfig $opencodeConfig -Force
-            Write-Host "[OK] OpenCode config.json configured (copy)" -ForegroundColor Green
+            Copy-Item $dotfilesOpencode $opencodeOpencode -Force
+            Write-Host "[OK] OpenCode opencode.json configured (copy)" -ForegroundColor Green
         }
     }
 }
