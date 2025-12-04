@@ -1,4 +1,20 @@
-# OpenCode configuration setup module
+# OpenCode installation and configuration module
+
+function Install-OpenCode {
+    Write-Host "`n=== OpenCode ===" -ForegroundColor Cyan
+    
+    if (Get-Command opencode -ErrorAction SilentlyContinue) {
+        Write-Host "[OK] OpenCode already installed" -ForegroundColor Green
+    } else {
+        Write-Host "Installing OpenCode..." -ForegroundColor Yellow
+        npm install -g @opencode/cli
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "[OK] OpenCode installed" -ForegroundColor Green
+        } else {
+            Write-Host "[ERROR] Failed to install OpenCode" -ForegroundColor Red
+        }
+    }
+}
 
 function Install-OpenCodeConfig {
     Write-Host "`n=== OpenCode Configuration ===" -ForegroundColor Cyan

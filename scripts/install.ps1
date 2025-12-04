@@ -11,9 +11,44 @@ Write-Host '╚═════════════════════�
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ModulesDir = Join-Path $ScriptDir 'modules'
 
+# Utility functions
+function Refresh-EnvironmentPath {
+    $machinePath = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $userPath = [System.Environment]::GetEnvironmentVariable('Path', 'User')
+    $env:Path = $machinePath + ';' + $userPath
+}
+
+function Test-CommandExists {
+    param([string]$Command)
+    $null -ne (Get-Command $Command -ErrorAction SilentlyContinue)
+}
+
+function Wait-ForCommand {
+    param(
+        [string]$Command,
+        [int]$MaxAttempts = 5,
+        [int]$DelaySeconds = 1
+    )
+    
+    for ($i = 1; $i -le $MaxAttempts; $i++) {
+        Refresh-EnvironmentPath
+        if (Test-CommandExists $Command) {
+            return $true
+        }
+        if ($i -lt $MaxAttempts) {
+            Start-Sleep -Seconds $DelaySeconds
+        }
+    }
+    
+    return $false
+}
+
 Write-Host ''
 Write-Host 'Loading modules...' -ForegroundColor Yellow
 $modules = @(
+    'dev-tools.ps1'
+    'bat.ps1'
+    'eza.ps1'
     'git.ps1'
     'wezterm.ps1'
     'neovim.ps1'
@@ -22,7 +57,6 @@ $modules = @(
     'yazi.ps1'
     'opencode.ps1'
     'powershell.ps1'
-    'dev-tools.ps1'
 )
 
 foreach ($module in $modules) {

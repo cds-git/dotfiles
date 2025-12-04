@@ -60,9 +60,10 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 # Aliases
 alias reload='source ~/.zshrc'
 alias zshconf='nvim ~/.zshrc'
-## List
-alias ls='ls --color'
-alias ll='ls -lha'
+## Modern CLI tools
+alias cat='bat'
+alias ls='eza --icons'
+alias ll='eza --icons -lha'
 ## Nvim
 alias vim='nvim'
 alias vi='nvim'

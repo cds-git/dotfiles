@@ -1,4 +1,21 @@
-# Yazi configuration setup module
+# Yazi installation and configuration module
+
+function Install-Yazi {
+    Write-Host "`n=== yazi (Terminal File Manager) ===" -ForegroundColor Cyan
+    
+    if (Get-Command yazi -ErrorAction SilentlyContinue) {
+        $version = yazi --version
+        Write-Host "[OK] yazi already installed ($version)" -ForegroundColor Green
+    } else {
+        Write-Host "Installing yazi..." -ForegroundColor Yellow
+        winget install sxyazi.yazi --accept-source-agreements --accept-package-agreements
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "[OK] yazi installed" -ForegroundColor Green
+        } else {
+            Write-Host "[ERROR] Failed to install yazi" -ForegroundColor Red
+        }
+    }
+}
 
 function Install-YaziConfig {
     Write-Host "`n=== Yazi Configuration ===" -ForegroundColor Cyan
