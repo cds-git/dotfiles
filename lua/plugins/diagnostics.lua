@@ -1,0 +1,42 @@
+return {
+	{
+		"folke/todo-comments.nvim",
+		event = { "BufReadPre", "BufNewFile" },
+		dependencies = { "nvim-lua/plenary.nvim" },
+		config = function()
+			local todo_comments = require("todo-comments")
+
+			-- set keymaps
+			local keymap = vim.keymap -- for conciseness
+
+			keymap.set("n", "]t", function()
+				todo_comments.jump_next()
+			end, { desc = "Next todo comment" })
+
+			keymap.set("n", "[t", function()
+				todo_comments.jump_prev()
+			end, { desc = "Previous todo comment" })
+
+			todo_comments.setup()
+		end,
+	},
+	{
+		-- DISABLED
+		-- USING TELESCOPE INSTEAD FOR LISTING DIAGNOSTICS
+		"folke/trouble.nvim",
+		enabled = false,
+		dependencies = { "nvim-tree/nvim-web-devicons", "folke/todo-comments.nvim" },
+		keys = {
+			{ "<leader>xx", "<cmd>TroubleToggle<CR>", desc = "Open/close trouble list" },
+			{
+				"<leader>xw",
+				"<cmd>TroubleToggle workspace_diagnostics<CR>",
+				desc = "Open trouble workspace diagnostics",
+			},
+			{ "<leader>xd", "<cmd>TroubleToggle document_diagnostics<CR>", desc = "Open trouble document diagnostics" },
+			{ "<leader>xq", "<cmd>TroubleToggle quickfix<CR>", desc = "Open trouble quickfix list" },
+			{ "<leader>xl", "<cmd>TroubleToggle loclist<CR>", desc = "Open trouble location list" },
+			{ "<leader>xt", "<cmd>TodoTrouble<CR>", desc = "Open todos in trouble" },
+		},
+	},
+}
