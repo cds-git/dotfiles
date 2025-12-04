@@ -28,12 +28,13 @@ function Install-DotNetSDK {
     Write-Host "`n=== .NET SDK ===" -ForegroundColor Cyan
     
     if (Test-CommandExists 'dotnet') {
-        $version = dotnet --version
-        Write-Host "[OK] .NET SDK already installed (v$version)" -ForegroundColor Green
-        return
+        $currentVersion = dotnet --version
+        Write-Host "Current .NET SDK version: v$currentVersion" -ForegroundColor Yellow
+        Write-Host "Upgrading to latest .NET SDK..." -ForegroundColor Yellow
+    } else {
+        Write-Host "Installing latest .NET SDK..." -ForegroundColor Yellow
     }
     
-    Write-Host "Installing .NET SDK..." -ForegroundColor Yellow
     winget install Microsoft.DotNet.SDK.10 --accept-source-agreements --accept-package-agreements
     
     if ($LASTEXITCODE -eq 0) {

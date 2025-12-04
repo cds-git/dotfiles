@@ -34,23 +34,27 @@ install_dotnet() {
     echo "=== .NET SDK ==="
     
     if command_exists dotnet; then
-        local version=$(dotnet --version)
-        echo "✓ .NET SDK already installed (v$version)"
+        local current_version=$(dotnet --version)
+        echo "Current .NET SDK version: v$current_version"
+        echo "Upgrading to latest .NET SDK..."
     else
-        echo "Installing .NET 9 SDK..."
-        if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
-            # Add Microsoft package repository
-            wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
-            sudo dpkg -i /tmp/packages-microsoft-prod.deb
-            rm /tmp/packages-microsoft-prod.deb
-            
-            sudo apt update
-            sudo apt install -y dotnet-sdk-9.0
-        elif [ "$ID" = "arch" ]; then
-            sudo pacman -S --noconfirm dotnet-sdk
-        fi
-        echo "✓ .NET SDK installed"
+        echo "Installing latest .NET SDK..."
     fi
+    
+    if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
+        # Add Microsoft package repository
+        wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+        sudo dpkg -i /tmp/packages-microsoft-prod.deb
+        rm /tmp/packages-microsoft-prod.deb
+        
+        sudo apt update
+        sudo apt install -y dotnet-sdk-10.0
+    elif [ "$ID" = "arch" ]; then
+        sudo pacman -S --noconfirm dotnet-sdk
+    fi
+    
+    local new_version=$(dotnet --version)
+    echo "✓ .NET SDK installed (v$new_version)"
 }
 
 install_nodejs() {

@@ -29,17 +29,10 @@ install_git_config() {
 [include]
 	path = $dotfiles_git_config
 
-# Personal information (REQUIRED)
 [user]
 	name = your-name
 	email = your-email@example.com
 
-# Machine-specific settings
-# Examples:
-#   [safe]
-#       directory = /home/user/admin-repo
-#   [core]
-#       sshCommand = ssh -i ~/.ssh/work_key
 EOF
     
     echo "✓ Created ~/.gitconfig"

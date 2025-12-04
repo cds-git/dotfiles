@@ -33,10 +33,6 @@ function Install-GitConfig {
 	name = your-name
 	email = your-email@example.com
 
-# Machine-specific settings
-# Examples:
-#   [safe]
-#       directory = C:/repos/admin-repo
 "@ | Out-File -Encoding utf8 -FilePath $gitconfigPath
     
     Write-Host "✓ Created ~/.gitconfig" -ForegroundColor Green
