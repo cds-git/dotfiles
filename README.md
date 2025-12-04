@@ -1,6 +1,6 @@
 # dotfiles
 
-Greatest dotfiles known to mankind
+Greatest config known to mankind
 
 ## What's Included
 
@@ -12,7 +12,7 @@ Greatest dotfiles known to mankind
 - **Lazygit** - Terminal UI for git with Catppuccin theme
 - **PowerShell/Zsh** - Shell configurations and aliases
 
-**Theme**: Catppuccin Mocha across all tools
+**Theme**: Catppuccin across all tools
 
 ## Installation and Setup
 
@@ -38,42 +38,6 @@ To install and configure everything:
 ```bash
 ./scripts/install.sh
 ```
-
-## Configuration Details
-
-### Git Hooks
-The dotfiles include an automatic JIRA ticket extraction hook that:
-- Extracts ticket IDs from branch names (e.g., `feature/SIR3-1234-description` → `SIR3-1234`)
-- Prepends the ticket ID to your commit messages automatically
-- Supports alphanumeric project codes (e.g., `SIR3-1234`, `ABC-123`, `PROJECT2-456`)
-- Skips prepending if your commit message already starts with a ticket ID
-- To use a different ticket ID, simply start your commit message with it: `git commit -m "SIR3-9999: message"`
-
-**For existing repositories**: Run `git init` to install the hook, or manually copy from `~/.git-templates/hooks/commit-msg` to your repo's `.git/hooks/` directory.
-
-### Neovim
-- **Plugin Manager**: lazy.nvim
-- **LSP**: Configured for C#, TypeScript, Lua, and more
-- **Fuzzy Finder**: Snacks.nvim picker
-- **Key Features**: Blink completion, Treesitter, Gitsigns, Oil file explorer, Neo-tree, Grapple, Diffview
-
-### Lazygit
-- **Catppuccin Mocha** theme
-- **Delta integration** for diffs
-- **Vim keybindings** throughout
-- **Auto-fetch** enabled
-
-### WezTerm
-- **Catppuccin Mocha** theme
-- Arrow key support in copy mode (for homerow mod users)
-- Vi-style navigation
-- Alt+Arrow scrolling (consistent with tmux)
-
-### Git
-- **Delta** - Syntax-highlighted diffs with side-by-side view
-- **Catppuccin Mocha** theme for delta
-- **Useful aliases** - shortcuts for common git operations
-- **Include-based configuration** - allows machine-specific settings without breaking dotfiles
 
 ## Post-Installation
 
@@ -107,7 +71,6 @@ New clones will automatically get the hooks via the git template directory.
 
 ### Windows-Specific
 - Git hooks use file copies instead of symlinks for Windows compatibility
-- SSL verification may need to be disabled for corporate Git servers: `git config --global http.https://your-server.sslVerify false`
 - PowerShell profile is configured for optimal development experience
 
 ### Cross-Platform
