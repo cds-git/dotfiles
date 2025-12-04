@@ -6,7 +6,7 @@ install_common_packages() {
     echo ""
     echo "=== Common Packages ==="
     
-    local packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "build-essential" "zsh" "tmux")
+    local packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "build-essential" "zsh" "tmux" "fastfetch")
     
     if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
         sudo apt update
@@ -22,7 +22,7 @@ install_common_packages() {
     elif [ "$ID" = "arch" ]; then
         sudo pacman -Syu --noconfirm
         # Adjust package names for Arch
-        local arch_packages=("ripgrep" "fzf" "fd" "jq" "curl" "wget" "unzip" "base-devel" "zsh" "tmux")
+        local arch_packages=("ripgrep" "fzf" "fd" "jq" "curl" "wget" "unzip" "base-devel" "zsh" "tmux" "fastfetch")
         sudo pacman -S --noconfirm "${arch_packages[@]}"
     fi
     
