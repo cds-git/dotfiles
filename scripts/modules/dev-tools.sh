@@ -22,7 +22,7 @@ install_common_packages() {
     elif [ "$ID" = "arch" ]; then
         sudo pacman -Syu --noconfirm
         # Adjust package names for Arch
-        local arch_packages=("ripgrep" "fzf" "fd" "jq" "curl" "wget" "unzip" "base-devel" "zsh" "tmux" "fastfetch" "htop" "ncdu")
+        local arch_packages=("ripgrep" "fzf" "fd" "jq" "curl" "wget" "unzip" "base-devel" "zsh" "tmux" "fastfetch" "btop" "ncdu")
         sudo pacman -S --noconfirm "${arch_packages[@]}"
         
         # Install yay (AUR helper) if not present
