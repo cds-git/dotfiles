@@ -3,7 +3,7 @@
 function Install-PowerShellProfile {
     Write-Host "`n=== PowerShell Profile ===" -ForegroundColor Cyan
     
-    $dotfilesProfile = "$HOME/dotfiles/powershell/cds_profile.ps1"
+    $dotfilesProfile = "$HOME\dotfiles\powershell\cds_profile.ps1"
     
     # Ensure main profile exists
     if (-not (Test-Path $PROFILE)) {

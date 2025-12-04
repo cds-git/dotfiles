@@ -16,6 +16,7 @@ Remove-Item Alias:cat -Force -ErrorAction SilentlyContinue
 Remove-Item Alias:ls -Force -ErrorAction SilentlyContinue
 function cat { bat $args }
 function ls { eza --icons $args }
+function ll { eza --icons -lha $args }
 
 # Initialize Starship prompt
 Invoke-Expression (&starship init powershell)

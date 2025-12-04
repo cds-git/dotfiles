@@ -5,8 +5,13 @@
 COMMIT_MSG_FILE=$1
 COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
 
-# Skip if this is an amend, merge, rebase, or already has a ticket
+# Skip if already has a ticket prefix
 if echo "$COMMIT_MSG" | grep -qE "^[A-Z]+-[0-9]+:"; then
+    exit 0
+fi
+
+# Skip merge commits
+if echo "$COMMIT_MSG" | grep -qE "^Merge "; then
     exit 0
 fi
 

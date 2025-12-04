@@ -1,32 +1,24 @@
 {
     "$schema": "https://opencode.ai/config.json",
     "theme": "catppuccin",
+    "keybinds": {
+        "app_exit": "ctrl+d,ctrl+w,<leader>q"
+    },
     "provider": {
-        "ollama": {
-            "npm": "@ai-sdk/openai-compatible",
-            "name": "Ollama (local)",
-            "options": {
-                "baseURL": "http://ollama:11434/v1"
-            },
-            "models": {
-                "gpt-oss:120b": {
-                    "name": "gpt-oss 120b",
-                    "options": {
-                        "num_ctx": 131072
-                    }
-                }
-            }
-        },
         "vllm": {
             "npm": "@ai-sdk/openai-compatible",
             "name": "vLLM",
             "options": {
-                "baseURL": "http://dc2-nvgp008.systematicgroup.local:8000/v1"
+                "baseURL": "http://172.20.7.131:6942/v1",
+                "apiKey": "dummy"
             },
             "models": {
-                "qwen-7b-instruct": {
-                    "name": "Qwen 7B Instruct",
-                    "maxTokens": 8192
+                "qwen3-coder-30b": {
+                    "name": "Qwen3 Coder 30b",
+                    "limit": {
+                        "context": 200000,
+                        "output": 65536
+                    }
                 }
             }
         }
