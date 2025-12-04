@@ -72,6 +72,7 @@ modules=(
     "neovim.sh"
     "starship.sh"
     "lazygit.sh"
+    "lazydocker.sh"
     "yazi.sh"
     "opencode.sh"
 )
@@ -98,6 +99,7 @@ install_dotnet
 install_nodejs
 install_bat
 install_eza
+install_lazydocker
 install_yazi
 install_opencode
 
@@ -119,6 +121,7 @@ echo '--- Configurations ---'
 install_git_config
 install_git_hooks
 install_bat_config
+install_lazydocker_config
 install_yazi_config
 install_opencode_config
 

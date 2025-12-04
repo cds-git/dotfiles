@@ -1,0 +1,36 @@
+gui:
+  # Catppuccin Mocha theme
+  theme:
+    activeBorderColor:
+      - '#89b4fa' # Blue
+      - bold
+    inactiveBorderColor:
+      - '#6c7086' # Surface2
+    optionsTextColor:
+      - '#cdd6f4' # Text
+    selectedLineBgColor:
+      - '#45475a' # Surface1
+    selectedRangeBgColor:
+      - '#313244' # Surface0
+  scrollHeight: 2
+  language: 'auto'
+  border: 'rounded'
+  # Show CPU and memory usage
+  showAllContainers: false
+  
+commandTemplates:
+  # Custom commands
+  dockerCompose: docker compose
+  
+reporting: 'off'
+
+confirmOnQuit: false
+
+stats:
+  graphs:
+    - caption: CPU (%)
+      statPath: DerivedStats.CPUPercentage
+      color: '#89b4fa' # Blue
+    - caption: Memory (%)
+      statPath: DerivedStats.MemoryPercentage  
+      color: '#a6e3a1' # Green

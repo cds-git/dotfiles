@@ -54,6 +54,7 @@ $modules = @(
     'neovim.ps1'
     'starship.ps1'
     'lazygit.ps1'
+    'lazydocker.ps1'
     'yazi.ps1'
     'opencode.ps1'
     'powershell.ps1'
@@ -81,6 +82,7 @@ Install-DotNetSDK
 Install-NodeJS
 Install-Bat
 Install-Eza
+Install-Lazydocker
 Install-Yazi
 Install-OpenCode
 
@@ -96,6 +98,7 @@ Write-Host '--- Configurations ---' -ForegroundColor Magenta
 Install-GitConfig
 Install-GitHooks
 Install-BatConfig
+Install-LazydockerConfig
 Install-YaziConfig
 Install-OpenCodeConfig
 Install-PowerShellProfile
