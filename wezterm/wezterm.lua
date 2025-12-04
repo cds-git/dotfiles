@@ -39,11 +39,11 @@ if wezterm.target_triple == "x86_64-pc-windows-msvc" then
 			args = { "powershell.exe", "-NoLogo" },
 		},
 		{
-			label = "WSL Ubuntu",
-			args = { "wsl.exe", "-d", "Ubuntu" },
+			label = "WSL",
+			args = { "wsl.exe", "--cd", "~" },
 		},
 		{
-			label = "WSL Ubuntu (Home)",
+			label = "WSL Ubuntu",
 			args = { "wsl.exe", "-d", "Ubuntu", "--cd", "~" },
 		},
 		{

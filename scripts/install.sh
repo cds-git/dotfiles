@@ -129,10 +129,27 @@ echo ""
 echo '--- Shell Setup (ZSH & Tmux) ---'
 
 # Setup ZSH as the default shell
-if [ "$SHELL" != "$(command -v zsh)" ]; then
+zsh_path="$(command -v zsh)"
+current_shell=$(grep "^$(whoami):" /etc/passwd | cut -d: -f7)
+
+if [ "$current_shell" != "$zsh_path" ]; then
     echo "Setting Zsh as the default shell..."
-    chsh -s "$(command -v zsh)"
-    echo "✓ Zsh set as default shell"
+    
+    # Ensure zsh is in /etc/shells (using the actual path from 'which')
+    if ! grep -q "^$zsh_path$" /etc/shells 2>/dev/null; then
+        echo "Adding $zsh_path to /etc/shells..."
+        echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+    fi
+    
+    # Change default shell via chsh
+    chsh -s "$zsh_path"
+    
+    echo "✓ Zsh set as default shell ($zsh_path)"
+    if grep -iq Microsoft /proc/version; then
+        echo "  Note: Restart WSL with 'wsl --terminate archlinux' then 'wsl'"
+    else
+        echo "  Note: Log out and back in for changes to take effect"
+    fi
 else
     echo "✓ Zsh already default shell"
 fi
