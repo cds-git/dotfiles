@@ -176,7 +176,7 @@ if wezterm.target_triple == "x86_64-pc-windows-msvc" then
 			key = "l",
 			mods = "CTRL|SHIFT|ALT",
 			action = act.SpawnCommandInNewTab({
-				args = { "wsl.exe", "-d", "Ubuntu" },
+				args = { "wsl.exe", "--cd", "~"  },
 			}),
 		}
 	)
