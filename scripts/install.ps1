@@ -80,6 +80,7 @@ Write-Host '--- Development Tools ---' -ForegroundColor Magenta
 Install-Chocolatey
 Install-DotNetSDK
 Install-NodeJS
+Install-Python
 Install-Bat
 Install-Eza
 Install-Lazydocker

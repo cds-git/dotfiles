@@ -6,7 +6,7 @@ install_common_packages() {
     echo ""
     echo "=== Common Packages ==="
     
-    local packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "build-essential" "zsh" "tmux" "fastfetch" "htop" "ncdu")
+    local packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "build-essential" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip")
     
     if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
         sudo apt update
@@ -21,8 +21,8 @@ install_common_packages() {
         fi
     elif [ "$ID" = "arch" ]; then
         sudo pacman -Syu --noconfirm
-        # Adjust package names for Arch
-        local arch_packages=("ripgrep" "fzf" "fd" "jq" "curl" "wget" "unzip" "base-devel" "zsh" "tmux" "fastfetch" "btop" "ncdu")
+        # Adjust package names for Arch (python is python3 by default, pip is python-pip)
+        local arch_packages=("ripgrep" "fzf" "fd" "jq" "curl" "wget" "unzip" "base-devel" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python" "python-pip")
         sudo pacman -S --noconfirm "${arch_packages[@]}"
         
         # Install yay (AUR helper) if not present

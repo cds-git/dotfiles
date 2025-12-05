@@ -107,3 +107,27 @@ function Install-NodeJS {
         }
     }
 }
+
+function Install-Python {
+    Write-Host "`n=== Python 3 ===" -ForegroundColor Cyan
+    
+    if (Test-CommandExists 'python') {
+        $version = python --version
+        Write-Host "[OK] Python already installed ($version)" -ForegroundColor Green
+    } else {
+        Write-Host "Installing Python 3..." -ForegroundColor Yellow
+        winget install Python.Python.3.13 --accept-source-agreements --accept-package-agreements
+        
+        if ($LASTEXITCODE -eq 0) {
+            Refresh-EnvironmentPath
+            if (Wait-ForCommand -Command 'python') {
+                $version = python --version
+                Write-Host "[OK] Python installed ($version)" -ForegroundColor Green
+            } else {
+                Write-Host "[WARN] Python installed but not in PATH yet. Restart terminal." -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "[ERROR] Failed to install Python" -ForegroundColor Red
+        }
+    }
+}
