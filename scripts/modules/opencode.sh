@@ -9,12 +9,13 @@ install_opencode() {
         echo "✓ OpenCode already installed"
     else
         echo "Installing OpenCode..."
-        if command_exists npm; then
-            npm install -g @opencode/cli
+        # Use official install script (downloads pre-built binary, distro-independent)
+        curl -fsSL https://opencode.ai/install | bash
+        
+        if wait_for_command opencode; then
             echo "✓ OpenCode installed"
         else
-            echo "✗ npm not found. Install Node.js first"
-            return 1
+            echo "✗ OpenCode installed but not in PATH yet. Restart shell."
         fi
     fi
 }

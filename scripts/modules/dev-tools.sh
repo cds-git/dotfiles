@@ -6,7 +6,7 @@ install_common_packages() {
     echo ""
     echo "=== Common Packages ==="
     
-    local packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "build-essential" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip")
+    local packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "build-essential" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip" "gawk")
     
     if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
         sudo apt update
@@ -21,8 +21,8 @@ install_common_packages() {
         fi
     elif [ "$ID" = "arch" ]; then
         sudo pacman -Syu --noconfirm
-        # Adjust package names for Arch (python is python3 by default, pip is python-pip)
-        local arch_packages=("ripgrep" "fzf" "fd" "jq" "curl" "wget" "unzip" "base-devel" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python" "python-pip")
+        # Adjust package names for Arch (python is python3 by default, pip is python-pip, gawk is the default awk)
+        local arch_packages=("ripgrep" "fzf" "fd" "jq" "curl" "wget" "unzip" "base-devel" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python" "python-pip" "gawk")
         sudo pacman -S --noconfirm "${arch_packages[@]}"
         
         # Install yay (AUR helper) if not present
@@ -39,7 +39,7 @@ install_common_packages() {
     elif [ "$ID" = "fedora" ]; then
         sudo dnf update -y
         # Package names for Fedora
-        local fedora_packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "@development-tools" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip")
+        local fedora_packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "@development-tools" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip" "gawk")
         sudo dnf install -y "${fedora_packages[@]}"
     fi
     

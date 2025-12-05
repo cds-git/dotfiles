@@ -14,6 +14,7 @@ install_starship() {
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm starship
         elif [ "$ID" = "fedora" ]; then
+            sudo dnf copr enable atim/starship
             sudo dnf install -y starship
         fi
         echo "✓ Starship installed"
