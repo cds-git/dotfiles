@@ -13,6 +13,8 @@ install_starship() {
             curl -sS https://starship.rs/install.sh | sh -s -- --yes
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm starship
+        elif [ "$ID" = "fedora" ]; then
+            sudo dnf install -y starship
         fi
         echo "✓ Starship installed"
     fi

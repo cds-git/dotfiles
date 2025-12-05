@@ -18,6 +18,8 @@ install_yazi() {
             cargo install --locked yazi-fm yazi-cli
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm yazi
+        elif [ "$ID" = "fedora" ]; then
+            sudo dnf install -y yazi
         fi
         echo "✓ yazi installed"
     fi

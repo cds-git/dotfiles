@@ -20,6 +20,8 @@ install_eza() {
             fi
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm eza
+        elif [ "$ID" = "fedora" ]; then
+            sudo dnf install -y eza
         fi
         echo "✓ eza installed"
     fi

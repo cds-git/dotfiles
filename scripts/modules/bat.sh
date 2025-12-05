@@ -17,6 +17,8 @@ install_bat() {
             ln -sf /usr/bin/batcat ~/.local/bin/bat
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm bat
+        elif [ "$ID" = "fedora" ]; then
+            sudo dnf install -y bat
         fi
         echo "✓ bat installed"
     fi

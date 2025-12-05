@@ -17,6 +17,9 @@ install_wezterm() {
             sudo apt install -y wezterm
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm wezterm
+        elif [ "$ID" = "fedora" ]; then
+            sudo dnf copr enable -y wezfurlong/wezterm-nightly
+            sudo dnf install -y wezterm
         fi
         echo "✓ WezTerm installed"
     fi

@@ -20,6 +20,8 @@ install_neovim() {
             sudo apt install -y neovim
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm neovim
+        elif [ "$ID" = "fedora" ]; then
+            sudo dnf install -y neovim
         fi
         echo "✓ Neovim installed"
     fi
@@ -43,6 +45,15 @@ install_neovim() {
         for tool in "${arch_tools[@]}"; do
             if ! command_exists "$tool"; then
                 sudo pacman -S --noconfirm "$tool" 2>/dev/null
+            else
+                echo "  ✓ $tool already installed"
+            fi
+        done
+    elif [ "$ID" = "fedora" ]; then
+        local fedora_tools=("ripgrep" "fd-find" "fzf")
+        for tool in "${fedora_tools[@]}"; do
+            if ! command_exists "$tool"; then
+                sudo dnf install -y "$tool" 2>/dev/null || echo "  ⚠ Could not install $tool"
             else
                 echo "  ✓ $tool already installed"
             fi

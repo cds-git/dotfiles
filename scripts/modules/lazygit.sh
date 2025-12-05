@@ -39,6 +39,9 @@ install_lazygit() {
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm git-delta
             echo "✓ delta installed"
+        elif [ "$ID" = "fedora" ]; then
+            sudo dnf install -y git-delta
+            echo "✓ delta installed"
         fi
     else
         echo "✓ delta already installed"

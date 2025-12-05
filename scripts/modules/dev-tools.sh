@@ -36,6 +36,11 @@ install_common_packages() {
             rm -rf "$temp_dir"
             echo "✓ yay installed"
         fi
+    elif [ "$ID" = "fedora" ]; then
+        sudo dnf update -y
+        # Package names for Fedora
+        local fedora_packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "@development-tools" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip")
+        sudo dnf install -y "${fedora_packages[@]}"
     fi
     
     echo "✓ Common packages installed"
@@ -63,6 +68,8 @@ install_dotnet() {
         sudo apt install -y dotnet-sdk-10.0
     elif [ "$ID" = "arch" ]; then
         sudo pacman -S --noconfirm dotnet-sdk
+    elif [ "$ID" = "fedora" ]; then
+        sudo dnf install -y dotnet-sdk-10.0
     fi
     
     local new_version=$(dotnet --version)
