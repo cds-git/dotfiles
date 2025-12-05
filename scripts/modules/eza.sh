@@ -21,7 +21,11 @@ install_eza() {
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm eza
         elif [ "$ID" = "fedora" ]; then
-            sudo dnf install -y eza
+            # eza not in default repos, use cargo
+            if ! command_exists cargo; then
+                sudo dnf install -y cargo
+            fi
+            cargo install eza
         fi
         echo "✓ eza installed"
     fi

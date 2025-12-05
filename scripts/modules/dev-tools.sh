@@ -38,8 +38,8 @@ install_common_packages() {
         fi
     elif [ "$ID" = "fedora" ]; then
         sudo dnf update -y
-        # Package names for Fedora
-        local fedora_packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "wget" "unzip" "@development-tools" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip" "gawk")
+        # Package names for Fedora (wget is already installed by default)
+        local fedora_packages=("ripgrep" "fzf" "fd-find" "jq" "curl" "unzip" "@development-tools" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip" "gawk" "cargo")
         sudo dnf install -y "${fedora_packages[@]}"
     fi
     

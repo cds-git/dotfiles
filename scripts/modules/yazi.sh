@@ -19,7 +19,11 @@ install_yazi() {
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm yazi
         elif [ "$ID" = "fedora" ]; then
-            sudo dnf install -y yazi
+            # yazi not in default repos, use cargo
+            if ! command_exists cargo; then
+                sudo dnf install -y cargo
+            fi
+            cargo install --locked yazi-fm yazi-cli
         fi
         echo "✓ yazi installed"
     fi
