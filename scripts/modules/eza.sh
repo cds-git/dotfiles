@@ -26,6 +26,10 @@ install_eza() {
                 sudo dnf install -y cargo
             fi
             cargo install eza
+            
+            # Source cargo env to make eza available immediately
+            [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+            export PATH="$HOME/.cargo/bin:$PATH"
         fi
         echo "✓ eza installed"
     fi

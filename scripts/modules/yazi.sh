@@ -6,15 +6,22 @@ install_yazi() {
     echo "=== yazi (Terminal File Manager) ==="
     
     if command_exists yazi; then
-        local version=$(yazi --version)
+        local version=$(yazi --version | head -n1)
         echo "✓ yazi already installed ($version)"
     else
         echo "Installing yazi..."
         if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
-            # Install from cargo
-            if ! command_exists cargo; then
-                sudo apt install -y cargo
+            # Yazi requires newer Rust - update via rustup
+            if ! command_exists rustup; then
+                echo "Installing rustup (Rust toolchain manager)..."
+                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+                source "$HOME/.cargo/env"
             fi
+            
+            # Ensure we have the latest stable Rust
+            rustup update stable
+            source "$HOME/.cargo/env"
+            
             cargo install --locked yazi-fm yazi-cli
         elif [ "$ID" = "arch" ]; then
             sudo pacman -S --noconfirm yazi
@@ -24,6 +31,10 @@ install_yazi() {
                 sudo dnf install -y cargo
             fi
             cargo install --locked yazi-fm yazi-cli
+            
+            # Source cargo env to make yazi available immediately
+            [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+            export PATH="$HOME/.cargo/bin:$PATH"
         fi
         echo "✓ yazi installed"
     fi
