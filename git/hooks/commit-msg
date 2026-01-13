@@ -1,14 +1,10 @@
 #!/bin/sh
 # Git hook to prepend JIRA ticket ID from branch name to commit message
-# Extracts patterns like ABC-123, PROJECT-456, etc.
+# Extracts JIRA ticket (e.g., PROJ-1234) from branch name if present
+# Examples: bugfix/PROJ-1234-some-description, feature/PROJ-321
 
 COMMIT_MSG_FILE=$1
 COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
-
-# Skip if already has a ticket prefix
-if echo "$COMMIT_MSG" | grep -qE "^[A-Z]+-[0-9]+:"; then
-    exit 0
-fi
 
 # Skip merge commits
 if echo "$COMMIT_MSG" | grep -qE "^Merge "; then
@@ -23,12 +19,31 @@ if [ -z "$BRANCH_NAME" ]; then
     exit 0
 fi
 
-# Extract JIRA ticket ID (pattern: ABC-123, PROJECT-456, SIR3-1234, etc.)
-TICKET=$(echo "$BRANCH_NAME" | grep -oE "[A-Z0-9]+-[0-9]+" | head -n1)
+# Extract JIRA ticket ID from anywhere in branch name
+# Matches patterns like: ABC-123, PROJ-999, PROJ2-1234
+TICKET=$(echo "$BRANCH_NAME" | grep -oE "[A-Z][A-Z0-9]+-[0-9]+" | head -n 1)
 
-# If we found a ticket, prepend it to the commit message
-if [ -n "$TICKET" ]; then
+# Exit if no ticket found in branch name
+if [ -z "$TICKET" ]; then
+    exit 0
+fi
+
+# Get first line of commit message
+FIRST_LINE=$(echo "$COMMIT_MSG" | head -n 1)
+
+# Skip if commit message already starts with any JIRA ticket pattern
+if echo "$FIRST_LINE" | grep -qE "^[A-Z][A-Z0-9]+-[0-9]+:"; then
+    exit 0
+fi
+
+# Prepend the ticket to the commit message
+# Preserve multi-line messages properly
+REST_OF_MSG=$(tail -n +2 "$COMMIT_MSG_FILE")
+
+if [ -z "$REST_OF_MSG" ]; then
     echo "$TICKET: $COMMIT_MSG" > "$COMMIT_MSG_FILE"
+else
+    printf "%s: %s\n%s" "$TICKET" "$FIRST_LINE" "$REST_OF_MSG" > "$COMMIT_MSG_FILE"
 fi
 
 exit 0
