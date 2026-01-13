@@ -2,9 +2,6 @@
 # Catppuccin Mocha theme
 --theme="Catppuccin Mocha"
 
-# Show line numbers, Git modifications and file header (but no grid)
---style="numbers,changes,header"
-
 # Add mouse scrolling support in less (does not work with all terminals)
 --paging=auto
 
