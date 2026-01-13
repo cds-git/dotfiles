@@ -1,6 +1,6 @@
 # Use custom format
 format = """
-[╭─](surface2)$os$username$hostname$directory$git_branch$battery
+[╭─](surface2)$os$username$hostname[](subtext0)$directory$git_branch$git_status$battery
 [╰─](surface2)$character"""
 
 palette = "catppuccin_mocha"
@@ -16,23 +16,23 @@ vimcmd_symbol = "[❮](green)"
 show_always = true
 style_root = "bold red"
 style_user = "bold flamingo"
-format = "[$user]($style) "
+format = "[$user]($style)[@](subtext0)"
 disabled = false
 
 # Hostname settings
 [hostname]
 ssh_only = false
-format =  "[on](text) [$hostname](bold maroon) "
+format = "[$hostname](bold maroon) "
 trim_at = ".companyname.com"
 disabled = false
 ssh_symbol = " "
 
 [directory]
-read_only = " 󰌾"
-truncation_length = 4
+read_only = "󰌾"
+truncation_length = 3
 truncation_symbol = "…/"
 style = "bold blue"
-format = "[in](text) [$read_only]($read_only_style)[$path]($style) "
+format = "[$read_only]($read_only_style)[$path]($style) "
 disabled = false
 
 # cmd_duration config
@@ -44,9 +44,24 @@ format = "took [$duration]($style)"
 [git_branch]
 symbol = " "
 style = "bold mauve"
-format = '[at](text) [$symbol$branch]($style)'
-truncation_length = 17
-truncation_symbol = ""
+format = '[](subtext0)[$symbol$branch]($style) '
+truncation_length = 20
+truncation_symbol = "…"
+
+[git_status]
+style = "bold red"
+format = '([$all_status$ahead_behind]($style))'
+conflicted = "󰞇"
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+up_to_date = ""
+untracked = "?"
+stashed = "󰏗"
+modified = "!"
+staged = "+"
+renamed = "»"
+deleted = "✘"
 
 [os]
 format = '[$symbol](bold subtext0)'   
