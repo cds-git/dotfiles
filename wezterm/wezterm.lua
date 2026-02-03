@@ -7,7 +7,12 @@ local config = wezterm.config_builder()
 
 -- Visual
 config.color_scheme = "catppuccin-mocha"
-config.font = wezterm.font("FiraCode Nerd Font")
+-- Use FiraCode Nerd Font, fall back to bundled JetBrains Mono
+-- WezTerm will automatically append Nerd Font Symbols and Noto Color Emoji
+config.font = wezterm.font_with_fallback({
+	"FiraCode Nerd Font",
+	"JetBrains Mono",
+})
 config.font_size = 13.2
 config.window_padding = { bottom = 0 }
 
@@ -20,6 +25,10 @@ config.prefer_egl = true
 
 -- Terminal type
 config.term = "xterm-256color"
+
+-- Mouse behavior - helps prevent gibberish input issues
+config.alternate_buffer_wheel_scroll_speed = 1
+config.bypass_mouse_reporting_modifiers = "SHIFT" -- Hold Shift to bypass app mouse handling
 
 -- Cursor
 config.default_cursor_style = "BlinkingBlock"
@@ -156,6 +165,14 @@ config.keys = {
 	{ key = "7", mods = "ALT", action = act.ActivateTab(6) },
 	{ key = "8", mods = "ALT", action = act.ActivateTab(7) },
 	{ key = "9", mods = "ALT", action = act.ActivateTab(8) },
+
+	-- TERMINAL RESET
+	-- Reset terminal to fix gibberish mouse input (Ctrl+Alt+R)
+	{
+		key = "r",
+		mods = "CTRL|ALT",
+		action = act.SendString("\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l\x0c"),
+	},
 }
 
 -- Windows-specific quick spawn keybinds

@@ -1,4 +1,4 @@
-﻿# WezTerm installation and configuration module
+# WezTerm installation and configuration module
 
 function Install-Wezterm {
     Write-Host "`n=== WezTerm ===" -ForegroundColor Cyan
@@ -33,6 +33,54 @@ function Install-Wezterm {
     } else {
         New-Item -ItemType SymbolicLink -Force -Path $weztermConfig -Target $dotfilesWezterm | Out-Null
         Write-Host "✓ Created WezTerm config symlink" -ForegroundColor Green
+    }
+    
+    # Install FiraCode Nerd Font
+    Install-WeztermFont
+}
+
+function Install-WeztermFont {
+    Write-Host "`n=== FiraCode Nerd Font ===" -ForegroundColor Cyan
+    
+    # Check if font is already installed
+    $weztermCheck = wezterm ls-fonts --list-system 2>$null | Select-String -Pattern "FiraCode Nerd Font" -Quiet
+    if ($weztermCheck) {
+        Write-Host "✓ FiraCode Nerd Font already installed" -ForegroundColor Green
+        return
+    }
+    
+    Write-Host "Installing FiraCode Nerd Font..." -ForegroundColor Yellow
+    
+    $downloadUrl = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip"
+    $tempZip = "$env:TEMP\FiraCode.zip"
+    $tempExtract = "$env:TEMP\FiraCode"
+    
+    try {
+        # Download
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing | Out-Null
+        
+        # Extract
+        Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force
+        
+        # Install to user fonts directory (no admin required)
+        $userFontsPath = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts"
+        if (!(Test-Path $userFontsPath)) {
+            New-Item -Path $userFontsPath -ItemType Directory -Force | Out-Null
+        }
+        
+        $fonts = Get-ChildItem "$tempExtract\*.ttf" | Where-Object { $_.Name -notlike "*Windows Compatible*" }
+        foreach ($font in $fonts) {
+            Copy-Item $font.FullName $userFontsPath -Force
+        }
+        
+        Write-Host "✓ FiraCode Nerd Font installed ($($fonts.Count) fonts)" -ForegroundColor Green
+        
+        # Cleanup
+        Remove-Item $tempZip -Force -ErrorAction SilentlyContinue
+        Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
+        
+    } catch {
+        Write-Host "✗ Failed to install font: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
