@@ -32,22 +32,20 @@ command_exists() {
 }
 
 refresh_path() {
-    # Refresh PATH by sourcing common profile locations
     if [ -f "$HOME/.bashrc" ]; then
         source "$HOME/.bashrc" 2>/dev/null || true
     fi
     if [ -f "$HOME/.zshrc" ]; then
         source "$HOME/.zshrc" 2>/dev/null || true
     fi
-    # Also manually add common bin directories
-    export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/usr/local/bin:$PATH"
+    export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:/usr/local/bin:$PATH"
 }
 
 wait_for_command() {
     local cmd="$1"
     local max_attempts="${2:-5}"
     local delay="${3:-1}"
-    
+
     for i in $(seq 1 $max_attempts); do
         refresh_path
         if command_exists "$cmd"; then
@@ -57,23 +55,23 @@ wait_for_command() {
             sleep $delay
         fi
     done
-    
+
     return 1
 }
 
 echo ""
 echo "Loading modules..."
 modules=(
+    "mise.sh"
     "dev-tools.sh"
     "bat.sh"
-    "eza.sh"
     "git.sh"
     "wezterm.sh"
     "neovim.sh"
-    "starship.sh"
     "lazygit.sh"
     "lazydocker.sh"
     "yazi.sh"
+    "starship.sh"
     "opencode.sh"
 )
 
@@ -92,19 +90,20 @@ echo '========================================'
 echo 'Starting installation...'
 echo '========================================'
 
+# --- Phase 1: OS-level packages ---
 echo ""
-echo '--- Development Tools ---'
+echo '--- OS Packages ---'
 install_common_packages
-install_dotnet
-install_nodejs
-install_bat
-install_eza
-install_lazydocker
-install_yazi
-install_opencode
 
+# --- Phase 2: mise + all tools ---
 echo ""
-echo '--- Terminal and Utilities ---'
+echo '--- mise + Development Tools ---'
+install_mise
+install_mise_tools
+
+# --- Phase 3: GUI applications (non-WSL only) ---
+echo ""
+echo '--- GUI Applications ---'
 if [ "$WSL_MODE" = false ]; then
     install_wezterm
 else
@@ -112,19 +111,21 @@ else
     echo "=== WezTerm ==="
     echo "⊘ Skipped (WSL mode - GUI application)"
 fi
-install_starship
-install_lazygit
-install_neovim
 
+# --- Phase 4: Configurations ---
 echo ""
 echo '--- Configurations ---'
 install_git_config
 install_git_hooks
 install_bat_config
+install_neovim_config
+install_starship_config
+install_lazygit_config
 install_lazydocker_config
 install_yazi_config
 install_opencode_config
 
+# --- Phase 5: Shell setup ---
 echo ""
 echo '--- Shell Setup (ZSH & Tmux) ---'
 
@@ -134,16 +135,14 @@ current_shell=$(grep "^$(whoami):" /etc/passwd | cut -d: -f7)
 
 if [ "$current_shell" != "$zsh_path" ]; then
     echo "Setting Zsh as the default shell..."
-    
-    # Ensure zsh is in /etc/shells (using the actual path from 'which')
+
     if ! grep -q "^$zsh_path$" /etc/shells 2>/dev/null; then
         echo "Adding $zsh_path to /etc/shells..."
         echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
     fi
-    
-    # Change default shell via chsh
+
     chsh -s "$zsh_path"
-    
+
     echo "✓ Zsh set as default shell ($zsh_path)"
     if grep -iq Microsoft /proc/version; then
         echo "  Note: Restart WSL with 'wsl --terminate archlinux' then 'wsl'"

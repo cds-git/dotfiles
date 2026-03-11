@@ -78,19 +78,7 @@ alias k='kubectl'
 # eval "$(fzf --zsh)"
 # eval "$(zoxide init --cmd cd zsh)"
 
-# Use starship prompt
-if command -v starship &> /dev/null; then
-    eval "$(starship init zsh)"
-fi
-
-# Cargo (Rust package manager)
-if [ -d "$HOME/.cargo/bin" ]; then
-  export PATH="$HOME/.cargo/bin:$PATH"
-fi
-
-# fnm
-FNM_PATH="/home/cds/.local/share/fnm"
-if [ -d "$FNM_PATH" ] && command -v fnm &> /dev/null; then
-  export PATH="/home/cds/.local/share/fnm:$PATH"
-  eval "`fnm env`"
+# mise (tool version manager — replaces fnm, rustup, etc.)
+if command -v mise &> /dev/null; then
+    eval "$(mise activate zsh)"
 fi

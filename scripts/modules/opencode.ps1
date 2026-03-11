@@ -22,8 +22,10 @@ function Install-OpenCodeConfig {
     $opencodeConfigDir = "$HOME\.config\opencode"
     $dotfilesAgents = "$HOME\dotfiles\opencode\AGENTS.md"
     $dotfilesOpencode = "$HOME\dotfiles\opencode\opencode.json"
+    $dotfilesSkills = "$HOME\dotfiles\opencode\skills"
     $opencodeAgents = "$opencodeConfigDir\AGENTS.md"
     $opencodeOpencode = "$opencodeConfigDir\opencode.json"
+    $opencodeSkills = "$opencodeConfigDir\skills"
     
     # Create config directory if it doesn't exist
     if (-not (Test-Path $opencodeConfigDir)) {
@@ -85,6 +87,32 @@ function Install-OpenCodeConfig {
         } catch {
             Copy-Item $dotfilesOpencode $opencodeOpencode -Force
             Write-Host "[OK] OpenCode opencode.json configured (copy)" -ForegroundColor Green
+        }
+    }
+    
+    # Setup skills directory
+    if (Test-Path $opencodeSkills) {
+        $item = Get-Item $opencodeSkills
+        if ($item.LinkType -eq "SymbolicLink" -and $item.Target -eq $dotfilesSkills) {
+            Write-Host "[OK] OpenCode skills already configured" -ForegroundColor Green
+        } else {
+            Write-Host "[WARN] Backing up existing skills directory" -ForegroundColor Yellow
+            Rename-Item $opencodeSkills "$opencodeSkills.backup" -Force
+            try {
+                New-Item -ItemType SymbolicLink -Force -Path $opencodeSkills -Target $dotfilesSkills | Out-Null
+                Write-Host "[OK] OpenCode skills configured (symlink)" -ForegroundColor Green
+            } catch {
+                Copy-Item $dotfilesSkills $opencodeSkills -Recurse -Force
+                Write-Host "[OK] OpenCode skills configured (copy)" -ForegroundColor Green
+            }
+        }
+    } else {
+        try {
+            New-Item -ItemType SymbolicLink -Force -Path $opencodeSkills -Target $dotfilesSkills | Out-Null
+            Write-Host "[OK] OpenCode skills configured (symlink)" -ForegroundColor Green
+        } catch {
+            Copy-Item $dotfilesSkills $opencodeSkills -Recurse -Force
+            Write-Host "[OK] OpenCode skills configured (copy)" -ForegroundColor Green
         }
     }
 }

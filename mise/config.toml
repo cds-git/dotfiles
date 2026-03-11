@@ -1,0 +1,19 @@
+# mise global tool configuration
+# These tools are installed via `mise install` and available globally on PATH
+# See: https://mise.jdx.dev
+
+[tools]
+# Runtimes
+dotnet = "10"
+node = "lts"
+
+# CLI tools (aqua backend — pre-built binaries, no compilation)
+bat = "latest"
+eza = "latest"
+yazi = "latest"
+lazygit = "latest"
+lazydocker = "latest"
+delta = "latest"
+neovim = "latest"
+starship = "latest"
+opencode = "latest"
