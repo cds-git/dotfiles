@@ -3,12 +3,7 @@ return {
 	event = "VeryLazy",
 	dependencies = {
 		"nvim-tree/nvim-web-devicons",
-		-- {
-		-- 	"cameronr/lualine-pretty-path",
-		-- 	-- dev = true,
-		-- },
 	},
-	-- enabled = vim.o.laststatus ~= 0,
 	opts = function()
 		local lazy_status = require("lazy.status") -- to configure lazy pending updates count
 
@@ -36,7 +31,6 @@ return {
 			local haveServers = false
 			local names = {}
 			for _, server in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
-				-- msg = ' '
 				haveServers = true
 				table.insert(names, server.name)
 			end
@@ -60,16 +54,6 @@ return {
 			return ret
 		end
 
-		-- Snacks.toggle({
-		-- 	name = "lualine symbols",
-		-- 	get = function()
-		-- 		return vim.b.trouble_lualine ~= false
-		-- 	end,
-		-- 	set = function(state)
-		-- 		vim.b.trouble_lualine = state
-		-- 	end,
-		-- }):map("<leader>vl")
-
 		Snacks.toggle({
 			name = "lualine lsp names",
 			get = function()
@@ -80,36 +64,12 @@ return {
 			end,
 		}):map("<leader>uS")
 
-		-- Snacks.toggle({
-		-- 	name = "lualine session name",
-		-- 	get = function()
-		-- 		return vim.g.custom_lualine_show_session_name
-		-- 	end,
-		-- 	set = function(state)
-		-- 		vim.g.custom_lualine_show_session_name = state
-		-- 	end,
-		-- }):map("<leader>vs")
-
 		return {
 			options = {
-				-- When theme is set to auto, Lualine uses dofile instead of require
-				-- to load the theme. We need the theme to be loaded via require since
-				-- we modify the cached singleton in tokyonight's config function to
-				-- add different colors for the x section
-				-- theme = function()
-				-- 	if vim.g.colors_name:match("^catppuccin") then
-				-- 		return require("lualine.themes." .. vim.g.colors_name)
-				-- 	end
-				-- 	-- fall through case just needed for telescope theme browser
-				-- 	return require("lualine.utils.loader").load_theme("auto")
-				-- end,
 				theme = "auto",
-				-- component_separators = { left = "╲", right = "╱" },
 				component_separators = "",
-				-- section_separators = { left = "", right = "" },
 				section_separators = "",
 				globalstatus = true,
-				-- ignore_focus = { "trouble" },
 				disabled_filetypes = {
 					statusline = { "dashboard", "alpha", "starter", "snacks_dashboard", "neo-tree" },
 				},
@@ -127,19 +87,9 @@ return {
 					{ "filename", file_status = true, padding = { left = 0, right = 1 } },
 				},
 				lualine_x = {
-					-- {
-					-- 	function()
-					-- 		return require("auto-session.lib").current_session_name(true)
-					-- 	end,
-					-- 	cond = function()
-					-- 		return vim.g.custom_lualine_show_session_name
-					-- 	end,
-					-- },
 					{
 						"diagnostics",
-						-- symbols = { error = 'E', warn = 'W', info = 'I', hint = 'H' },
-						-- symbols = { error = " ", warn = " ", info = " ", hint = " " },
-						symbols = { error = " ", warn = " ", info = " ", hint = "" },
+						symbols = { error = " ", warn = " ", info = " ", hint = "󰠠 " },
 						separator = "",
 					},
 					{
@@ -165,11 +115,9 @@ return {
 					{
 						lazy_status.updates,
 						cond = lazy_status.has_updates,
-						-- color = { fg = '#3d59a1' },
 						fmt = trunc(0, 0, 100, true), -- hide when window is < 100 columns
 						separator = "",
 					},
-					-- require("util.lualine").cmp_source("supermaven", "󰰣"),
 					{
 						lsp_status_all,
 						fmt = trunc(0, 8, 80, false),
@@ -193,18 +141,7 @@ return {
 					{ "location" },
 				},
 			},
-			inactive_sections = {
-				lualine_c = {
-					{
-						-- "pretty_path",
-						-- 'filename',
-						-- symbols = {
-						--   modified = '+', -- Text to show when the file is modified.
-						--   readonly = '', -- Text to show when the file is non-modifiable or readonly.
-						-- },
-					},
-				},
-			},
+			inactive_sections = {},
 			extensions = {
 				"lazy",
 				"mason",
@@ -213,7 +150,6 @@ return {
 				"oil",
 				"quickfix",
 				"toggleterm",
-				-- "trouble",
 			},
 		}
 	end,

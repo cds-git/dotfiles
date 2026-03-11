@@ -31,7 +31,7 @@ map("n", "<leader>sx", ":split<Return><C-w>w", { desc = "[Window] Horisontal Spl
 map("n", "<leader>sv", ":vsplit<Return><C-w>w", { desc = "[Window] Vertical Split" })
 map("n", "<leader>q", "<C-w>q", { desc = "[Window] Quit" })
 
--- Window navigations
+-- Window navigations (overridden by vim-tmux-navigator when tmux is active)
 map("n", "<C-h>", "<C-w>h", { desc = "[Window] Switch left" })
 map("n", "<C-j>", "<C-w>j", { desc = "[Window] Switch down" })
 map("n", "<C-k>", "<C-w>k", { desc = "[Window] Switch up" })
@@ -43,10 +43,3 @@ map("n", "<C-Down>", "<cmd>resize -2<cr>", { desc = "Decrease window height" })
 map("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease window width" })
 map("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase window width" })
 
--- Navigation while in insert mode
--- map("i", "<C-b>", "<ESC>^i", { desc = "Move beginning of line" })
--- map("i", "<C-e>", "<End>", { desc = "Move end of line" })
--- map("i", "<C-h>", "<Left>", { desc = "Move left" })
--- map("i", "<C-l>", "<Right>", { desc = "Move right" })
--- map("i", "<C-j>", "<Down>", { desc = "Move down" })
--- map("i", "<C-k>", "<Up>", { desc = "Move up" })

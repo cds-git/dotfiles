@@ -14,8 +14,6 @@ return {
 			vim.keymap.set("n", "<leader>gp", gitsigns.preview_hunk, { desc = "[Gitsigns] Preview git hunk" })
 
 			-- blame
-			-- vim.keymap.set("n", "<leader>gf", gitsigns.blame, { desc = "[Gitsigns] Blame entire file" })
-			-- vim.keymap.set("n", "<leader>gb", gitsigns.blame_line, { desc = "[Gitsigns] Blame current line" })
 			vim.keymap.set("n", "<leader>gB", function()
 				gitsigns.blame_line({ full = true })
 			end, { buffer = bufnr, desc = "[Gitsigns] Blame details" })

@@ -35,14 +35,6 @@ return {
 			end,
 			desc = "Goto Definition",
 		},
-		-- {
-		-- 	"gr",
-		-- 	function()
-		-- 		Snacks.picker.lsp_references()
-		-- 	end,
-		-- 	nowait = true,
-		-- 	desc = "References",
-		-- },
 		{
 			"gi",
 			function()
@@ -51,14 +43,14 @@ return {
 			desc = "Goto Implementation",
 		},
 		{
-			"gt",
+			"gy",
 			function()
 				Snacks.picker.lsp_type_definitions()
 			end,
 			desc = "Goto Type Definition",
 		},
 		{
-			"<leader>ds",
+			"<leader>ls",
 			function()
 				Snacks.picker.lsp_symbols()
 			end,
@@ -195,13 +187,6 @@ return {
 			end,
 			desc = "Diagnostics",
 		},
-		-- {
-		-- 	"<leader>sh",
-		-- 	function()
-		-- 		Snacks.picker.help()
-		-- 	end,
-		-- 	desc = "Help Pages",
-		-- },
 		{
 			"<leader>sH",
 			function()
@@ -266,11 +251,11 @@ return {
 			desc = "Colorschemes",
 		},
 		{
-			"<leader>qp",
+			"<leader>fp",
 			function()
 				Snacks.picker.projects()
 			end,
-			desc = "Projects",
+			desc = "Find Projects",
 		},
 	},
 }
