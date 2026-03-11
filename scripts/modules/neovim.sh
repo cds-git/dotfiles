@@ -1,15 +1,10 @@
 #!/bin/bash
 # Neovim configuration module
-# Installation handled by mise
+# Installation handled by mise (neovim = "latest" in config.toml)
 
 install_neovim_config() {
     echo ""
     echo "=== Neovim Configuration ==="
-
-    # Update nvim submodule (if applicable)
-    cd "$HOME/dotfiles" || return 1
-    git submodule update --init --recursive 2>&1 | grep -v "^Submodule" || true
-    cd - >/dev/null || return 1
 
     # Create symlink
     local nvim_config="$HOME/.config/nvim"

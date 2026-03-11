@@ -95,7 +95,7 @@ echo ""
 echo '--- OS Packages ---'
 install_common_packages
 
-# --- Phase 2: mise + all tools ---
+# --- Phase 2: mise + all tools (includes neovim) ---
 echo ""
 echo '--- mise + Development Tools ---'
 install_mise
