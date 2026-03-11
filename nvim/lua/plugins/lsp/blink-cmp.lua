@@ -76,9 +76,16 @@ return {
 			default = { "lsp", "snippets", "buffer", "path" },
 			per_filetype = {
 				sql = { "snippets", "dadbod", "buffer" },
+				xml = { "lsp", "nuget", "snippets", "buffer", "path" },
 			},
 			providers = {
 				dadbod = { name = "Dadbod", module = "vim_dadbod_completion.blink" },
+				nuget = {
+					name = "NuGet",
+					module = "utility.nuget-cmp",
+					async = true,
+					score_offset = 100,
+				},
 			},
 		},
 		cmdline = {
