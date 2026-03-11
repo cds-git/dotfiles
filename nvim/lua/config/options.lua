@@ -1,12 +1,6 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
--- Set highlight on search
-vim.opt.hlsearch = true
-
--- Incremental search, helps to find 'regex' for search
-vim.opt.incsearch = true
-
 -- Shows the effects of substitute etc. as you type
 vim.opt.inccommand = "split"
 
@@ -25,27 +19,13 @@ vim.opt.relativenumber = true
 -- Disable word wrap, enable temporarily with `:set wrap` when needed
 vim.opt.wrap = false
 
--- Separate sign colum (extra column for Git/LSP)
-vim.wo.signcolumn = "yes"
-
--- Create splits vertically by default
--- vim.opt.diffopt = "vertical"
+-- Separate sign column (extra column for Git/LSP)
+vim.opt.signcolumn = "yes"
 
 vim.opt.tabstop = 4
 vim.opt.softtabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.expandtab = true -- indent using spaces instead of <Tab>
---vim.opt.breakindent = true
--- vim.opt.autoindent = true
--- vim.opt.smartindent = true
--- vim.opt.cindent = true
-
--- highlight columns
--- vim.opt.colorcolumn = "80,120"
-
--- Sync clipboard between OS and Neovim.
--- Remove this option if you want your OS clipboard to remain independent.
---vim.opt.clipboard = 'unnamedplus'
 
 -- Always keep this amount of lines above and below the cursor
 vim.opt.scrolloff = 5
@@ -71,12 +51,6 @@ vim.opt.timeoutlen = 300
 -- https://neovim.io/doc/user/options.html
 vim.opt.completeopt = "menuone,noselect"
 
--- Split windows appear below, not above
--- vim.opt.splitbelow = true
-
--- Split windows appear to the right instead of left
--- vim.opt.splitright = true
-
 -- Mode is shown in lualine, so we don't need it one line below
 vim.opt.showmode = false
 
@@ -101,15 +75,10 @@ vim.diagnostic.config({
 	},
 	virtual_text = false,
 	virtual_lines = false,
-	-- virtual_lines = {
-	--     current_line = true,
-	-- },
 })
 
--- Disable log because it's slowing down Neovim
-vim.lsp.log_levels = "OFF"
-
--- TODO: Find out if settings below are needed
+-- Disable LSP log because it's slowing down Neovim
+vim.lsp.set_log_level("OFF")
 
 -- set no swap files
 vim.opt.swapfile = false
@@ -120,15 +89,9 @@ vim.opt.backup = false
 vim.opt.undodir = vim.fn.stdpath("config") .. "/.undo"
 vim.opt.undofile = true
 
--- Hide 'No write since last change' error on switching buffers Keeps buffer open in the background.
-vim.opt.hidden = true
-
-vim.opt.backspace = "indent,eol,start"
-
 -- filenames
 vim.opt.fileformat = "unix"
 vim.opt.fileformats = "unix,dos"
-vim.opt.encoding = "utf-8"
 vim.opt.fileencoding = "utf-8"
 
 vim.opt.grepprg = "rg --vimgrep"
