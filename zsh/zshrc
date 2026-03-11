@@ -87,3 +87,9 @@ fi
 if command -v starship &> /dev/null; then
     eval "$(starship init zsh)"
 fi
+
+# opencode
+export PATH=/home/cds/.opencode/bin:$PATH
+
+# Added by get-aspire-cli.sh
+export PATH="$HOME/.aspire/bin:$PATH"
