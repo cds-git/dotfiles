@@ -16,6 +16,7 @@
 3. **Pragmatism** -- balance functional ideals with real-world constraints
 4. **Composability** -- favor small, composable functions and type unions over deep inheritance
 5. **Future-proof** -- design for all future cases, not just the current requirement
+6. **Duplicate code, not intent** -- DRY applies to knowledge and decisions, not surface-level syntax. Identical-looking code with different reasons to change is fine. If the "fix" for duplication is a helper that hides the real problem (e.g., error handling at the wrong architectural layer), fix the architecture instead.
 
 ## Communication Preferences
 

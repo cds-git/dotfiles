@@ -1,20 +1,17 @@
 {
     "$schema": "https://opencode.ai/config.json",
     "theme": "catppuccin",
-    "keybinds": {
-        "app_exit": "ctrl+d,ctrl+w,<leader>q"
-    },
     "provider": {
-        "vllm": {
+        "h100": {
             "npm": "@ai-sdk/openai-compatible",
-            "name": "vLLM",
+            "name": "H100",
             "options": {
                 "baseURL": "http://172.20.7.131:6942/v1",
                 "apiKey": "dummy"
             },
             "models": {
-                "qwen3-coder-30b": {
-                    "name": "Qwen3 Coder 30b",
+                "qwen3-coder-next-fp8": {
+                    "name": "Qwen3 Coder Next",
                     "limit": {
                         "context": 200000,
                         "output": 65536
@@ -22,5 +19,5 @@
                 }
             }
         }
-    }
+    },
 }
