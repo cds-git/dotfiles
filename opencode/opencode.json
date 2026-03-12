@@ -19,4 +19,53 @@
             }
         }
     },
+    "share": "disabled",
+    "permission": {
+        "*": "ask",
+        "read": {
+            "*": "allow",
+            "*.env": "deny",
+            "*.env.*": "deny",
+            "*.env.example": "allow"
+        },
+        "glob": "allow",
+        "grep": "allow",
+        "list": "allow",
+        "todoread": "allow",
+        "todowrite": "allow",
+        "skill": "allow",
+        "question": "allow",
+        "codesearch": "allow",
+        "bash": {
+            "*": "ask",
+            "git status *": "allow",
+            "git diff *": "allow",
+            "git log *": "allow",
+            "git branch *": "allow",
+            "git show *": "allow",
+            "grep *": "allow",
+            "rg *": "allow",
+            "cat *": "allow",
+            "ls *": "allow",
+            "find *": "allow",
+            "which *": "allow",
+            "dotnet build *": "allow",
+            "dotnet test *": "allow",
+            "npm test *": "allow",
+            "npm run *": "ask",
+            "rm *": "deny",
+            "rm -rf *": "deny",
+            "git commit *": "ask",
+            "git push *": "ask",
+            "git push * --force*": "deny",
+            "git reset --hard*": "deny",
+            "curl *": "ask",
+            "wget *": "ask"
+        },
+        "edit": "ask",
+        "webfetch": "ask",
+        "external_directory": "ask",
+        "task": "allow",
+        "lsp": "allow"
+    }
 }
