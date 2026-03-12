@@ -1,0 +1,192 @@
+{
+    "$help": "https://aka.ms/terminal-documentation",
+    "$schema": "https://aka.ms/terminal-profiles-schema",
+
+    "defaultProfile": "{2c4de342-38b7-51cf-b940-2309a097f518}",
+    "copyOnSelect": false,
+    "copyFormatting": "none",
+    "theme": "Catppuccin Mocha",
+
+    "newTabMenu": [
+        {
+            "type": "remainingProfiles"
+        }
+    ],
+
+    "profiles": {
+        "defaults": {
+            "bellStyle": "none",
+            "colorScheme": "Catppuccin Mocha",
+            "font": {
+                "face": "FiraCode Nerd Font",
+                "size": 13.2,
+                "features": {
+                    "liga": 1,
+                    "calt": 1
+                }
+            },
+            "cursorShape": "filledBox",
+            "padding": "0",
+            "scrollbarState": "visible",
+            "antialiasingMode": "cleartype"
+        },
+        "list": [
+            {
+                "name": "PowerShell",
+                "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
+                "commandline": "powershell.exe -NoLogo",
+                "hidden": false
+            },
+            {
+                "name": "WSL",
+                "guid": "{2c4de342-38b7-51cf-b940-2309a097f518}",
+                "source": "Windows.Terminal.Wsl",
+                "startingDirectory": "~",
+                "hidden": false
+            },
+            {
+                "name": "Command Prompt",
+                "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
+                "commandline": "cmd.exe",
+                "hidden": false
+            },
+            {
+                "name": "Git Bash",
+                "guid": "{2ece5bfe-50ed-5f3a-ab87-5cd4baafed2b}",
+                "source": "Git",
+                "hidden": false
+            }
+        ]
+    },
+
+    "schemes": [
+        {
+            "name": "Catppuccin Mocha",
+            "cursorColor": "#F5E0DC",
+            "selectionBackground": "#585B70",
+            "background": "#1E1E2E",
+            "foreground": "#CDD6F4",
+            "black": "#45475A",
+            "red": "#F38BA8",
+            "green": "#A6E3A1",
+            "yellow": "#F9E2AF",
+            "blue": "#89B4FA",
+            "purple": "#F5C2E7",
+            "cyan": "#94E2D5",
+            "white": "#BAC2DE",
+            "brightBlack": "#585B70",
+            "brightRed": "#F38BA8",
+            "brightGreen": "#A6E3A1",
+            "brightYellow": "#F9E2AF",
+            "brightBlue": "#89B4FA",
+            "brightPurple": "#F5C2E7",
+            "brightCyan": "#94E2D5",
+            "brightWhite": "#A6ADC8"
+        }
+    ],
+
+    "themes": [
+        {
+            "name": "Catppuccin Mocha",
+            "tab": {
+                "background": "#1E1E2EFF",
+                "iconStyle": "default",
+                "showCloseButton": "always",
+                "unfocusedBackground": null
+            },
+            "tabRow": {
+                "background": "#181825FF",
+                "unfocusedBackground": "#11111BFF"
+            },
+            "window": {
+                "applicationTheme": "dark",
+                "useMica": false
+            }
+        }
+    ],
+
+    "actions": [
+        {
+            "command": { "action": "copy", "singleLine": false },
+            "id": "User.copy"
+        },
+        {
+            "command": "paste",
+            "id": "User.paste"
+        },
+        {
+            "command": "find",
+            "id": "User.find"
+        },
+        {
+            "command": { "action": "newTab" },
+            "id": "User.newTab"
+        },
+        {
+            "command": { "action": "nextTab" },
+            "id": "User.nextTab"
+        },
+        {
+            "command": { "action": "prevTab" },
+            "id": "User.prevTab"
+        },
+        {
+            "command": { "action": "closeTab" },
+            "id": "User.closeTab"
+        },
+        {
+            "command": { "action": "switchToTab", "index": 0 },
+            "id": "User.switchToTab0"
+        },
+        {
+            "command": { "action": "switchToTab", "index": 1 },
+            "id": "User.switchToTab1"
+        },
+        {
+            "command": { "action": "switchToTab", "index": 2 },
+            "id": "User.switchToTab2"
+        },
+        {
+            "command": { "action": "switchToTab", "index": 3 },
+            "id": "User.switchToTab3"
+        },
+        {
+            "command": { "action": "switchToTab", "index": 4 },
+            "id": "User.switchToTab4"
+        },
+        {
+            "command": { "action": "openSettings" },
+            "id": "User.openSettings"
+        }
+    ],
+
+    "keybindings": [
+        // Unbind Ctrl+V (conflicts with neovim block visual mode)
+        { "keys": "ctrl+v", "id": null },
+        // Unbind Ctrl+C (let it pass through to shell/neovim)
+        { "keys": "ctrl+c", "id": null },
+
+        // Copy/Paste with Ctrl+Shift
+        { "keys": "ctrl+shift+c", "id": "User.copy" },
+        { "keys": "ctrl+shift+v", "id": "User.paste" },
+
+        // Search
+        { "keys": "ctrl+shift+f", "id": "User.find" },
+
+        // Tab management
+        { "keys": "ctrl+shift+t", "id": "User.newTab" },
+        { "keys": "ctrl+tab", "id": "User.nextTab" },
+        { "keys": "ctrl+shift+tab", "id": "User.prevTab" },
+        { "keys": "ctrl+shift+w", "id": "User.closeTab" },
+
+        // Jump to specific tabs
+        { "keys": "alt+1", "id": "User.switchToTab0" },
+        { "keys": "alt+2", "id": "User.switchToTab1" },
+        { "keys": "alt+3", "id": "User.switchToTab2" },
+        { "keys": "alt+4", "id": "User.switchToTab3" },
+        { "keys": "alt+5", "id": "User.switchToTab4" },
+
+        // Settings
+        { "keys": "ctrl+,", "id": "User.openSettings" }
+    ]
+}
