@@ -7,7 +7,7 @@ function Install-OpenCode {
         Write-Host "[OK] OpenCode already installed" -ForegroundColor Green
     } else {
         Write-Host "Installing OpenCode..." -ForegroundColor Yellow
-        npm install -g @opencode/cli
+        choco install opencode -y
         if ($LASTEXITCODE -eq 0) {
             Write-Host "[OK] OpenCode installed" -ForegroundColor Green
         } else {

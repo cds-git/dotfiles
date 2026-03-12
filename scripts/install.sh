@@ -100,6 +100,7 @@ echo ""
 echo '--- mise + Development Tools ---'
 install_mise
 install_mise_tools
+install_opencode
 
 # --- Phase 3: GUI applications (non-WSL only) ---
 echo ""
