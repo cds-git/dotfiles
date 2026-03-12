@@ -132,7 +132,7 @@ config.keys = {
 		action = act.ScrollByPage(0.5),
 	},
 
-	-- Alt+Arrow scroll shortcuts (consistent with tmux navigation)
+	-- Alt+Arrow scroll shortcuts (outside tmux only)
 	{
 		key = "UpArrow",
 		mods = "ALT",

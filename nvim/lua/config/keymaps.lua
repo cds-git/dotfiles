@@ -31,7 +31,7 @@ map("n", "<leader>sx", ":split<Return><C-w>w", { desc = "[Window] Horisontal Spl
 map("n", "<leader>sv", ":vsplit<Return><C-w>w", { desc = "[Window] Vertical Split" })
 map("n", "<leader>q", "<C-w>q", { desc = "[Window] Quit" })
 
--- Window navigations (overridden by vim-tmux-navigator when tmux is active)
+-- Window navigations
 map("n", "<C-h>", "<C-w>h", { desc = "[Window] Switch left" })
 map("n", "<C-j>", "<C-w>j", { desc = "[Window] Switch down" })
 map("n", "<C-k>", "<C-w>k", { desc = "[Window] Switch up" })
