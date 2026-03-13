@@ -12,6 +12,7 @@ return {
 		vim.keymap.set("n", "<S-F11>", dap.step_out, { desc = "[DAP] Step Out" })
 		vim.keymap.set("n", "<F2>", require("dap.ui.widgets").hover, { desc = "[DAP] Hover" })
 		vim.keymap.set("n", "<S-F5>", dap.terminate, { desc = "[DAP] Stop / Terminate" })
+		vim.keymap.set("n", "<F6>", dap.terminate, { desc = "[DAP] Stop / Terminate" })
 		vim.keymap.set("n", "<C-S-F5>", dap.run_last, { desc = "[DAP] Restart (Run Last)" })
 
 		local dotnet = require("utility.dotnet")
