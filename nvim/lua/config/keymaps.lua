@@ -46,5 +46,7 @@ map("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase window w
 -- .NET Test Runner
 map("n", "<leader>tt", "<cmd>DotnetTestRunner<cr>", { desc = "[Test] Toggle test runner" })
 map("n", "<leader>tr", "<cmd>DotnetTestRun<cr>", { desc = "[Test] Run nearest test" })
-map("n", "<leader>td", "<cmd>DotnetTestDiscover<cr>", { desc = "[Test] Discover tests" })
+map("n", "<leader>td", "<cmd>DotnetTestDebug<cr>", { desc = "[Test] Debug nearest test" })
+map("n", "<leader>tf", "<cmd>DotnetTestFocus<cr>", { desc = "[Test] Focus nearest test in runner" })
+map("n", "<leader>tD", "<cmd>DotnetTestDiscover<cr>", { desc = "[Test] Discover tests" })
 

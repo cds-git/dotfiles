@@ -4,8 +4,9 @@ local runner = require("utility.test-runner.runner")
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("dotnet_test_runner")
-local buf = nil
-local win = nil
+
+---@type snacks.win|nil
+local main_win = nil
 
 --- Icons per node type
 local type_icons = {
@@ -13,6 +14,7 @@ local type_icons = {
 	[state.Type.PROJECT] = " ",
 	[state.Type.NAMESPACE] = " ",
 	[state.Type.CLASS] = " ",
+	[state.Type.THEORY] = "󰇖 ",
 	[state.Type.TEST] = "",
 }
 
@@ -44,6 +46,7 @@ local type_hl = {
 	[state.Type.PROJECT] = "DotnetTestProject",
 	[state.Type.NAMESPACE] = "DotnetTestNamespace",
 	[state.Type.CLASS] = "DotnetTestClass",
+	[state.Type.THEORY] = "DotnetTestTheory",
 	[state.Type.TEST] = "Normal",
 }
 
@@ -59,6 +62,7 @@ function M.setup_highlights()
 	hl(0, "DotnetTestProject", { link = "Type" })
 	hl(0, "DotnetTestNamespace", { link = "Comment" })
 	hl(0, "DotnetTestClass", { link = "Function" })
+	hl(0, "DotnetTestTheory", { link = "Constant" })
 	hl(0, "DotnetTestDuration", { link = "Comment" })
 	hl(0, "DotnetTestHeader", { link = "Title" })
 	hl(0, "DotnetTestHeaderCount", { link = "Comment" })
@@ -97,10 +101,11 @@ local line_to_node = {}
 
 --- Render the test tree into the buffer
 function M.refresh()
-	if not buf or not vim.api.nvim_buf_is_valid(buf) then
+	if not main_win or not main_win:buf_valid() then
 		return
 	end
 
+	local buf = main_win.buf
 	local lines = {}
 	local highlights = {} -- { line, col_start, col_end, hl_group }
 	line_to_node = {}
@@ -171,7 +176,6 @@ function M.refresh()
 				duration_str = "  " .. node.duration
 			end
 		else
-			-- For container nodes, show aggregated status icon
 			if node.status ~= state.Status.IDLE then
 				status_icon = status_icons[node.status] or ""
 			end
@@ -180,34 +184,45 @@ function M.refresh()
 		local line = indent .. expand_icon .. icon .. status_icon .. node.display_name .. duration_str
 		table.insert(lines, line)
 
-		-- Highlight the status icon
 		local icon_start = #indent + #expand_icon + #icon
 		if status_icon ~= "" and status_icon ~= "  " then
-			local hl = status_hl[node.status]
-			if hl then
-				table.insert(highlights, { row, icon_start, icon_start + #status_icon + #node.display_name, hl })
+			local hl_group = status_hl[node.status]
+			if hl_group then
+				table.insert(highlights, { row, icon_start, icon_start + #status_icon + #node.display_name, hl_group })
 			end
 		else
-			-- Highlight by type
-			local hl = type_hl[node.type]
-			if hl then
-				table.insert(highlights, { row, icon_start, icon_start + #status_icon + #node.display_name, hl })
+			local hl_group = type_hl[node.type]
+			if hl_group then
+				table.insert(highlights, { row, icon_start, icon_start + #status_icon + #node.display_name, hl_group })
 			end
 		end
 
-		-- Duration in comment color
 		if duration_str ~= "" then
 			local dur_start = #line - #duration_str
 			table.insert(highlights, { row, dur_start, #line, "DotnetTestDuration" })
+		end
+
+		-- Show inline error preview for failed tests
+		if node.type == state.Type.TEST and node.status == state.Status.FAILED and node.error_message then
+			local err_line = node.error_message:match("^([^\n]+)")
+			if err_line then
+				row = row + 1
+				local err_display = indent .. "    " .. err_line
+				if #err_display > 100 then
+					err_display = err_display:sub(1, 97) .. "..."
+				end
+				table.insert(lines, err_display)
+				table.insert(highlights, { row, 0, #err_display, "DiagnosticError" })
+			end
 		end
 
 		line_to_node[row] = node
 		row = row + 1
 	end)
 
-	-- Footer
+	-- Footer hint
 	table.insert(lines, "")
-	local legend = " r: run  R: run all  p: peek  gf: goto  o: toggle  q: close"
+	local legend = " ?: keymaps"
 	table.insert(lines, legend)
 	table.insert(highlights, { row + 1, 0, #legend, "Comment" })
 
@@ -223,9 +238,9 @@ function M.refresh()
 	end
 
 	-- Header right (right-aligned)
-	if header_right ~= "" and win and vim.api.nvim_win_is_valid(win) then
-		local win_width = vim.api.nvim_win_get_width(win)
-		local padding = win_width - vim.fn.strdisplaywidth(header_left) - vim.fn.strdisplaywidth(header_right) - 1
+	if header_right ~= "" and main_win:win_valid() then
+		local win_width = vim.api.nvim_win_get_width(main_win.win)
+		local padding = win_width - vim.fn.strdisplaywidth(header_left) - vim.fn.strdisplaywidth(header_right) - 3
 		if padding > 0 then
 			vim.bo[buf].modifiable = true
 			local full_header = header_left .. string.rep(" ", padding) .. header_right
@@ -237,17 +252,31 @@ function M.refresh()
 	end
 end
 
+--- Move cursor to a specific node by id
+---@param node_id string
+function M.focus_node(node_id)
+	if not main_win or not main_win:win_valid() then
+		return
+	end
+	for row, node in pairs(line_to_node) do
+		if node.id == node_id then
+			vim.api.nvim_win_set_cursor(main_win.win, { row + 1, 0 })
+			return
+		end
+	end
+end
+
 --- Get the node under the cursor
 ---@return TestNode|nil
 function M.node_at_cursor()
-	if not win or not vim.api.nvim_win_is_valid(win) then
+	if not main_win or not main_win:win_valid() then
 		return nil
 	end
-	local row = vim.api.nvim_win_get_cursor(win)[1] - 1 -- 0-indexed
+	local row = vim.api.nvim_win_get_cursor(main_win.win)[1] - 1
 	return line_to_node[row]
 end
 
---- Open error/result details in a floating window
+--- Open error/result details in a Snacks float
 ---@param node TestNode
 function M.peek_results(node)
 	if not node.error_message and not node.stack_trace and not node.stdout then
@@ -279,14 +308,11 @@ function M.peek_results(node)
 	if node.stack_trace then
 		table.insert(lines, "Stack Trace:")
 		table.insert(highlights, { #lines - 1, "Title" })
-		local frame_map = {}
 		for line in node.stack_trace:gmatch("[^\n]+") do
 			table.insert(lines, "  " .. line)
-			-- Highlight user code vs framework code
-			local file, lnum = line:match("in (.+):line (%d+)")
+			local file = line:match("in (.+):line %d+")
 			if file and not file:match("^%s*at System%.") and not file:match("^%s*at Microsoft%.") then
 				table.insert(highlights, { #lines - 1, "String" })
-				frame_map[#lines - 1] = { file = file, line = tonumber(lnum) }
 			else
 				table.insert(highlights, { #lines - 1, "Comment" })
 			end
@@ -303,55 +329,39 @@ function M.peek_results(node)
 		end
 	end
 
-	-- Create float
-	local float_buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_buf_set_lines(float_buf, 0, -1, false, lines)
-	vim.bo[float_buf].modifiable = false
-	vim.bo[float_buf].bufhidden = "wipe"
-	vim.bo[float_buf].filetype = "dotnet-test-results"
-
-	local width = math.min(100, vim.o.columns - 10)
-	local height = math.min(#lines + 1, vim.o.lines - 6)
-	local float_win = vim.api.nvim_open_win(float_buf, true, {
-		relative = "editor",
-		width = width,
-		height = height,
-		col = math.floor((vim.o.columns - width) / 2),
-		row = math.floor((vim.o.lines - height) / 2),
-		style = "minimal",
+	local peek_win = Snacks.win({
+		position = "float",
+		width = 0.6,
+		height = 0.5,
 		border = "rounded",
 		title = " Test Results ",
 		title_pos = "center",
+		enter = true,
+		text = lines,
+		bo = { modifiable = false, filetype = "dotnet-test-results" },
+		keys = {
+			q = "close",
+			["<Esc>"] = "close",
+			gf = {
+				function(self)
+					local cursor_line = self:line(vim.api.nvim_win_get_cursor(self.win)[1])
+					local file, lnum = cursor_line:match("in (.+):line (%d+)")
+					if file and vim.fn.filereadable(file) == 1 then
+						self:close()
+						vim.cmd("edit " .. vim.fn.fnameescape(file))
+						vim.api.nvim_win_set_cursor(0, { tonumber(lnum) or 1, 0 })
+					end
+				end,
+				desc = "Go to stack frame",
+			},
+		},
+		on_buf = function(self)
+			local peek_ns = vim.api.nvim_create_namespace("dotnet_test_results")
+			for _, hl in ipairs(highlights) do
+				vim.api.nvim_buf_add_highlight(self.buf, peek_ns, hl[2], hl[1], 0, -1)
+			end
+		end,
 	})
-
-	-- Apply highlights
-	local float_ns = vim.api.nvim_create_namespace("dotnet_test_results")
-	for _, hl in ipairs(highlights) do
-		vim.api.nvim_buf_add_highlight(float_buf, float_ns, hl[2], hl[1], 0, -1)
-	end
-
-	-- Keymaps for the float
-	local function close_float()
-		if vim.api.nvim_win_is_valid(float_win) then
-			vim.api.nvim_win_close(float_win, true)
-		end
-	end
-
-	vim.keymap.set("n", "q", close_float, { buffer = float_buf, nowait = true })
-	vim.keymap.set("n", "<Esc>", close_float, { buffer = float_buf, nowait = true })
-
-	-- gf to jump to stack frame under cursor
-	vim.keymap.set("n", "gf", function()
-		local cursor_row = vim.api.nvim_win_get_cursor(float_win)[1] - 1
-		-- Parse the line for a file:line pattern
-		local cursor_line = vim.api.nvim_buf_get_lines(float_buf, cursor_row, cursor_row + 1, false)[1] or ""
-		local file, lnum = cursor_line:match("in (.+):line (%d+)")
-		if file and vim.fn.filereadable(file) == 1 then
-			close_float()
-			vim.cmd("edit " .. vim.fn.fnameescape(file))
-			vim.api.nvim_win_set_cursor(0, { tonumber(lnum) or 1, 0 })
-		end
-	end, { buffer = float_buf, nowait = true })
 end
 
 --- Navigate to source file for a test node
@@ -362,29 +372,18 @@ function M.goto_source(node)
 		return
 	end
 
-	-- Parse the FQN to get class and method
 	local parsed = runner.parse_test_name(node.fqn)
-	local method_name = parsed.method:match("^([^%(]+)") -- strip params
+	local method_name = parsed.method:match("^([^%(]+)")
 
-	-- Search for the method in .cs files
 	local cwd = vim.fn.getcwd()
 	local cs_files = vim.fn.globpath(cwd, "**/*.cs", false, true)
 
 	for _, file in ipairs(cs_files) do
-		-- Skip bin/obj
 		if not file:match("/bin/") and not file:match("/obj/") then
 			local file_lines = vim.fn.readfile(file)
 			for i, line in ipairs(file_lines) do
-				-- Match method declaration patterns
 				if line:match("%s+" .. vim.pesc(method_name) .. "%s*%(") or line:match("%s+" .. vim.pesc(method_name) .. "%(") then
-					-- Focus main editor window before opening
-					for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-						local w_buf = vim.api.nvim_win_get_buf(w)
-						if vim.bo[w_buf].filetype ~= "dotnet-test-runner" then
-							vim.api.nvim_set_current_win(w)
-							break
-						end
-					end
+					M.close()
 					vim.cmd("edit " .. vim.fn.fnameescape(file))
 					vim.api.nvim_win_set_cursor(0, { i, 0 })
 					vim.cmd("normal! zz")
@@ -397,129 +396,242 @@ function M.goto_source(node)
 	vim.notify("Could not find source for " .. method_name, vim.log.levels.WARN)
 end
 
---- Setup keymaps on the test runner buffer
-local function setup_keymaps()
-	local opts = { buffer = buf, nowait = true }
-
-	-- Toggle expand/collapse
-	vim.keymap.set("n", "o", function()
-		local node = M.node_at_cursor()
-		if node then
-			node.expanded = not node.expanded
-			M.refresh()
-		end
-	end, opts)
-
-	-- Expand all under cursor
-	vim.keymap.set("n", "O", function()
-		local node = M.node_at_cursor()
-		if node then
-			state.expand_all(node.id)
-			M.refresh()
-		end
-	end, opts)
-
-	-- Collapse all under cursor
-	vim.keymap.set("n", "W", function()
-		local node = M.node_at_cursor()
-		if node then
-			state.collapse_all(node.id)
-			M.refresh()
-		end
-	end, opts)
-
-	-- Run tests for node under cursor
-	vim.keymap.set("n", "r", function()
-		local node = M.node_at_cursor()
-		if node then
-			-- Expand so we can see results
-			node.expanded = true
-			runner.run(node)
-		end
-	end, opts)
-
-	-- Run all tests
-	vim.keymap.set("n", "R", function()
-		if state.root_id then
-			local root = state.get(state.root_id)
-			if root then
-				runner.run(root)
-			end
-		end
-	end, opts)
-
-	-- Peek results
-	vim.keymap.set("n", "p", function()
-		local node = M.node_at_cursor()
-		if node then
-			M.peek_results(node)
-		end
-	end, opts)
-
-	-- Go to source
-	vim.keymap.set("n", "gf", function()
-		local node = M.node_at_cursor()
-		if node then
-			M.goto_source(node)
-		end
-	end, opts)
-
-	-- Cancel active run
-	vim.keymap.set("n", "<C-c>", function()
-		state.cancel()
-		vim.notify("Test run cancelled", vim.log.levels.INFO)
-	end, opts)
-
-	-- Re-discover
-	vim.keymap.set("n", "D", function()
-		if state.sln_path then
-			runner.discover(state.sln_path, function()
-				M.refresh()
-			end)
-		end
-	end, opts)
-
-	-- Close
-	vim.keymap.set("n", "q", function()
-		M.close()
-	end, opts)
-	vim.keymap.set("n", "<Esc>", function()
-		M.close()
-	end, opts)
-end
-
---- Create or show the test runner buffer in a vsplit
-function M.open()
-	if win and vim.api.nvim_win_is_valid(win) then
-		vim.api.nvim_set_current_win(win)
+--- Debug a single test using DAP
+--- Launches the test DLL directly under the debugger (requires OutputType=Exe test projects)
+---@param node TestNode
+function M.debug_test(node)
+	if node.type ~= state.Type.TEST then
+		vim.notify("Debug is only supported for individual tests", vim.log.levels.WARN)
 		return
 	end
 
-	-- Create buffer if needed
-	if not buf or not vim.api.nvim_buf_is_valid(buf) then
-		buf = vim.api.nvim_create_buf(false, true)
-		vim.bo[buf].buftype = "nofile"
-		vim.bo[buf].bufhidden = "hide"
-		vim.bo[buf].swapfile = false
-		vim.bo[buf].filetype = "dotnet-test-runner"
-		vim.api.nvim_buf_set_name(buf, "dotnet-test-runner")
-		setup_keymaps()
+	local project_path = runner.get_project_path(node)
+	if not project_path then
+		vim.notify("Could not determine project for test", vim.log.levels.ERROR)
+		return
 	end
 
-	-- Open in vsplit on the right
-	vim.cmd("botright vsplit")
-	win = vim.api.nvim_get_current_win()
-	vim.api.nvim_win_set_buf(win, buf)
-	vim.api.nvim_win_set_width(win, 60)
+	local fqn = node.fqn
+	if not fqn then
+		vim.notify("No fully qualified name for test", vim.log.levels.ERROR)
+		return
+	end
 
-	-- Window options
-	vim.wo[win].number = false
-	vim.wo[win].relativenumber = false
-	vim.wo[win].signcolumn = "no"
-	vim.wo[win].foldcolumn = "0"
-	vim.wo[win].wrap = false
-	vim.wo[win].cursorline = true
-	vim.wo[win].winfixwidth = true
+	-- Strip params for method filter (e.g. "Ns.Class.Method(args)" -> "Ns.Class.Method")
+	local filter_name = fqn:match("^(.-)%(") or fqn
+	local project_name = vim.fn.fnamemodify(project_path, ":t:r")
+	local project_dir = vim.fn.fnamemodify(project_path, ":h")
+
+	-- Close the test runner so DAP UI has space
+	M.close()
+
+	vim.notify("Building " .. project_name .. " for debug...", vim.log.levels.INFO)
+
+	vim.system(
+		{ "dotnet", "build", "-c", "Debug", project_path },
+		{ text = true },
+		vim.schedule_wrap(function(build_result)
+			if build_result.code ~= 0 then
+				vim.notify("Build failed:\n" .. (build_result.stderr or build_result.stdout or ""), vim.log.levels.ERROR)
+				return
+			end
+
+			-- Find the test DLL in the build output
+			local dlls = vim.fn.glob(project_dir .. "/bin/Debug/**/" .. project_name .. ".dll", false, true)
+			if #dlls == 0 then
+				vim.notify("Could not find debug DLL for " .. project_name, vim.log.levels.ERROR)
+				return
+			end
+
+			local dll_path = dlls[1]
+			local dap = require("dap")
+
+			-- Launch the test DLL directly under the debugger.
+			-- This works for test projects with OutputType=Exe (xUnit v3, Microsoft.Testing.Platform).
+			-- The test runner is in-process, so breakpoints in test code work without attach.
+			dap.run({
+				type = "coreclr",
+				name = "Debug Test: " .. node.display_name,
+				request = "launch",
+				program = dll_path,
+				args = { "-method", filter_name .. "*" },
+				cwd = project_dir,
+				stopAtEntry = false,
+			})
+		end)
+	)
+end
+
+--- Show help float with available keymaps
+function M.show_help()
+	local keymaps = {
+		{ "o", "Toggle expand/collapse" },
+		{ "O", "Expand all under cursor" },
+		{ "W", "Collapse all under cursor" },
+		{ "r", "Run test/class/project under cursor" },
+		{ "R", "Run all tests" },
+		{ "d", "Debug test under cursor" },
+		{ "p", "Peek error details / stack trace" },
+		{ "gf", "Go to source file" },
+		{ "D", "Re-discover tests" },
+		{ "<C-c>", "Cancel active test run" },
+		{ "?", "Show this help" },
+		{ "q", "Close test runner" },
+	}
+
+	local lines = {}
+	for _, km in ipairs(keymaps) do
+		table.insert(lines, "  " .. km[1] .. string.rep(" ", 10 - #km[1]) .. km[2])
+	end
+
+	Snacks.win({
+		position = "float",
+		width = 44,
+		height = #lines,
+		border = "rounded",
+		title = " Keymaps ",
+		title_pos = "center",
+		enter = true,
+		text = lines,
+		bo = { modifiable = false },
+		keys = {
+			q = "close",
+			["<Esc>"] = "close",
+			["?"] = "close",
+		},
+		on_buf = function(self)
+			local help_ns = vim.api.nvim_create_namespace("dotnet_test_help")
+			for i = 0, #lines - 1 do
+				vim.api.nvim_buf_add_highlight(self.buf, help_ns, "Special", i, 0, 12)
+			end
+		end,
+	})
+end
+
+--- Create or show the test runner as a Snacks floating window
+function M.open()
+	if main_win and main_win:win_valid() then
+		main_win:focus()
+		return
+	end
+
+	main_win = Snacks.win({
+		position = "float",
+		width = 0.5,
+		height = 0.7,
+		border = "rounded",
+		title = " Test Runner ",
+		title_pos = "center",
+		enter = true,
+		minimal = true,
+		bo = {
+			buftype = "nofile",
+			filetype = "dotnet-test-runner",
+			modifiable = false,
+		},
+		wo = {
+			cursorline = true,
+			wrap = false,
+		},
+		-- Disable default q=close so we control it
+		keys = {},
+		on_close = function()
+			stop_spinner()
+			main_win = nil
+		end,
+		on_buf = function(self)
+			local buf = self.buf
+			local opts = { buffer = buf, nowait = true }
+
+			vim.keymap.set("n", "o", function()
+				local node = M.node_at_cursor()
+				if node then
+					node.expanded = not node.expanded
+					M.refresh()
+				end
+			end, opts)
+
+			vim.keymap.set("n", "O", function()
+				local node = M.node_at_cursor()
+				if node then
+					state.expand_all(node.id)
+					M.refresh()
+				end
+			end, opts)
+
+			vim.keymap.set("n", "W", function()
+				local node = M.node_at_cursor()
+				if node then
+					state.collapse_all(node.id)
+					M.refresh()
+				end
+			end, opts)
+
+			vim.keymap.set("n", "r", function()
+				local node = M.node_at_cursor()
+				if node then
+					node.expanded = true
+					runner.run(node)
+				end
+			end, opts)
+
+			vim.keymap.set("n", "R", function()
+				if state.root_id then
+					local root = state.get(state.root_id)
+					if root then
+						runner.run(root)
+					end
+				end
+			end, opts)
+
+			vim.keymap.set("n", "d", function()
+				local node = M.node_at_cursor()
+				if node then
+					M.debug_test(node)
+				end
+			end, opts)
+
+			vim.keymap.set("n", "p", function()
+				local node = M.node_at_cursor()
+				if node then
+					M.peek_results(node)
+				end
+			end, opts)
+
+			vim.keymap.set("n", "gf", function()
+				local node = M.node_at_cursor()
+				if node then
+					M.goto_source(node)
+				end
+			end, opts)
+
+			vim.keymap.set("n", "<C-c>", function()
+				state.cancel()
+				vim.notify("Test run cancelled", vim.log.levels.INFO)
+			end, opts)
+
+			vim.keymap.set("n", "D", function()
+				if state.sln_path then
+					local root_name = vim.fn.fnamemodify(state.sln_path, ":t")
+					runner.discover(state.sln_path, root_name, function()
+						M.refresh()
+					end)
+				end
+			end, opts)
+
+			vim.keymap.set("n", "?", function()
+				M.show_help()
+			end, opts)
+
+			vim.keymap.set("n", "q", function()
+				M.close()
+			end, opts)
+
+			vim.keymap.set("n", "<Esc>", function()
+				M.close()
+			end, opts)
+		end,
+	})
 
 	-- Hook up state changes to refresh
 	state.on_update = function()
@@ -528,31 +640,21 @@ function M.open()
 		end)
 	end
 
-	-- Auto-close cleanup
-	vim.api.nvim_create_autocmd("WinClosed", {
-		pattern = tostring(win),
-		once = true,
-		callback = function()
-			win = nil
-			stop_spinner()
-		end,
-	})
-
 	M.refresh()
 end
 
 --- Close the test runner window
 function M.close()
 	stop_spinner()
-	if win and vim.api.nvim_win_is_valid(win) then
-		vim.api.nvim_win_close(win, true)
-		win = nil
+	if main_win and main_win:valid() then
+		main_win:close()
 	end
+	main_win = nil
 end
 
 --- Toggle the test runner window
 function M.toggle()
-	if win and vim.api.nvim_win_is_valid(win) then
+	if main_win and main_win:win_valid() then
 		M.close()
 	else
 		M.open()
@@ -561,7 +663,7 @@ end
 
 --- Check if the test runner window is open
 function M.is_open()
-	return win and vim.api.nvim_win_is_valid(win)
+	return main_win and main_win:win_valid()
 end
 
 return M

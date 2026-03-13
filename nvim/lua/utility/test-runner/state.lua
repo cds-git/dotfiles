@@ -15,6 +15,7 @@ M.Type = {
 	PROJECT = "project",
 	NAMESPACE = "namespace",
 	CLASS = "class",
+	THEORY = "theory",
 	TEST = "test",
 }
 
@@ -89,7 +90,8 @@ function M.children(parent_id)
 			[M.Type.PROJECT] = 1,
 			[M.Type.NAMESPACE] = 2,
 			[M.Type.CLASS] = 3,
-			[M.Type.TEST] = 4,
+			[M.Type.THEORY] = 4,
+			[M.Type.TEST] = 5,
 		}
 		local ta = type_order[a.type] or 9
 		local tb = type_order[b.type] or 9

@@ -171,8 +171,23 @@ function M.build_tree(root_name, root_path, project_tests)
 				parent_id = parent,
 			})
 
-			-- Create test nodes
+			-- Group parameterized tests (theories) by base method name
+			local theories = {} -- base_method -> list of tests
+			local standalone = {} -- tests without params
 			for _, test in ipairs(info.tests) do
+				local base_method, params = test.method:match("^([^%(]+)(%(.*%))")
+				if params then
+					if not theories[base_method] then
+						theories[base_method] = {}
+					end
+					table.insert(theories[base_method], test)
+				else
+					table.insert(standalone, test)
+				end
+			end
+
+			-- Create standalone test nodes directly under the class
+			for _, test in ipairs(standalone) do
 				state.register({
 					id = "test:" .. test.fqn,
 					display_name = test.method,
@@ -183,6 +198,48 @@ function M.build_tree(root_name, root_path, project_tests)
 					fqn = test.fqn,
 					project_path = project_path,
 				})
+			end
+
+			-- Create theory group nodes for parameterized tests
+			for base_method, cases in pairs(theories) do
+				if #cases == 1 then
+					-- Single case, no need for a group
+					state.register({
+						id = "test:" .. cases[1].fqn,
+						display_name = cases[1].method,
+						type = state.Type.TEST,
+						status = state.Status.IDLE,
+						expanded = false,
+						parent_id = class_id,
+						fqn = cases[1].fqn,
+						project_path = project_path,
+					})
+				else
+					-- Create a collapsible theory group
+					local theory_id = class_id .. ":theory:" .. base_method
+					state.register({
+						id = theory_id,
+						display_name = base_method .. " (" .. #cases .. " cases)",
+						type = state.Type.THEORY,
+						status = state.Status.IDLE,
+						expanded = false,
+						parent_id = class_id,
+					})
+					for _, test in ipairs(cases) do
+						-- Show just the params as display name under the theory
+						local params = test.method:match("^[^%(]+(%(.*%))") or test.method
+						state.register({
+							id = "test:" .. test.fqn,
+							display_name = params,
+							type = state.Type.TEST,
+							status = state.Status.IDLE,
+							expanded = false,
+							parent_id = theory_id,
+							fqn = test.fqn,
+							project_path = project_path,
+						})
+					end
+				end
 			end
 		end
 	end
@@ -283,12 +340,14 @@ function M.build_filter(node)
 		if not fqn then
 			return nil
 		end
-		-- For parameterized tests, match base method name
-		if fqn:find("%(") then
-			local base = fqn:match("^(.-)%(")
-			return "FullyQualifiedName~" .. base
-		end
 		return "FullyQualifiedName=" .. fqn
+	elseif node.type == state.Type.THEORY then
+		-- Theory node: match the base method name (without params)
+		local base_method = node.id:match(":theory:(.+)$")
+		local class_key = node.id:match(":class:(.+):theory:")
+		if base_method and class_key then
+			return "FullyQualifiedName~" .. class_key .. "." .. base_method
+		end
 	elseif node.type == state.Type.CLASS then
 		local class_key = node.id:match(":class:(.+)$")
 		if class_key then
@@ -462,6 +521,8 @@ function M.run(node, callback)
 		"normal",
 	})
 
+	local stderr_lines = {}
+
 	state.active_job = vim.fn.jobstart(cmd, {
 		on_stdout = function(_, data)
 			vim.schedule(function()
@@ -476,7 +537,13 @@ function M.run(node, callback)
 				end
 			end)
 		end,
-		on_stderr = function(_, _) end,
+		on_stderr = function(_, data)
+			for _, line in ipairs(data) do
+				if line ~= "" then
+					table.insert(stderr_lines, line)
+				end
+			end
+		end,
 		on_exit = function(_, exit_code)
 			vim.schedule(function()
 				state.active_job = nil
@@ -506,12 +573,28 @@ function M.run(node, callback)
 					end
 				end
 
+				-- Build the error output for failed tests without TRX results
+				local build_error = nil
+				if exit_code ~= 0 and #stderr_lines > 0 then
+					build_error = table.concat(stderr_lines, "\n")
+				end
+
 				-- Any tests still marked as running had no results (build failure?)
 				for _, n in pairs(state.nodes) do
 					if n.type == state.Type.TEST and n.status == state.Status.RUNNING then
 						state.update_status(n.id, state.Status.FAILED, {
-							error_message = "Test did not produce results (build failure?)",
+							error_message = build_error or "Test did not produce results (build failure?)",
 						})
+					end
+				end
+
+				-- Auto-expand classes that contain failed tests
+				for _, n in pairs(state.nodes) do
+					if n.type == state.Type.TEST and n.status == state.Status.FAILED and n.parent_id then
+						local parent = state.get(n.parent_id)
+						if parent then
+							parent.expanded = true
+						end
 					end
 				end
 
