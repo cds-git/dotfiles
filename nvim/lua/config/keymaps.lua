@@ -43,3 +43,8 @@ map("n", "<C-Down>", "<cmd>resize -2<cr>", { desc = "Decrease window height" })
 map("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease window width" })
 map("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase window width" })
 
+-- .NET Test Runner
+map("n", "<leader>tt", "<cmd>DotnetTestRunner<cr>", { desc = "[Test] Toggle test runner" })
+map("n", "<leader>tr", "<cmd>DotnetTestRun<cr>", { desc = "[Test] Run nearest test" })
+map("n", "<leader>td", "<cmd>DotnetTestDiscover<cr>", { desc = "[Test] Discover tests" })
+

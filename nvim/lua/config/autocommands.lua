@@ -91,3 +91,6 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufEnter" }, {
 		vim.bo.filetype = "jsonc"
 	end,
 })
+
+-- .NET test runner
+require("utility.test-runner").setup()
