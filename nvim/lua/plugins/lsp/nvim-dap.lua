@@ -19,13 +19,20 @@ return {
 		dotnet.setup_commands()
 
 		-- Sign icons
-		vim.fn.sign_define("DapBreakpoint", { text = " ", texthl = "DiagnosticSignError", numhl = "" })
+		vim.fn.sign_define("DapBreakpoint", { text = "●", texthl = "DiagnosticSignError", numhl = "" })
 		vim.fn.sign_define("DapBreakpointCondition", { text = "⚑ ", texthl = "DiagnosticSignError", numhl = "" })
 		vim.fn.sign_define("DapBreakpointRejected", { text = " ", texthl = "DiagnosticSignWarn", numhl = "" })
 		vim.fn.sign_define("DapLogPoint", { text = " ", texthl = "DiagnosticSignInfo", numhl = "" })
 		vim.fn.sign_define("DapStopped", { text = "󰁕 ", texthl = "DiagnosticSignOk", numhl = "" })
 	end,
 	keys = {
+		{
+			"<leader>db",
+			function()
+				require("dap").toggle_breakpoint()
+			end,
+			desc = "[DAP] Toggle Breakpoint",
+		},
 		{
 			"<leader>dB",
 			function()
