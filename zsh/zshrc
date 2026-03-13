@@ -79,8 +79,17 @@ alias gs='git status'
 alias k='kubectl'
 
 # Shell integrations
-eval "$(fzf --zsh)"
-eval "$(zoxide init --cmd cd zsh)"
+if command -v fzf &> /dev/null; then
+    # fzf 0.48+ supports --zsh, older versions need manual sourcing
+    eval "$(fzf --zsh 2>/dev/null)" || {
+        local fzf_share="${FZF_BASE:-$(dirname $(dirname $(command -v fzf)))/share/fzf}"
+        [[ -f "$fzf_share/key-bindings.zsh" ]] && source "$fzf_share/key-bindings.zsh"
+        [[ -f "$fzf_share/completion.zsh" ]] && source "$fzf_share/completion.zsh"
+    }
+fi
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init --cmd cd zsh)"
+fi
 
 # mise (tool version manager — replaces fnm, rustup, etc.)
 if command -v mise &> /dev/null; then

@@ -154,13 +154,26 @@ else
     echo "✓ Zsh already default shell"
 fi
 
-# Create symlinks for zsh and tmux
+# Setup zsh to source dotfiles zshrc (allows machine-specific config above/below)
+ZSHRC_SOURCE='source "$HOME/dotfiles/zsh/zshrc"'
+
+# Remove old symlink if present, but don't touch real files
 if [ -L "$HOME/.zshrc" ]; then
-    echo "✓ .zshrc symlink exists"
+    rm "$HOME/.zshrc"
+    echo "Removed old .zshrc symlink"
+fi
+
+if [ -f "$HOME/.zshrc" ]; then
+    if grep -qF 'dotfiles/zsh/zshrc' "$HOME/.zshrc" 2>/dev/null; then
+        echo "✓ .zshrc already sources dotfiles"
+    else
+        echo "" >> "$HOME/.zshrc"
+        echo "$ZSHRC_SOURCE" >> "$HOME/.zshrc"
+        echo "✓ Appended dotfiles source to existing .zshrc"
+    fi
 else
-    [ -f "$HOME/.zshrc" ] && mv "$HOME/.zshrc" "$HOME/.zshrc.backup"
-    ln -sf "$HOME/dotfiles/zsh/zshrc" "$HOME/.zshrc"
-    echo "✓ Created .zshrc symlink"
+    echo "$ZSHRC_SOURCE" > "$HOME/.zshrc"
+    echo "✓ Created .zshrc (sources dotfiles)"
 fi
 
 if [ -L "$HOME/.tmux.conf" ]; then
