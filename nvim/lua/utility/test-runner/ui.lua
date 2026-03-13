@@ -4,88 +4,28 @@ local runner = require("utility.test-runner.runner")
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("dotnet_test_runner")
-
 ---@type snacks.win|nil
 local main_win = nil
+local line_to_node = {}
 
---- Icons per node type
-local type_icons = {
-	[state.Type.SOLUTION] = " ",
-	[state.Type.PROJECT] = " ",
-	[state.Type.NAMESPACE] = " ",
-	[state.Type.CLASS] = " ",
-	[state.Type.THEORY] = "󰇖 ",
-	[state.Type.TEST] = "",
-}
-
---- Status icons
-local status_icons = {
-	[state.Status.PASSED] = " ",
-	[state.Status.FAILED] = " ",
-	[state.Status.SKIPPED] = " ",
-	[state.Status.RUNNING] = " ",
-	[state.Status.BUILDING] = " ",
-	[state.Status.DISCOVERING] = " ",
-	[state.Status.IDLE] = "  ",
-}
-
---- Highlight groups per status
-local status_hl = {
-	[state.Status.PASSED] = "DotnetTestPassed",
-	[state.Status.FAILED] = "DotnetTestFailed",
-	[state.Status.SKIPPED] = "DotnetTestSkipped",
-	[state.Status.RUNNING] = "DotnetTestRunning",
-	[state.Status.BUILDING] = "DotnetTestRunning",
-	[state.Status.DISCOVERING] = "DotnetTestRunning",
-	[state.Status.IDLE] = "DotnetTestIdle",
-}
-
---- Highlight groups per node type
-local type_hl = {
-	[state.Type.SOLUTION] = "DotnetTestSolution",
-	[state.Type.PROJECT] = "DotnetTestProject",
-	[state.Type.NAMESPACE] = "DotnetTestNamespace",
-	[state.Type.CLASS] = "DotnetTestClass",
-	[state.Type.THEORY] = "DotnetTestTheory",
-	[state.Type.TEST] = "Normal",
-}
-
---- Setup highlight groups (links to standard groups for theme compatibility)
-function M.setup_highlights()
-	local hl = vim.api.nvim_set_hl
-	hl(0, "DotnetTestPassed", { link = "DiagnosticOk" })
-	hl(0, "DotnetTestFailed", { link = "DiagnosticError" })
-	hl(0, "DotnetTestSkipped", { link = "DiagnosticWarn" })
-	hl(0, "DotnetTestRunning", { link = "DiagnosticInfo" })
-	hl(0, "DotnetTestIdle", { link = "Comment" })
-	hl(0, "DotnetTestSolution", { link = "Directory" })
-	hl(0, "DotnetTestProject", { link = "Type" })
-	hl(0, "DotnetTestNamespace", { link = "Comment" })
-	hl(0, "DotnetTestClass", { link = "Function" })
-	hl(0, "DotnetTestTheory", { link = "Constant" })
-	hl(0, "DotnetTestDuration", { link = "Comment" })
-	hl(0, "DotnetTestHeader", { link = "Title" })
-	hl(0, "DotnetTestHeaderCount", { link = "Comment" })
-end
-
---- Spinner for loading states
+-- Spinner
 local spinner_frames = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" }
 local spinner_idx = 1
 local spinner_timer = nil
+
+local function spinner_char()
+	return spinner_frames[spinner_idx]
+end
 
 local function start_spinner()
 	if spinner_timer then
 		return
 	end
 	spinner_timer = vim.uv.new_timer()
-	spinner_timer:start(
-		0,
-		80,
-		vim.schedule_wrap(function()
-			spinner_idx = (spinner_idx % #spinner_frames) + 1
-			M.refresh()
-		end)
-	)
+	spinner_timer:start(0, 80, vim.schedule_wrap(function()
+		spinner_idx = (spinner_idx % #spinner_frames) + 1
+		M.refresh()
+	end))
 end
 
 local function stop_spinner()
@@ -96,22 +36,133 @@ local function stop_spinner()
 	end
 end
 
---- Track which node is at each line for cursor-based operations
-local line_to_node = {}
+-- Display config tables
+local type_icons = {
+	[state.Type.SOLUTION] = " ",
+	[state.Type.PROJECT] = " ",
+	[state.Type.NAMESPACE] = " ",
+	[state.Type.CLASS] = " ",
+	[state.Type.THEORY] = "󰇖 ",
+	[state.Type.TEST] = "",
+}
 
---- Render the test tree into the buffer
+local type_hl = {
+	[state.Type.SOLUTION] = "DotnetTestSolution",
+	[state.Type.PROJECT] = "DotnetTestProject",
+	[state.Type.NAMESPACE] = "DotnetTestNamespace",
+	[state.Type.CLASS] = "DotnetTestClass",
+	[state.Type.THEORY] = "DotnetTestTheory",
+	[state.Type.TEST] = "Normal",
+}
+
+local status_hl = {
+	[state.Status.PASSED] = "DotnetTestPassed",
+	[state.Status.FAILED] = "DotnetTestFailed",
+	[state.Status.SKIPPED] = "DotnetTestSkipped",
+	[state.Status.RUNNING] = "DotnetTestRunning",
+	[state.Status.BUILDING] = "DotnetTestRunning",
+	[state.Status.DISCOVERING] = "DotnetTestRunning",
+	[state.Status.IDLE] = "DotnetTestIdle",
+}
+
+local status_icons = {
+	[state.Status.PASSED] = " ",
+	[state.Status.FAILED] = " ",
+	[state.Status.SKIPPED] = " ",
+	[state.Status.BUILDING] = " ",
+	[state.Status.DISCOVERING] = " ",
+	[state.Status.IDLE] = "  ",
+}
+
+function M.setup_highlights()
+	local links = {
+		DotnetTestPassed = "DiagnosticOk",
+		DotnetTestFailed = "DiagnosticError",
+		DotnetTestSkipped = "DiagnosticWarn",
+		DotnetTestRunning = "DiagnosticInfo",
+		DotnetTestIdle = "Comment",
+		DotnetTestSolution = "Directory",
+		DotnetTestProject = "Type",
+		DotnetTestNamespace = "Comment",
+		DotnetTestClass = "Function",
+		DotnetTestTheory = "Constant",
+		DotnetTestDuration = "Comment",
+		DotnetTestHeader = "Title",
+		DotnetTestHeaderCount = "Comment",
+	}
+	for name, target in pairs(links) do
+		vim.api.nvim_set_hl(0, name, { link = target })
+	end
+end
+
+--- Get the status icon for a node, with animated spinner for running states
+---@param node TestNode
+---@return string icon, string|nil hl_group
+local function node_status_icon(node)
+	local is_running = node.status == state.Status.RUNNING
+		or node.status == state.Status.BUILDING
+		or node.status == state.Status.DISCOVERING
+
+	if is_running then
+		return spinner_char() .. " ", status_hl[node.status]
+	end
+
+	if node.type == state.Type.TEST then
+		return status_icons[node.status] or "  ", status_hl[node.status]
+	end
+
+	if node.status ~= state.Status.IDLE then
+		return status_icons[node.status] or "", status_hl[node.status]
+	end
+
+	return "", nil
+end
+
+--- Build header lines and their highlights
+---@param has_running boolean
+---@return string left, string right
+local function build_header(has_running)
+	local counts = state.counts()
+
+	local left
+	if has_running then
+		left = " " .. spinner_char() .. " Running..."
+	elseif counts.failed > 0 then
+		left = "  Tests"
+	elseif counts.passed > 0 then
+		left = "  Tests"
+	else
+		left = "  Tests"
+	end
+
+	local right = ""
+	if counts.total > 0 then
+		local parts = {}
+		if counts.passed > 0 then
+			parts[#parts + 1] = " " .. counts.passed
+		end
+		if counts.failed > 0 then
+			parts[#parts + 1] = " " .. counts.failed
+		end
+		if counts.skipped > 0 then
+			parts[#parts + 1] = " " .. counts.skipped
+		end
+		right = table.concat(parts, "  ") .. "  (" .. counts.total .. ")"
+	end
+
+	return left, right
+end
+
 function M.refresh()
 	if not main_win or not main_win:buf_valid() then
 		return
 	end
 
 	local buf = main_win.buf
-	local lines = {}
-	local highlights = {} -- { line, col_start, col_end, hl_group }
+	local lines, hls = {}, {}
 	line_to_node = {}
 
-	-- Header
-	local counts = state.counts()
+	-- Check for running state
 	local has_running = false
 	for _, node in pairs(state.nodes) do
 		if node.status == state.Status.RUNNING or node.status == state.Status.BUILDING or node.status == state.Status.DISCOVERING then
@@ -120,99 +171,54 @@ function M.refresh()
 		end
 	end
 
-	local header_left
 	if has_running then
-		header_left = " " .. spinner_frames[spinner_idx] .. " Running..."
 		start_spinner()
 	else
 		stop_spinner()
-		if counts.failed > 0 then
-			header_left = "  Tests"
-		elseif counts.passed > 0 then
-			header_left = "  Tests"
-		else
-			header_left = "  Tests"
-		end
 	end
 
-	local header_right = ""
-	if counts.total > 0 then
-		local parts = {}
-		if counts.passed > 0 then
-			table.insert(parts, " " .. counts.passed)
-		end
-		if counts.failed > 0 then
-			table.insert(parts, " " .. counts.failed)
-		end
-		if counts.skipped > 0 then
-			table.insert(parts, " " .. counts.skipped)
-		end
-		header_right = table.concat(parts, "  ") .. "  (" .. counts.total .. ")"
-	end
-
-	table.insert(lines, header_left)
-	table.insert(highlights, { 0, 0, #header_left, "DotnetTestHeader" })
-	table.insert(lines, "")
+	-- Header
+	local header_left, header_right = build_header(has_running)
+	lines[1] = header_left
+	hls[#hls + 1] = { 0, 0, #header_left, "DotnetTestHeader" }
+	lines[2] = ""
 
 	-- Tree
-	local row = 2 -- 0-indexed, after header + blank line
+	local row = 2
 	state.traverse_visible(function(node, depth)
 		local indent = string.rep("  ", depth)
-		local expand_icon = ""
 		local has_children = #state.children(node.id) > 0
-		if has_children then
-			expand_icon = node.expanded and "▼ " or "▶ "
-		else
-			expand_icon = "  "
-		end
-
+		local expand = has_children and (node.expanded and "▼ " or "▶ ") or "  "
 		local icon = type_icons[node.type] or ""
-		local status_icon = ""
-		local duration_str = ""
+		local status_icon, shl = node_status_icon(node)
+		local duration = (node.type == state.Type.TEST and node.duration) and ("  " .. node.duration) or ""
 
-		if node.type == state.Type.TEST then
-			status_icon = status_icons[node.status] or "  "
-			if node.duration then
-				duration_str = "  " .. node.duration
-			end
-		else
-			if node.status ~= state.Status.IDLE then
-				status_icon = status_icons[node.status] or ""
-			end
+		local line = indent .. expand .. icon .. status_icon .. node.display_name .. duration
+		lines[#lines + 1] = line
+
+		-- Highlight: status color takes priority, else type color
+		local hl_start = #indent + #expand + #icon
+		local hl_end = hl_start + #status_icon + #node.display_name
+		local hl_group = (shl and status_icon ~= "  ") and shl or type_hl[node.type]
+		if hl_group then
+			hls[#hls + 1] = { row, hl_start, hl_end, hl_group }
 		end
 
-		local line = indent .. expand_icon .. icon .. status_icon .. node.display_name .. duration_str
-		table.insert(lines, line)
-
-		local icon_start = #indent + #expand_icon + #icon
-		if status_icon ~= "" and status_icon ~= "  " then
-			local hl_group = status_hl[node.status]
-			if hl_group then
-				table.insert(highlights, { row, icon_start, icon_start + #status_icon + #node.display_name, hl_group })
-			end
-		else
-			local hl_group = type_hl[node.type]
-			if hl_group then
-				table.insert(highlights, { row, icon_start, icon_start + #status_icon + #node.display_name, hl_group })
-			end
+		if duration ~= "" then
+			hls[#hls + 1] = { row, #line - #duration, #line, "DotnetTestDuration" }
 		end
 
-		if duration_str ~= "" then
-			local dur_start = #line - #duration_str
-			table.insert(highlights, { row, dur_start, #line, "DotnetTestDuration" })
-		end
-
-		-- Show inline error preview for failed tests
+		-- Inline error preview for failed tests
 		if node.type == state.Type.TEST and node.status == state.Status.FAILED and node.error_message then
 			local err_line = node.error_message:match("^([^\n]+)")
 			if err_line then
 				row = row + 1
-				local err_display = indent .. "    " .. err_line
-				if #err_display > 100 then
-					err_display = err_display:sub(1, 97) .. "..."
+				local err = indent .. "    " .. err_line
+				if #err > 100 then
+					err = err:sub(1, 97) .. "..."
 				end
-				table.insert(lines, err_display)
-				table.insert(highlights, { row, 0, #err_display, "DiagnosticError" })
+				lines[#lines + 1] = err
+				hls[#hls + 1] = { row, 0, #err, "DiagnosticError" }
 			end
 		end
 
@@ -220,39 +226,38 @@ function M.refresh()
 		row = row + 1
 	end)
 
-	-- Footer hint
-	table.insert(lines, "")
+	-- Footer
+	lines[#lines + 1] = ""
 	local legend = " ?: keymaps"
-	table.insert(lines, legend)
-	table.insert(highlights, { row + 1, 0, #legend, "Comment" })
+	lines[#lines + 1] = legend
+	hls[#hls + 1] = { row + 1, 0, #legend, "Comment" }
 
-	-- Write to buffer
+	-- Write buffer
 	vim.bo[buf].modifiable = true
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 	vim.bo[buf].modifiable = false
 
-	-- Apply highlights
+	-- Highlights
 	vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-	for _, hl in ipairs(highlights) do
+	for _, hl in ipairs(hls) do
 		vim.api.nvim_buf_add_highlight(buf, ns, hl[4], hl[1], hl[2], hl[3])
 	end
 
-	-- Header right (right-aligned)
+	-- Right-aligned header counts
 	if header_right ~= "" and main_win:win_valid() then
-		local win_width = vim.api.nvim_win_get_width(main_win.win)
-		local padding = win_width - vim.fn.strdisplaywidth(header_left) - vim.fn.strdisplaywidth(header_right) - 3
-		if padding > 0 then
+		local win_w = vim.api.nvim_win_get_width(main_win.win)
+		local pad = win_w - vim.fn.strdisplaywidth(header_left) - vim.fn.strdisplaywidth(header_right) - 3
+		if pad > 0 then
 			vim.bo[buf].modifiable = true
-			local full_header = header_left .. string.rep(" ", padding) .. header_right
-			vim.api.nvim_buf_set_lines(buf, 0, 1, false, { full_header })
+			local full = header_left .. string.rep(" ", pad) .. header_right
+			vim.api.nvim_buf_set_lines(buf, 0, 1, false, { full })
 			vim.bo[buf].modifiable = false
 			vim.api.nvim_buf_add_highlight(buf, ns, "DotnetTestHeader", 0, 0, #header_left)
-			vim.api.nvim_buf_add_highlight(buf, ns, "DotnetTestHeaderCount", 0, #header_left, #full_header)
+			vim.api.nvim_buf_add_highlight(buf, ns, "DotnetTestHeaderCount", 0, #header_left, #full)
 		end
 	end
 end
 
---- Move cursor to a specific node by id
 ---@param node_id string
 function M.focus_node(node_id)
 	if not main_win or not main_win:win_valid() then
@@ -266,70 +271,64 @@ function M.focus_node(node_id)
 	end
 end
 
---- Get the node under the cursor
 ---@return TestNode|nil
 function M.node_at_cursor()
 	if not main_win or not main_win:win_valid() then
 		return nil
 	end
-	local row = vim.api.nvim_win_get_cursor(main_win.win)[1] - 1
-	return line_to_node[row]
+	return line_to_node[vim.api.nvim_win_get_cursor(main_win.win)[1] - 1]
 end
 
---- Open error/result details in a Snacks float
+--- Perform an action on the node at cursor
+---@param fn fun(node: TestNode)
+local function with_cursor_node(fn)
+	local node = M.node_at_cursor()
+	if node then
+		fn(node)
+	end
+end
+
 ---@param node TestNode
 function M.peek_results(node)
 	if not node.error_message and not node.stack_trace and not node.stdout then
-		if node.status == state.Status.PASSED then
-			vim.notify("Test passed - no error details", vim.log.levels.INFO)
-		else
-			vim.notify("No results available for this test", vim.log.levels.INFO)
-		end
+		vim.notify(node.status == state.Status.PASSED and "Test passed" or "No results available", vim.log.levels.INFO)
 		return
 	end
 
-	local lines = {}
-	local highlights = {}
+	local lines, hls = {}, {}
 
-	table.insert(lines, " " .. node.display_name)
-	table.insert(highlights, { 0, status_hl[node.status] or "Normal" })
-	table.insert(lines, "")
+	local function add(text, hl)
+		lines[#lines + 1] = text
+		hls[#hls + 1] = { #lines - 1, hl }
+	end
+
+	local function add_block(header, header_hl, content, line_hl_fn)
+		add(header, header_hl)
+		for line in content:gmatch("[^\n]+") do
+			add("  " .. line, line_hl_fn and line_hl_fn(line) or "Normal")
+		end
+		add("", "Normal")
+	end
+
+	add(" " .. node.display_name, status_hl[node.status] or "Normal")
+	add("", "Normal")
 
 	if node.error_message then
-		table.insert(lines, "Error:")
-		table.insert(highlights, { #lines - 1, "DiagnosticError" })
-		for line in node.error_message:gmatch("[^\n]+") do
-			table.insert(lines, "  " .. line)
-			table.insert(highlights, { #lines - 1, "Normal" })
-		end
-		table.insert(lines, "")
+		add_block("Error:", "DiagnosticError", node.error_message)
 	end
 
 	if node.stack_trace then
-		table.insert(lines, "Stack Trace:")
-		table.insert(highlights, { #lines - 1, "Title" })
-		for line in node.stack_trace:gmatch("[^\n]+") do
-			table.insert(lines, "  " .. line)
+		add_block("Stack Trace:", "Title", node.stack_trace, function(line)
 			local file = line:match("in (.+):line %d+")
-			if file and not file:match("^%s*at System%.") and not file:match("^%s*at Microsoft%.") then
-				table.insert(highlights, { #lines - 1, "String" })
-			else
-				table.insert(highlights, { #lines - 1, "Comment" })
-			end
-		end
-		table.insert(lines, "")
+			return (file and not file:match("^%s*at System%.") and not file:match("^%s*at Microsoft%.")) and "String" or "Comment"
+		end)
 	end
 
 	if node.stdout then
-		table.insert(lines, "Output:")
-		table.insert(highlights, { #lines - 1, "DiagnosticWarn" })
-		for line in node.stdout:gmatch("[^\n]+") do
-			table.insert(lines, "  " .. line)
-			table.insert(highlights, { #lines - 1, "Normal" })
-		end
+		add_block("Output:", "DiagnosticWarn", node.stdout)
 	end
 
-	local peek_win = Snacks.win({
+	Snacks.win({
 		position = "float",
 		width = 0.6,
 		height = 0.5,
@@ -357,14 +356,13 @@ function M.peek_results(node)
 		},
 		on_buf = function(self)
 			local peek_ns = vim.api.nvim_create_namespace("dotnet_test_results")
-			for _, hl in ipairs(highlights) do
+			for _, hl in ipairs(hls) do
 				vim.api.nvim_buf_add_highlight(self.buf, peek_ns, hl[2], hl[1], 0, -1)
 			end
 		end,
 	})
 end
 
---- Navigate to source file for a test node
 ---@param node TestNode
 function M.goto_source(node)
 	if not node.fqn then
@@ -372,17 +370,13 @@ function M.goto_source(node)
 		return
 	end
 
-	local parsed = runner.parse_test_name(node.fqn)
-	local method_name = parsed.method:match("^([^%(]+)")
+	local method_name = runner.parse_test_name(node.fqn).method:match("^([^%(]+)")
+	local pattern = vim.pesc(method_name)
 
-	local cwd = vim.fn.getcwd()
-	local cs_files = vim.fn.globpath(cwd, "**/*.cs", false, true)
-
-	for _, file in ipairs(cs_files) do
+	for _, file in ipairs(vim.fn.globpath(vim.fn.getcwd(), "**/*.cs", false, true)) do
 		if not file:match("/bin/") and not file:match("/obj/") then
-			local file_lines = vim.fn.readfile(file)
-			for i, line in ipairs(file_lines) do
-				if line:match("%s+" .. vim.pesc(method_name) .. "%s*%(") or line:match("%s+" .. vim.pesc(method_name) .. "%(") then
+			for i, line in ipairs(vim.fn.readfile(file)) do
+				if line:match("%s+" .. pattern .. "%s*%(") or line:match("%s+" .. pattern .. "%(") then
 					M.close()
 					vim.cmd("edit " .. vim.fn.fnameescape(file))
 					vim.api.nvim_win_set_cursor(0, { i, 0 })
@@ -396,92 +390,96 @@ function M.goto_source(node)
 	vim.notify("Could not find source for " .. method_name, vim.log.levels.WARN)
 end
 
---- Debug a single test using DAP
---- Launches the test DLL directly under the debugger (requires OutputType=Exe test projects)
 ---@param node TestNode
 function M.debug_test(node)
-	if node.type ~= state.Type.TEST then
-		vim.notify("Debug is only supported for individual tests", vim.log.levels.WARN)
+	if node.type ~= state.Type.TEST and node.type ~= state.Type.THEORY then
+		vim.notify("Debug is only supported for tests and theories", vim.log.levels.WARN)
 		return
 	end
 
-	local project_path = runner.get_project_path(node)
-	if not project_path then
-		vim.notify("Could not determine project for test", vim.log.levels.ERROR)
+	-- xUnit v3 -method can only filter by method name, not individual theory cases.
+	-- Escalate theory cases to their parent theory (runs all cases for that method).
+	local target = node
+	if node.type == state.Type.TEST and node.parent_id then
+		local parent = state.get(node.parent_id)
+		if parent and parent.type == state.Type.THEORY then
+			target = parent
+			vim.notify("Debugging all cases of " .. parent.display_name .. " (xUnit cannot target single theory cases)", vim.log.levels.INFO)
+		end
+	end
+
+	local fqn, project_path
+	if target.type == state.Type.THEORY then
+		local children = state.children(target.id)
+		if #children == 0 then
+			vim.notify("Theory has no test cases", vim.log.levels.WARN)
+			return
+		end
+		fqn = children[1].fqn
+		project_path = runner.get_project_path(children[1])
+	else
+		fqn = target.fqn
+		project_path = runner.get_project_path(target)
+	end
+
+	if not project_path or not fqn then
+		vim.notify("Could not determine project or test name", vim.log.levels.ERROR)
 		return
 	end
 
-	local fqn = node.fqn
-	if not fqn then
-		vim.notify("No fully qualified name for test", vim.log.levels.ERROR)
-		return
-	end
+	-- xUnit v3 -method matches on fully qualified method name (no params)
+	-- Strip params if present, use exact match for standalone tests
+	local method_filter = fqn:match("^(.-)%(") or fqn
 
-	-- Strip params for method filter (e.g. "Ns.Class.Method(args)" -> "Ns.Class.Method")
-	local filter_name = fqn:match("^(.-)%(") or fqn
 	local project_name = vim.fn.fnamemodify(project_path, ":t:r")
 	local project_dir = vim.fn.fnamemodify(project_path, ":h")
 
-	-- Close the test runner so DAP UI has space
 	M.close()
-
 	vim.notify("Building " .. project_name .. " for debug...", vim.log.levels.INFO)
 
-	vim.system(
-		{ "dotnet", "build", "-c", "Debug", project_path },
-		{ text = true },
-		vim.schedule_wrap(function(build_result)
-			if build_result.code ~= 0 then
-				vim.notify("Build failed:\n" .. (build_result.stderr or build_result.stdout or ""), vim.log.levels.ERROR)
-				return
-			end
+	vim.system({ "dotnet", "build", "-c", "Debug", project_path }, { text = true }, vim.schedule_wrap(function(result)
+		if result.code ~= 0 then
+			vim.notify("Build failed:\n" .. (result.stderr or result.stdout or ""), vim.log.levels.ERROR)
+			return
+		end
 
-			-- Find the test DLL in the build output
-			local dlls = vim.fn.glob(project_dir .. "/bin/Debug/**/" .. project_name .. ".dll", false, true)
-			if #dlls == 0 then
-				vim.notify("Could not find debug DLL for " .. project_name, vim.log.levels.ERROR)
-				return
-			end
+		local dlls = vim.fn.glob(project_dir .. "/bin/Debug/**/" .. project_name .. ".dll", false, true)
+		if #dlls == 0 then
+			vim.notify("Could not find debug DLL for " .. project_name, vim.log.levels.ERROR)
+			return
+		end
 
-			local dll_path = dlls[1]
-			local dap = require("dap")
-
-			-- Launch the test DLL directly under the debugger.
-			-- This works for test projects with OutputType=Exe (xUnit v3, Microsoft.Testing.Platform).
-			-- The test runner is in-process, so breakpoints in test code work without attach.
-			dap.run({
-				type = "coreclr",
-				name = "Debug Test: " .. node.display_name,
-				request = "launch",
-				program = dll_path,
-				args = { "-method", filter_name .. "*" },
-				cwd = project_dir,
-				stopAtEntry = false,
-			})
-		end)
-	)
+		require("dap").run({
+			type = "coreclr",
+			name = "Debug Test: " .. node.display_name,
+			request = "launch",
+			program = dlls[1],
+			args = { "-method", method_filter },
+			cwd = project_dir,
+			stopAtEntry = false,
+		})
+	end))
 end
 
---- Show help float with available keymaps
 function M.show_help()
 	local keymaps = {
 		{ "o", "Toggle expand/collapse" },
 		{ "O", "Expand all under cursor" },
 		{ "W", "Collapse all under cursor" },
-		{ "r", "Run test/class/project under cursor" },
+		{ "r", "Run test/class/project" },
 		{ "R", "Run all tests" },
 		{ "d", "Debug test under cursor" },
-		{ "p", "Peek error details / stack trace" },
+		{ "p", "Peek error / stack trace" },
 		{ "gf", "Go to source file" },
 		{ "D", "Re-discover tests" },
-		{ "<C-c>", "Cancel active test run" },
+		{ "<C-c>", "Cancel active run" },
 		{ "?", "Show this help" },
-		{ "q", "Close test runner" },
+		{ "q", "Close" },
 	}
 
 	local lines = {}
 	for _, km in ipairs(keymaps) do
-		table.insert(lines, "  " .. km[1] .. string.rep(" ", 10 - #km[1]) .. km[2])
+		lines[#lines + 1] = "  " .. km[1] .. string.rep(" ", 10 - #km[1]) .. km[2]
 	end
 
 	Snacks.win({
@@ -494,11 +492,7 @@ function M.show_help()
 		enter = true,
 		text = lines,
 		bo = { modifiable = false },
-		keys = {
-			q = "close",
-			["<Esc>"] = "close",
-			["?"] = "close",
-		},
+		keys = { q = "close", ["<Esc>"] = "close", ["?"] = "close" },
 		on_buf = function(self)
 			local help_ns = vim.api.nvim_create_namespace("dotnet_test_help")
 			for i = 0, #lines - 1 do
@@ -508,12 +502,87 @@ function M.show_help()
 	})
 end
 
---- Create or show the test runner as a Snacks floating window
+-- Buffer keymaps as a declarative table
+local keymap_defs = {
+	o = function()
+		with_cursor_node(function(n)
+			n.expanded = not n.expanded
+			M.refresh()
+		end)
+	end,
+	O = function()
+		with_cursor_node(function(n)
+			state.expand_all(n.id)
+			M.refresh()
+		end)
+	end,
+	W = function()
+		with_cursor_node(function(n)
+			state.collapse_all(n.id)
+			M.refresh()
+		end)
+	end,
+	r = function()
+		with_cursor_node(function(n)
+			n.expanded = true
+			runner.run(n)
+		end)
+	end,
+	R = function()
+		local root = state.root_id and state.get(state.root_id)
+		if root then
+			runner.run(root)
+		end
+	end,
+	d = function()
+		with_cursor_node(M.debug_test)
+	end,
+	p = function()
+		with_cursor_node(M.peek_results)
+	end,
+	gf = function()
+		with_cursor_node(M.goto_source)
+	end,
+	["<C-c>"] = function()
+		state.cancel()
+		vim.notify("Test run cancelled", vim.log.levels.INFO)
+	end,
+	D = function()
+		if not state.sln_path then
+			return
+		end
+		local root_name = vim.fn.fnamemodify(state.sln_path, ":t")
+		state.clear()
+		state.register({
+			id = "root:" .. state.sln_path,
+			display_name = root_name .. " (discovering...)",
+			type = state.Type.SOLUTION,
+			status = state.Status.DISCOVERING,
+			expanded = true,
+			parent_id = nil,
+		})
+		state.root_id = "root:" .. state.sln_path
+		M.refresh()
+		runner.discover(state.sln_path, root_name, function()
+			M.refresh()
+		end)
+	end,
+	["?"] = M.show_help,
+	q = function()
+		M.close()
+	end,
+	["<Esc>"] = function()
+		M.close()
+	end,
+}
+
 function M.open()
 	if main_win and main_win:win_valid() then
 		main_win:focus()
 		return
 	end
+
+	M.setup_highlights()
 
 	main_win = Snacks.win({
 		position = "float",
@@ -524,126 +593,27 @@ function M.open()
 		title_pos = "center",
 		enter = true,
 		minimal = true,
-		bo = {
-			buftype = "nofile",
-			filetype = "dotnet-test-runner",
-			modifiable = false,
-		},
-		wo = {
-			cursorline = true,
-			wrap = false,
-		},
-		-- Disable default q=close so we control it
+		bo = { buftype = "nofile", filetype = "dotnet-test-runner", modifiable = false },
+		wo = { cursorline = true, wrap = false },
 		keys = {},
 		on_close = function()
 			stop_spinner()
 			main_win = nil
 		end,
 		on_buf = function(self)
-			local buf = self.buf
-			local opts = { buffer = buf, nowait = true }
-
-			vim.keymap.set("n", "o", function()
-				local node = M.node_at_cursor()
-				if node then
-					node.expanded = not node.expanded
-					M.refresh()
-				end
-			end, opts)
-
-			vim.keymap.set("n", "O", function()
-				local node = M.node_at_cursor()
-				if node then
-					state.expand_all(node.id)
-					M.refresh()
-				end
-			end, opts)
-
-			vim.keymap.set("n", "W", function()
-				local node = M.node_at_cursor()
-				if node then
-					state.collapse_all(node.id)
-					M.refresh()
-				end
-			end, opts)
-
-			vim.keymap.set("n", "r", function()
-				local node = M.node_at_cursor()
-				if node then
-					node.expanded = true
-					runner.run(node)
-				end
-			end, opts)
-
-			vim.keymap.set("n", "R", function()
-				if state.root_id then
-					local root = state.get(state.root_id)
-					if root then
-						runner.run(root)
-					end
-				end
-			end, opts)
-
-			vim.keymap.set("n", "d", function()
-				local node = M.node_at_cursor()
-				if node then
-					M.debug_test(node)
-				end
-			end, opts)
-
-			vim.keymap.set("n", "p", function()
-				local node = M.node_at_cursor()
-				if node then
-					M.peek_results(node)
-				end
-			end, opts)
-
-			vim.keymap.set("n", "gf", function()
-				local node = M.node_at_cursor()
-				if node then
-					M.goto_source(node)
-				end
-			end, opts)
-
-			vim.keymap.set("n", "<C-c>", function()
-				state.cancel()
-				vim.notify("Test run cancelled", vim.log.levels.INFO)
-			end, opts)
-
-			vim.keymap.set("n", "D", function()
-				if state.sln_path then
-					local root_name = vim.fn.fnamemodify(state.sln_path, ":t")
-					runner.discover(state.sln_path, root_name, function()
-						M.refresh()
-					end)
-				end
-			end, opts)
-
-			vim.keymap.set("n", "?", function()
-				M.show_help()
-			end, opts)
-
-			vim.keymap.set("n", "q", function()
-				M.close()
-			end, opts)
-
-			vim.keymap.set("n", "<Esc>", function()
-				M.close()
-			end, opts)
+			for key, fn in pairs(keymap_defs) do
+				vim.keymap.set("n", key, fn, { buffer = self.buf, nowait = true })
+			end
 		end,
 	})
 
-	-- Hook up state changes to refresh
 	state.on_update = function()
-		vim.schedule(function()
-			M.refresh()
-		end)
+		vim.schedule(M.refresh)
 	end
 
 	M.refresh()
 end
 
---- Close the test runner window
 function M.close()
 	stop_spinner()
 	if main_win and main_win:valid() then
@@ -652,16 +622,6 @@ function M.close()
 	main_win = nil
 end
 
---- Toggle the test runner window
-function M.toggle()
-	if main_win and main_win:win_valid() then
-		M.close()
-	else
-		M.open()
-	end
-end
-
---- Check if the test runner window is open
 function M.is_open()
 	return main_win and main_win:win_valid()
 end
