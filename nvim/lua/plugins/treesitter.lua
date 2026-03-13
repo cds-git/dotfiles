@@ -25,6 +25,12 @@ return {
 					"bash",
 					"markdown_inline",
 					"angular",
+					"yaml",
+					"dockerfile",
+					"toml",
+					"xml",
+					"diff",
+					"gitcommit",
 				},
 			})
 		end,

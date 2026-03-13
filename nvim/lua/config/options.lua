@@ -33,6 +33,10 @@ vim.opt.scrolloff = 5
 -- Highlight current line
 vim.opt.cursorline = true
 
+-- Natural split directions
+vim.opt.splitright = true
+vim.opt.splitbelow = true
+
 -- Cursor shape configuration for different modes
 -- n-v-c: block in normal, visual, command modes
 -- i-ci-ve: vertical bar (25% width) in insert modes
@@ -86,7 +90,7 @@ vim.opt.backup = false
 
 -- And use undodir instead
 -- Allow undo-ing even after save file
-vim.opt.undodir = vim.fn.stdpath("config") .. "/.undo"
+vim.opt.undodir = vim.fn.stdpath("data") .. "/undo"
 vim.opt.undofile = true
 
 -- filenames

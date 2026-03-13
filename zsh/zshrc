@@ -12,15 +12,18 @@ source "${ZINIT_HOME}/zinit.zsh"
 
 # Add in zsh plugins
 zinit light zsh-users/zsh-syntax-highlighting
+zinit ice wait lucida
 zinit light zsh-users/zsh-completions
+zinit ice wait lucida
 zinit light zsh-users/zsh-autosuggestions
+zinit ice wait lucida
 zinit light Aloxaf/fzf-tab
 
 # Add in snippets
 zinit snippet OMZL::git.zsh
 zinit snippet OMZP::git
 zinit snippet OMZP::sudo
-zinit snippet OMZP::archlinux
+[[ -f /etc/arch-release ]] && zinit snippet OMZP::archlinux
 zinit snippet OMZP::aws
 zinit snippet OMZP::kubectl
 zinit snippet OMZP::kubectx
@@ -38,7 +41,7 @@ bindkey '^n' history-search-forward
 bindkey '^[w' kill-region
 
 # History
-HISTSIZE=5000
+HISTSIZE=50000
 HISTFILE=~/.zsh_history
 SAVEHIST=$HISTSIZE
 HISTDUP=erase
@@ -55,7 +58,7 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
-# zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # Aliases
 alias reload='source ~/.zshrc'
@@ -64,6 +67,7 @@ alias zshconf='nvim ~/.zshrc'
 alias cat='bat'
 alias ls='eza --icons'
 alias ll='eza --icons -lha'
+alias tree='eza --icons --tree'
 ## Nvim
 alias vim='nvim'
 alias vi='nvim'
@@ -75,8 +79,8 @@ alias gs='git status'
 alias k='kubectl'
 
 # Shell integrations
-# eval "$(fzf --zsh)"
-# eval "$(zoxide init --cmd cd zsh)"
+eval "$(fzf --zsh)"
+eval "$(zoxide init --cmd cd zsh)"
 
 # mise (tool version manager — replaces fnm, rustup, etc.)
 if command -v mise &> /dev/null; then
@@ -89,7 +93,7 @@ if command -v starship &> /dev/null; then
 fi
 
 # opencode
-export PATH=/home/cds/.opencode/bin:$PATH
+export PATH="$HOME/.opencode/bin:$PATH"
 
 # Added by get-aspire-cli.sh
 export PATH="$HOME/.aspire/bin:$PATH"
