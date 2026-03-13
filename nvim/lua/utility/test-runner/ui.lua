@@ -288,13 +288,23 @@ local function with_cursor_node(fn)
 	end
 end
 
+--- Collect all failed test nodes under a parent
+---@param node_id string
+---@return TestNode[]
+local function collect_failed_tests(node_id)
+	local failed = {}
+	for _, child in ipairs(state.children(node_id)) do
+		if child.type == state.Type.TEST and child.status == state.Status.FAILED then
+			failed[#failed + 1] = child
+		else
+			vim.list_extend(failed, collect_failed_tests(child.id))
+		end
+	end
+	return failed
+end
+
 ---@param node TestNode
 function M.peek_results(node)
-	if not node.error_message and not node.stack_trace and not node.stdout then
-		vim.notify(node.status == state.Status.PASSED and "Test passed" or "No results available", vim.log.levels.INFO)
-		return
-	end
-
 	local lines, hls = {}, {}
 
 	local function add(text, hl)
@@ -310,22 +320,55 @@ function M.peek_results(node)
 		add("", "Normal")
 	end
 
-	add(" " .. node.display_name, status_hl[node.status] or "Normal")
-	add("", "Normal")
+	local function add_test_result(test_node)
+		add(" " .. test_node.display_name, status_hl[test_node.status] or "Normal")
+		add("", "Normal")
 
-	if node.error_message then
-		add_block("Error:", "DiagnosticError", node.error_message)
+		if test_node.error_message then
+			add_block("Error:", "DiagnosticError", test_node.error_message)
+		end
+
+		if test_node.stack_trace then
+			add_block("Stack Trace:", "Title", test_node.stack_trace, function(line)
+				local file = line:match("in (.+):line %d+")
+				return (file and not file:match("^%s*at System%.") and not file:match("^%s*at Microsoft%.")) and "String"
+					or "Comment"
+			end)
+		end
+
+		if test_node.stdout then
+			add_block("Output:", "DiagnosticWarn", test_node.stdout)
+		end
 	end
 
-	if node.stack_trace then
-		add_block("Stack Trace:", "Title", node.stack_trace, function(line)
-			local file = line:match("in (.+):line %d+")
-			return (file and not file:match("^%s*at System%.") and not file:match("^%s*at Microsoft%.")) and "String" or "Comment"
-		end)
-	end
-
-	if node.stdout then
-		add_block("Output:", "DiagnosticWarn", node.stdout)
+	-- For TEST nodes, show their own results
+	if node.type == state.Type.TEST then
+		if not node.error_message and not node.stack_trace and not node.stdout then
+			vim.notify(
+				node.status == state.Status.PASSED and "Test passed" or "No results available",
+				vim.log.levels.INFO
+			)
+			return
+		end
+		add_test_result(node)
+	else
+		-- For parent nodes, aggregate failed children
+		local failed = collect_failed_tests(node.id)
+		if #failed == 0 then
+			vim.notify(
+				node.status == state.Status.PASSED and "All tests passed" or "No failed tests",
+				vim.log.levels.INFO
+			)
+			return
+		end
+		add(
+			" " .. node.display_name .. " — " .. #failed .. " failed test(s)",
+			status_hl[state.Status.FAILED]
+		)
+		add("", "Normal")
+		for _, test_node in ipairs(failed) do
+			add_test_result(test_node)
+		end
 	end
 
 	Snacks.win({

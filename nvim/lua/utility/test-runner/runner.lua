@@ -34,14 +34,15 @@ function M.find_solutions()
 end
 
 ---@param search_dir string
----@return string[]
+---@return { path: string, uses_mtp: boolean }[]
 function M.find_test_projects(search_dir)
 	local projects = {}
 	for _, path in ipairs(vim.fn.globpath(search_dir, "**/*.csproj", false, true)) do
 		if not path:match("/bin/") and not path:match("/obj/") and not path:match("/node_modules/") then
 			local content = table.concat(vim.fn.readfile(path), "\n")
 			if content:find("Microsoft%.NET%.Test%.Sdk") or content:find("<IsTestProject>true</IsTestProject>") then
-				projects[#projects + 1] = path
+				local uses_mtp = content:find("TestingPlatformDotnetTestSupport") ~= nil
+				projects[#projects + 1] = { path = path, uses_mtp = uses_mtp }
 			end
 		end
 	end
@@ -98,7 +99,7 @@ end
 
 ---@param root_name string
 ---@param root_path string
----@param project_tests table<string, string[]>
+---@param project_tests table<string, { tests: string[], uses_mtp: boolean }>
 function M.build_tree(root_name, root_path, project_tests)
 	state.clear()
 
@@ -106,10 +107,11 @@ function M.build_tree(root_name, root_path, project_tests)
 	reg({ id = root_id, display_name = root_name, type = state.Type.SOLUTION, expanded = true })
 	state.root_id = root_id
 
-	for project_path, tests in pairs(project_tests) do
+	for project_path, info in pairs(project_tests) do
+		local tests = info.tests
 		local proj_name = vim.fn.fnamemodify(project_path, ":t:r")
 		local proj_id = "proj:" .. project_path
-		reg({ id = proj_id, display_name = proj_name, type = state.Type.PROJECT, expanded = true, parent_id = root_id, project_path = project_path })
+		reg({ id = proj_id, display_name = proj_name, type = state.Type.PROJECT, expanded = true, parent_id = root_id, project_path = project_path, uses_mtp = info.uses_mtp })
 
 		-- Group by namespace.class
 		local classes = {}
@@ -160,15 +162,33 @@ function M.build_tree(root_name, root_path, project_tests)
 	end
 end
 
+--- Parse VSTest format: lines after "The following Tests are available:"
 ---@param lines string[]
 ---@return string[]
-local function parse_test_list(lines)
+local function parse_vstest_list(lines)
 	local tests, in_list = {}, false
 	for _, line in ipairs(lines) do
 		if line:match("The following Tests are available:") then
 			in_list = true
 		elseif in_list then
 			local name = line:match("^%s+(.+)$")
+			if name then
+				tests[#tests + 1] = name
+			end
+		end
+	end
+	return tests
+end
+
+--- Parse xUnit v3 native format: one FQN per line (skips the header line)
+---@param lines string[]
+---@return string[]
+local function parse_xunit_list(lines)
+	local tests = {}
+	for _, line in ipairs(lines) do
+		-- Skip empty lines and the xUnit header "xUnit.net v3 ..."
+		if line ~= "" and not line:match("^xUnit%.net") then
+			local name = line:match("^%s*(.+%..+)%s*$")
 			if name then
 				tests[#tests + 1] = name
 			end
@@ -208,10 +228,27 @@ function M.discover(search_dir, root_name, callback)
 	local remaining = #projects
 	local failed_projects = {}
 
-	for _, project_path in ipairs(projects) do
+	local function on_project_done()
+		remaining = remaining - 1
+		if remaining == 0 then
+			M.build_tree(root_name, search_dir, project_tests)
+			if #failed_projects > 0 then
+				vim.notify(
+					"Discovery failed for " .. #failed_projects .. " project(s): " .. table.concat(failed_projects, ", "),
+					vim.log.levels.WARN
+				)
+			end
+			if callback then
+				callback()
+			end
+		end
+	end
+
+	--- Discover via VSTest: dotnet test --list-tests
+	local function discover_vstest(project)
 		local output, errors = {}, {}
 		vim.fn.jobstart(
-			{ "dotnet", "test", project_path, "--list-tests", "--verbosity", "quiet", "--nologo" },
+			{ "dotnet", "test", project.path, "--list-tests", "--verbosity", "quiet", "--nologo" },
 			{
 				stdout_buffered = true,
 				stderr_buffered = true,
@@ -219,28 +256,72 @@ function M.discover(search_dir, root_name, callback)
 				on_stderr = collect_lines(errors),
 				on_exit = function(_, code)
 					vim.schedule(function()
-						local tests = parse_test_list(output)
-						project_tests[project_path] = tests
+						local tests = parse_vstest_list(output)
+						project_tests[project.path] = { tests = tests, uses_mtp = false }
 						if code ~= 0 and #tests == 0 then
-							failed_projects[#failed_projects + 1] = vim.fn.fnamemodify(project_path, ":t:r")
+							failed_projects[#failed_projects + 1] = vim.fn.fnamemodify(project.path, ":t:r")
 						end
-						remaining = remaining - 1
-						if remaining == 0 then
-							M.build_tree(root_name, search_dir, project_tests)
-							if #failed_projects > 0 then
-								vim.notify(
-									"Discovery failed for " .. #failed_projects .. " project(s): " .. table.concat(failed_projects, ", "),
-									vim.log.levels.WARN
-								)
-							end
-							if callback then
-								callback()
-							end
-						end
+						on_project_done()
 					end)
 				end,
 			}
 		)
+	end
+
+	--- Discover via MTP: build then run DLL with -list tests
+	local function discover_mtp(project)
+		local proj_name = vim.fn.fnamemodify(project.path, ":t:r")
+		local proj_dir = vim.fn.fnamemodify(project.path, ":h")
+
+		vim.fn.jobstart({ "dotnet", "build", project.path, "--verbosity", "quiet", "--nologo" }, {
+			stdout_buffered = true,
+			stderr_buffered = true,
+			on_exit = function(_, build_code)
+				vim.schedule(function()
+					if build_code ~= 0 then
+						project_tests[project.path] = { tests = {}, uses_mtp = true }
+						failed_projects[#failed_projects + 1] = proj_name
+						on_project_done()
+						return
+					end
+
+					-- Find the built DLL
+					local dlls = vim.fn.glob(proj_dir .. "/bin/Debug/**/" .. proj_name .. ".dll", false, true)
+					if #dlls == 0 then
+						project_tests[project.path] = { tests = {}, uses_mtp = true }
+						failed_projects[#failed_projects + 1] = proj_name
+						on_project_done()
+						return
+					end
+
+					-- Run xUnit v3 native list
+					local output = {}
+					vim.fn.jobstart({ "dotnet", "exec", dlls[1], "-list", "tests" }, {
+						stdout_buffered = true,
+						stderr_buffered = true,
+						on_stdout = collect_lines(output),
+						on_exit = function(_, list_code)
+							vim.schedule(function()
+								local tests = parse_xunit_list(output)
+								project_tests[project.path] = { tests = tests, uses_mtp = true }
+								if list_code ~= 0 and #tests == 0 then
+									failed_projects[#failed_projects + 1] = proj_name
+								end
+								on_project_done()
+							end)
+						end,
+					})
+				end)
+			end,
+		})
+	end
+
+	for _, project in ipairs(projects) do
+		if project.uses_mtp then
+			discover_mtp(project)
+		else
+			discover_vstest(project)
+		end
 	end
 end
 
@@ -257,6 +338,30 @@ function M.get_project_path(node)
 	return parent and M.get_project_path(parent) or nil
 end
 
+--- Check if a node belongs to an MTP project
+---@param node TestNode
+---@return boolean
+function M.get_uses_mtp(node)
+	if node.uses_mtp ~= nil then
+		return node.uses_mtp
+	end
+	-- For SOLUTION nodes, check if any child project uses MTP
+	if node.type == state.Type.SOLUTION then
+		for _, child in ipairs(state.children(node.id)) do
+			if child.uses_mtp then
+				return true
+			end
+		end
+		return false
+	end
+	if not node.parent_id then
+		return false
+	end
+	local parent = state.get(node.parent_id)
+	return parent and M.get_uses_mtp(parent) or false
+end
+
+--- Build a VSTest --filter expression
 ---@param node TestNode
 ---@return string|nil
 function M.build_filter(node)
@@ -273,6 +378,26 @@ function M.build_filter(node)
 		return "FullyQualifiedName~" .. node.display_name .. "."
 	end
 	return nil
+end
+
+--- Build xUnit v3 native -method and -class args for MTP projects
+---@param node TestNode
+---@return string[]
+function M.build_mtp_filter_args(node)
+	if node.type == state.Type.TEST then
+		local base = node.fqn and (node.fqn:match("^(.-)%(") or node.fqn) or nil
+		return base and { "-method", base } or {}
+	elseif node.type == state.Type.THEORY then
+		local base_method = node.id:match(":theory:(.+)$")
+		local class_key = node.id:match(":class:(.+):theory:")
+		return (base_method and class_key) and { "-method", class_key .. "." .. base_method } or {}
+	elseif node.type == state.Type.CLASS then
+		local class_key = node.id:match(":class:(.+)$")
+		return class_key and { "-class", class_key } or {}
+	elseif node.type == state.Type.NAMESPACE then
+		return { "-namespace", node.display_name }
+	end
+	return {}
 end
 
 ---@param line string
@@ -357,13 +482,66 @@ local function format_duration(trx_duration)
 	return string.format("%.0fms", ms)
 end
 
+--- Common exit handler for test runs
+---@param trx_file string
+---@param tmp_dir string
+---@param stderr_lines string[]
+---@param callback? fun(exit_code: number)
+---@return fun(exit_code: number)
+local function make_on_exit(trx_file, tmp_dir, stderr_lines, callback)
+	return function(_, exit_code)
+		vim.schedule(function()
+			state.active_job = nil
+
+			-- Apply TRX results
+			for test_name, result in pairs(M.parse_trx(trx_file)) do
+				local test_id = "test:" .. test_name
+				if state.get(test_id) then
+					state.update_status(test_id, outcome_map[result.outcome] or state.Status.IDLE, {
+						duration = format_duration(result.duration),
+						error_message = result.error_message,
+						stack_trace = result.stack_trace,
+						stdout = result.stdout,
+					})
+				end
+			end
+
+			-- Failed tests without results (build failure)
+			local build_error = (exit_code ~= 0 and #stderr_lines > 0) and table.concat(stderr_lines, "\n") or nil
+			for _, n in pairs(state.nodes) do
+				if n.type == state.Type.TEST and n.status == state.Status.RUNNING then
+					state.update_status(n.id, state.Status.FAILED, {
+						error_message = build_error or "Test did not produce results (build failure?)",
+					})
+				end
+			end
+
+			-- Auto-expand parents of failed tests
+			for _, n in pairs(state.nodes) do
+				if n.type == state.Type.TEST and n.status == state.Status.FAILED and n.parent_id then
+					local parent = state.get(n.parent_id)
+					if parent then
+						parent.expanded = true
+					end
+				end
+			end
+
+			vim.fn.delete(tmp_dir, "rf")
+
+			if callback then
+				callback(exit_code)
+			end
+		end)
+	end
+end
+
 ---@param node TestNode
 ---@param callback? fun(exit_code: number)
 function M.run(node, callback)
 	state.cancel()
 
 	local project_path = M.get_project_path(node)
-	local filter = M.build_filter(node)
+	local uses_mtp = M.get_uses_mtp(node)
 
 	-- Mark running
 	if node.type == state.Type.TEST then
@@ -379,78 +557,98 @@ function M.run(node, callback)
 	local tmp_dir = vim.fn.tempname()
 	vim.fn.mkdir(tmp_dir, "p")
 	local trx_file = tmp_dir .. "/results.trx"
-
-	local cmd = { "dotnet", "test" }
-	if not (node.type == state.Type.SOLUTION and state.sln_path) and project_path then
-		cmd[#cmd + 1] = project_path
-	end
-	if filter then
-		vim.list_extend(cmd, { "--filter", filter })
-	end
-	vim.list_extend(cmd, { "--logger", "trx;LogFileName=" .. trx_file, "--results-directory", tmp_dir, "--nologo", "-v", "normal" })
-
 	local stderr_lines = {}
 
-	state.active_job = vim.fn.jobstart(cmd, {
-		on_stdout = function(_, data)
-			vim.schedule(function()
-				for _, line in ipairs(data) do
-					local result = parse_result_line(line)
-					if result then
-						local test_id = "test:" .. result.name
-						if state.get(test_id) then
-							state.update_status(test_id, result.status, { duration = result.duration })
+	if uses_mtp then
+		-- MTP: run the DLL directly with xUnit v3 native args
+		-- For SOLUTION nodes, find the first MTP project child
+		if not project_path and node.type == state.Type.SOLUTION then
+			for _, child in ipairs(state.children(node.id)) do
+				if child.uses_mtp and child.project_path then
+					project_path = child.project_path
+					break
+				end
+			end
+		end
+		if not project_path then
+			vim.notify("No MTP project found", vim.log.levels.ERROR)
+			return
+		end
+		local proj_name = vim.fn.fnamemodify(project_path, ":t:r")
+		local proj_dir = vim.fn.fnamemodify(project_path, ":h")
+		local dlls = vim.fn.glob(proj_dir .. "/bin/Debug/**/" .. proj_name .. ".dll", false, true)
+
+		if #dlls == 0 then
+			vim.notify("No DLL found for " .. proj_name .. ", building...", vim.log.levels.INFO)
+			-- Need to build first, then run
+			state.active_job = vim.fn.jobstart({ "dotnet", "build", project_path, "--verbosity", "quiet", "--nologo" }, {
+				on_exit = function(_, build_code)
+					vim.schedule(function()
+						if build_code ~= 0 then
+							state.active_job = nil
+							for _, n in pairs(state.nodes) do
+								if n.type == state.Type.TEST and n.status == state.Status.RUNNING then
+									state.update_status(n.id, state.Status.FAILED, { error_message = "Build failed" })
+								end
+							end
+							return
+						end
+						dlls = vim.fn.glob(proj_dir .. "/bin/Debug/**/" .. proj_name .. ".dll", false, true)
+						if #dlls == 0 then
+							return
+						end
+						local cmd = { "dotnet", "exec", dlls[1] }
+						vim.list_extend(cmd, M.build_mtp_filter_args(node))
+						vim.list_extend(cmd, { "-trx", trx_file })
+
+						state.active_job = vim.fn.jobstart(cmd, {
+							on_stderr = collect_lines(stderr_lines),
+							on_exit = make_on_exit(trx_file, tmp_dir, stderr_lines, callback),
+						})
+					end)
+				end,
+			})
+			return
+		end
+
+		local cmd = { "dotnet", "exec", dlls[1] }
+		vim.list_extend(cmd, M.build_mtp_filter_args(node))
+		vim.list_extend(cmd, { "-trx", trx_file })
+
+		state.active_job = vim.fn.jobstart(cmd, {
+			on_stderr = collect_lines(stderr_lines),
+			on_exit = make_on_exit(trx_file, tmp_dir, stderr_lines, callback),
+		})
+	else
+		-- VSTest: dotnet test with --filter and TRX logger
+		local filter = M.build_filter(node)
+		local cmd = { "dotnet", "test" }
+		if not (node.type == state.Type.SOLUTION and state.sln_path) and project_path then
+			cmd[#cmd + 1] = project_path
+		end
+		if filter then
+			vim.list_extend(cmd, { "--filter", filter })
+		end
+		vim.list_extend(cmd, { "--logger", "trx;LogFileName=" .. trx_file, "--results-directory", tmp_dir, "--nologo", "-v", "normal" })
+
+		state.active_job = vim.fn.jobstart(cmd, {
+			on_stdout = function(_, data)
+				vim.schedule(function()
+					for _, line in ipairs(data) do
+						local result = parse_result_line(line)
+						if result then
+							local test_id = "test:" .. result.name
+							if state.get(test_id) then
+								state.update_status(test_id, result.status, { duration = result.duration })
+							end
 						end
 					end
-				end
-			end)
-		end,
-		on_stderr = collect_lines(stderr_lines),
-		on_exit = function(_, exit_code)
-			vim.schedule(function()
-				state.active_job = nil
-
-				-- Apply TRX results
-				for test_name, result in pairs(M.parse_trx(trx_file)) do
-					local test_id = "test:" .. test_name
-					if state.get(test_id) then
-						state.update_status(test_id, outcome_map[result.outcome] or state.Status.IDLE, {
-							duration = format_duration(result.duration),
-							error_message = result.error_message,
-							stack_trace = result.stack_trace,
-							stdout = result.stdout,
-						})
-					end
-				end
-
-				-- Failed tests without results (build failure)
-				local build_error = (exit_code ~= 0 and #stderr_lines > 0) and table.concat(stderr_lines, "\n") or nil
-				for _, n in pairs(state.nodes) do
-					if n.type == state.Type.TEST and n.status == state.Status.RUNNING then
-						state.update_status(n.id, state.Status.FAILED, {
-							error_message = build_error or "Test did not produce results (build failure?)",
-						})
-					end
-				end
-
-				-- Auto-expand parents of failed tests
-				for _, n in pairs(state.nodes) do
-					if n.type == state.Type.TEST and n.status == state.Status.FAILED and n.parent_id then
-						local parent = state.get(n.parent_id)
-						if parent then
-							parent.expanded = true
-						end
-					end
-				end
-
-				vim.fn.delete(tmp_dir, "rf")
-
-				if callback then
-					callback(exit_code)
-				end
-			end)
-		end,
-	})
+				end)
+			end,
+			on_stderr = collect_lines(stderr_lines),
+			on_exit = make_on_exit(trx_file, tmp_dir, stderr_lines, callback),
+		})
+	end
 end
 
 return M

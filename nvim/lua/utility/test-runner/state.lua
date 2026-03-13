@@ -49,6 +49,7 @@ local type_order = {
 ---@field parent_id string|nil
 ---@field fqn string|nil
 ---@field project_path string|nil
+---@field uses_mtp boolean|nil
 ---@field duration string|nil
 ---@field error_message string|nil
 ---@field stack_trace string|nil
