@@ -23,9 +23,11 @@ function Install-OpenCodeConfig {
     $dotfilesAgents = "$HOME\dotfiles\opencode\AGENTS.md"
     $dotfilesOpencode = "$HOME\dotfiles\opencode\opencode.json"
     $dotfilesSkills = "$HOME\dotfiles\opencode\skills"
+    $dotfilesAgentsDir = "$HOME\dotfiles\opencode\agents"
     $opencodeAgents = "$opencodeConfigDir\AGENTS.md"
     $opencodeOpencode = "$opencodeConfigDir\opencode.json"
     $opencodeSkills = "$opencodeConfigDir\skills"
+    $opencodeAgentsDir = "$opencodeConfigDir\agents"
     
     # Create config directory if it doesn't exist
     if (-not (Test-Path $opencodeConfigDir)) {
@@ -113,6 +115,32 @@ function Install-OpenCodeConfig {
         } catch {
             Copy-Item $dotfilesSkills $opencodeSkills -Recurse -Force
             Write-Host "[OK] OpenCode skills configured (copy)" -ForegroundColor Green
+        }
+    }
+
+    # Setup agents directory
+    if (Test-Path $opencodeAgentsDir) {
+        $item = Get-Item $opencodeAgentsDir
+        if ($item.LinkType -eq "SymbolicLink" -and $item.Target -eq $dotfilesAgentsDir) {
+            Write-Host "[OK] OpenCode agents already configured" -ForegroundColor Green
+        } else {
+            Write-Host "[WARN] Backing up existing agents directory" -ForegroundColor Yellow
+            Rename-Item $opencodeAgentsDir "$opencodeAgentsDir.backup" -Force
+            try {
+                New-Item -ItemType SymbolicLink -Force -Path $opencodeAgentsDir -Target $dotfilesAgentsDir | Out-Null
+                Write-Host "[OK] OpenCode agents configured (symlink)" -ForegroundColor Green
+            } catch {
+                Copy-Item $dotfilesAgentsDir $opencodeAgentsDir -Recurse -Force
+                Write-Host "[OK] OpenCode agents configured (copy)" -ForegroundColor Green
+            }
+        }
+    } else {
+        try {
+            New-Item -ItemType SymbolicLink -Force -Path $opencodeAgentsDir -Target $dotfilesAgentsDir | Out-Null
+            Write-Host "[OK] OpenCode agents configured (symlink)" -ForegroundColor Green
+        } catch {
+            Copy-Item $dotfilesAgentsDir $opencodeAgentsDir -Recurse -Force
+            Write-Host "[OK] OpenCode agents configured (copy)" -ForegroundColor Green
         }
     }
 }

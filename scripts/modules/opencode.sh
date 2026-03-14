@@ -73,4 +73,20 @@ install_opencode_config() {
         ln -sf "$dotfiles_skills" "$skills_dir"
         echo "✓ OpenCode skills configured"
     fi
+
+    # Symlink agents directory
+    local agents_dir="$config_dir/agents"
+    local dotfiles_agents_dir="$HOME/dotfiles/opencode/agents"
+
+    if [ -L "$agents_dir" ]; then
+        echo "✓ OpenCode agents already configured"
+    elif [ -d "$agents_dir" ]; then
+        echo "⚠ Backing up existing agents directory"
+        mv "$agents_dir" "$agents_dir.backup"
+        ln -sf "$dotfiles_agents_dir" "$agents_dir"
+        echo "✓ OpenCode agents configured"
+    else
+        ln -sf "$dotfiles_agents_dir" "$agents_dir"
+        echo "✓ OpenCode agents configured"
+    fi
 }
