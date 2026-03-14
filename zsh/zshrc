@@ -91,11 +91,6 @@ if command -v zoxide &> /dev/null; then
     eval "$(zoxide init --cmd cd zsh)"
 fi
 
-# mise (tool version manager — replaces fnm, rustup, etc.)
-if command -v mise &> /dev/null; then
-    eval "$(mise activate zsh)"
-fi
-
 # Starship prompt
 if command -v starship &> /dev/null; then
     eval "$(starship init zsh)"
