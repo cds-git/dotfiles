@@ -71,6 +71,7 @@ modules=(
     "lazygit.sh"
     "lazydocker.sh"
     "yazi.sh"
+    "fastfetch.sh"
     "starship.sh"
     "opencode.sh"
 )
@@ -124,6 +125,7 @@ install_starship_config
 install_lazygit_config
 install_lazydocker_config
 install_yazi_config
+install_fastfetch_config
 install_opencode_config
 
 # --- Phase 5: Shell setup ---
