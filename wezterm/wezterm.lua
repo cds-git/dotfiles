@@ -27,11 +27,13 @@ config.prefer_egl = true
 config.term = "xterm-256color"
 
 -- Mouse behavior - helps prevent gibberish input issues
+-- When gibberish appears on mouse input, press Ctrl+Alt+R to reset mouse tracking
 config.alternate_buffer_wheel_scroll_speed = 1
 config.bypass_mouse_reporting_modifiers = "SHIFT" -- Hold Shift to bypass app mouse handling
 
--- Cursor
+-- Cursor - force_reverse_video_cursor makes text under block cursor always visible
 config.default_cursor_style = "BlinkingBlock"
+config.force_reverse_video_cursor = true
 
 -- Tabs
 config.hide_tab_bar_if_only_one_tab = false
