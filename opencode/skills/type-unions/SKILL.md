@@ -12,39 +12,22 @@ metadata:
 
 Implement discriminated unions (type unions) in C# using abstract record hierarchies. Provides exhaustive pattern matching, value-based equality, and composable designs.
 
+For domain-specific usage (entities, value objects, aggregates, domain events), see the `csharp-domain-modelling` skill.
+
 ## Pattern
 
-Define a sealed abstract record as the base, with concrete records for each case.
-
-```csharp
-public abstract record Shape;
-public record Circle(double Radius) : Shape;
-public record Rectangle(double Width, double Height) : Shape;
-public record Triangle(double Base, double Height) : Shape;
-```
-
-Consume with exhaustive `switch` expressions:
-
-```csharp
-double Area(Shape shape) => shape switch
-{
-    Circle c => Math.PI * c.Radius * c.Radius,
-    Rectangle r => r.Width * r.Height,
-    Triangle t => 0.5 * t.Base * t.Height,
-    _ => throw new ArgumentOutOfRangeException(nameof(shape))
-};
-```
-
-## Real-World Examples
-
-### Domain Modeling
+Define an `abstract record` as the base, with concrete records for each case:
 
 ```csharp
 public abstract record PaymentMethod;
 public record CreditCard(string CardNumber, string Cvv, DateOnly Expiry) : PaymentMethod;
 public record BankTransfer(string AccountNumber, string RoutingNumber) : PaymentMethod;
 public record DigitalWallet(string Email, WalletProvider Provider) : PaymentMethod;
+```
 
+Consume with exhaustive `switch` expressions:
+
+```csharp
 decimal CalculateFee(PaymentMethod method) => method switch
 {
     CreditCard => 2.9m,
@@ -55,24 +38,11 @@ decimal CalculateFee(PaymentMethod method) => method switch
 };
 ```
 
-### Command/Message Types
-
-```csharp
-public abstract record Command;
-public record CreateUser(string Name, string Email) : Command;
-public record UpdateUser(UserId Id, string Name) : Command;
-public record DeleteUser(UserId Id) : Command;
-
-Result<NoValue> Handle(Command command) => command switch
-{
-    CreateUser cmd => CreateUserHandler(cmd),
-    UpdateUser cmd => UpdateUserHandler(cmd),
-    DeleteUser cmd => DeleteUserHandler(cmd),
-    _ => Error.Validation("UNKNOWN_COMMAND", "Unrecognized command type")
-};
-```
+## Real-World Examples
 
 ### State Machines
+
+Model an entity's lifecycle as a type union instead of an enum. Each state carries only the data relevant to that state:
 
 ```csharp
 public abstract record OrderState;
@@ -85,6 +55,8 @@ public record Cancelled(DateTime CancelledAt, string Reason) : OrderState;
 
 ### Nested Unions
 
+Use intermediate abstract records when there's a genuine sub-classification:
+
 ```csharp
 public abstract record Notification;
 public abstract record EmailNotification(string To) : Notification;
@@ -96,7 +68,7 @@ public record PushNotification(DeviceId Device, string Title, string Body) : Not
 
 ## Combining with BetterResult
 
-For **error** unions, always use BetterResult's `Error` type instead of custom error hierarchies.
+For **error** unions, always use BetterResult's `Error` type -- don't create custom error hierarchies.
 
 For **domain** unions, use abstract records and return `Result<T>` from operations that can fail:
 
@@ -148,7 +120,7 @@ var method = JsonSerializer.Deserialize<PaymentMethod>(json); // returns CreditC
 
 ### Nested Unions
 
-For nested hierarchies, apply attributes at each abstract level:
+For nested hierarchies, register all concrete types on the **root** base, not the intermediate abstract:
 
 ```csharp
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
@@ -165,14 +137,13 @@ public record SmsNotification(string PhoneNumber, string Message) : Notification
 public record PushNotification(DeviceId Device, string Title, string Body) : Notification;
 ```
 
-Register concrete types on the **root** base (`Notification`), not the intermediate abstract (`EmailNotification`), so all cases deserialize from a single `Notification` reference.
-
 ## Key Guidelines
 
 - Use `abstract record` as the base (not `abstract class`) for value equality and immutability
 - Each case is a concrete `record` inheriting from the base
 - Always include a `_` discard arm in switch expressions to catch future additions at runtime
 - Prefer flat hierarchies -- nest only when there's a genuine sub-classification
+- Prefer type unions over enums when different cases carry different data
 - For **errors**, use `BetterResult.Error` -- don't create custom error unions
 - For **domain concepts**, use type unions -- they make illegal states unrepresentable
 - Leverage property patterns for sub-matching: `DigitalWallet { Provider: WalletProvider.PayPal }`

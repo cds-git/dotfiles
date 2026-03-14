@@ -35,12 +35,16 @@
         "todowrite": "allow",
         "skill": "allow",
         "question": "allow",
-        "codesearch": "allow",
+        "lsp": "allow",
         "bash": {
             "*": "ask",
+            "git status": "allow",
             "git status *": "allow",
+            "git diff": "allow",
             "git diff *": "allow",
+            "git log": "allow",
             "git log *": "allow",
+            "git branch": "allow",
             "git branch *": "allow",
             "git show *": "allow",
             "grep *": "allow",
@@ -51,6 +55,7 @@
             "which *": "allow",
             "dotnet build *": "allow",
             "dotnet test *": "allow",
+            "dotnet run *": "ask",
             "npm test *": "allow",
             "npm run *": "ask",
             "rm *": "deny",
@@ -59,13 +64,15 @@
             "git push *": "ask",
             "git push * --force*": "deny",
             "git reset --hard*": "deny",
+            "git checkout -- *": "deny",
+            "git clean *": "deny",
             "curl *": "ask",
             "wget *": "ask"
         },
         "edit": "ask",
         "webfetch": "ask",
-        "external_directory": "ask",
-        "task": "allow",
-        "lsp": "allow"
+        "websearch": "ask",
+        "external_directory": "deny",
+        "task": "allow"
     }
 }

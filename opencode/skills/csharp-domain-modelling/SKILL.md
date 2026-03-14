@@ -1,5 +1,5 @@
 ---
-name: ddd-records
+name: csharp-domain-modelling
 description: Load when designing domain models, entities, value objects, aggregates, or domain events using C# records and DDD patterns
 license: MIT
 compatibility: opencode
@@ -10,7 +10,7 @@ metadata:
 
 ## What I Do
 
-Guide Domain-Driven Design implementation using C# records for immutability, value-based equality, and composability. Combines DDD tactical patterns with the Result pattern (BetterResult) for domain logic that can fail.
+Guide domain modelling using C# records for immutability, value-based equality, and composability. Combines DDD tactical patterns with the Result pattern (BetterResult) for domain logic that can fail.
 
 ## Core Concepts
 
@@ -23,10 +23,10 @@ public record Money(decimal Amount, string Currency)
 {
     public static Money Zero(string currency) => new(0, currency);
 
-    public Money Add(Money other) =>
-        Currency == other.Currency
-            ? this with { Amount = Amount + other.Amount }
-            : throw new InvalidOperationException("Currency mismatch");
+    public Result<Money> Add(Money other) =>
+        Currency != other.Currency
+            ? Error.Validation("CURRENCY_MISMATCH", $"Cannot add {Currency} and {other.Currency}")
+            : this with { Amount = Amount + other.Amount };
 }
 
 public record Email
@@ -56,17 +56,18 @@ public record OrderId(Guid Value)
 }
 
 // Entity as record -- identity is the Id
-public record Order(OrderId Id, Money Total, OrderStatus Status, IReadOnlyList<OrderLine> Lines)
+// OrderState is a type union (see the `type-unions` skill)
+public record Order(OrderId Id, Money Total, OrderState State, IReadOnlyList<OrderLine> Lines)
 {
     public Result<Order> AddLine(Product product, int quantity) =>
-        Status != OrderStatus.Draft
+        State is not Draft
             ? Error.Validation("ORDER_LOCKED", "Can only add lines to draft orders")
             : this with { Lines = Lines.Append(new OrderLine(product.Id, quantity, product.Price)).ToList() };
 
-    public Result<Order> MarkAsPaid() =>
-        Status == OrderStatus.Pending
-            ? this with { Status = OrderStatus.Paid }
-            : Error.Validation("INVALID_STATUS", $"Cannot pay an order in {Status} status");
+    public Result<Order> MarkAsPaid(PaymentId paymentId) =>
+        State is Pending
+            ? this with { State = new Paid(DateTime.UtcNow, paymentId) }
+            : Error.Validation("INVALID_STATE", $"Cannot pay an order in {State} state");
 }
 ```
 
@@ -102,7 +103,7 @@ public record ShoppingCart(CartId Id, CustomerId CustomerId, IReadOnlyList<CartI
 
 ### Domain Events
 
-Record what happened in the domain. Use abstract record hierarchies as type unions.
+Model domain events as immutable records that describe something that already happened. Use abstract record hierarchies to group related events (see the `type-unions` skill for the full pattern).
 
 ```csharp
 public abstract record OrderEvent(OrderId OrderId, DateTime OccurredAt);
@@ -123,3 +124,4 @@ Events are immutable facts. Name them in past tense. Include only the data a con
 - Domain events carry data, not behavior -- handlers live in application/infrastructure layers
 - Use strongly-typed IDs (`record OrderId(Guid Value)`) to prevent mixing up identifiers
 - Prefer `IReadOnlyList<T>` for collections in records to reinforce immutability
+- Model state as type unions instead of enums when different states carry different data (see `type-unions` skill)
