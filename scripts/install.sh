@@ -167,8 +167,8 @@ fi
 # Each entry: grep pattern | line to append
 zshrc_entries=(
     'dotfiles/zsh/zshrc|source "$HOME/dotfiles/zsh/zshrc"'
-    'mise activate zsh|eval "$(mise activate zsh)"'
-    'fzf --zsh|source <(fzf --zsh)'
+    'mise activate zsh|eval "$(mise activate zsh --shims)"'
+    'fzf --zsh|source <(fzf --zsh 2>/dev/null) || true'
     'zoxide init|eval "$(zoxide init --cmd cd zsh)"'
     'starship init zsh|eval "$(starship init zsh)"'
     '.opencode/bin|export PATH="$HOME/.opencode/bin:$PATH"'
