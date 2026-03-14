@@ -63,12 +63,52 @@ M.root_id = nil
 M.sln_path = nil
 ---@type number|nil
 M.active_job = nil
+---@type number[]
+M.active_jobs = {}
 ---@type fun()|nil
 M.on_update = nil
+
+-- Children cache: parent_id -> sorted TestNode[]
+---@type table<string, TestNode[]>
+local children_cache = {}
+local children_dirty = true
+
+local function invalidate_children()
+	children_dirty = true
+	children_cache = {}
+end
+
+local function ensure_children_cache()
+	if not children_dirty then
+		return
+	end
+	children_cache = {}
+	for _, node in pairs(M.nodes) do
+		if node.parent_id then
+			local list = children_cache[node.parent_id]
+			if not list then
+				list = {}
+				children_cache[node.parent_id] = list
+			end
+			list[#list + 1] = node
+		end
+	end
+	for _, list in pairs(children_cache) do
+		table.sort(list, function(a, b)
+			local ta, tb = type_order[a.type] or 9, type_order[b.type] or 9
+			if ta ~= tb then
+				return ta < tb
+			end
+			return a.display_name < b.display_name
+		end)
+	end
+	children_dirty = false
+end
 
 function M.clear()
 	M.nodes = {}
 	M.root_id = nil
+	invalidate_children()
 end
 
 ---@param node TestNode
@@ -78,6 +118,7 @@ function M.register(node)
 		node.expanded = existing.expanded
 	end
 	M.nodes[node.id] = node
+	invalidate_children()
 end
 
 ---@param id string
@@ -89,20 +130,8 @@ end
 ---@param parent_id string
 ---@return TestNode[]
 function M.children(parent_id)
-	local result = {}
-	for _, node in pairs(M.nodes) do
-		if node.parent_id == parent_id then
-			result[#result + 1] = node
-		end
-	end
-	table.sort(result, function(a, b)
-		local ta, tb = type_order[a.type] or 9, type_order[b.type] or 9
-		if ta ~= tb then
-			return ta < tb
-		end
-		return a.display_name < b.display_name
-	end)
-	return result
+	ensure_children_cache()
+	return children_cache[parent_id] or {}
 end
 
 ---@param id string|nil
@@ -206,29 +235,103 @@ function M.collapse_all(node_id)
 	set_expanded_recursive(node_id, false)
 end
 
+---@param node_id? string
 ---@return { total: number, passed: number, failed: number, skipped: number }
-function M.counts()
+function M.counts(node_id)
 	local c = { total = 0, passed = 0, failed = 0, skipped = 0 }
-	for _, node in pairs(M.nodes) do
-		if node.type == M.Type.TEST then
-			c.total = c.total + 1
-			if node.status == M.Status.PASSED then
-				c.passed = c.passed + 1
-			elseif node.status == M.Status.FAILED then
-				c.failed = c.failed + 1
-			elseif node.status == M.Status.SKIPPED then
-				c.skipped = c.skipped + 1
+	if node_id then
+		for _, child in ipairs(M.children(node_id)) do
+			if child.type == M.Type.TEST then
+				c.total = c.total + 1
+				if child.status == M.Status.PASSED then
+					c.passed = c.passed + 1
+				elseif child.status == M.Status.FAILED then
+					c.failed = c.failed + 1
+				elseif child.status == M.Status.SKIPPED then
+					c.skipped = c.skipped + 1
+				end
+			else
+				local sub = M.counts(child.id)
+				c.total = c.total + sub.total
+				c.passed = c.passed + sub.passed
+				c.failed = c.failed + sub.failed
+				c.skipped = c.skipped + sub.skipped
+			end
+		end
+	else
+		for _, node in pairs(M.nodes) do
+			if node.type == M.Type.TEST then
+				c.total = c.total + 1
+				if node.status == M.Status.PASSED then
+					c.passed = c.passed + 1
+				elseif node.status == M.Status.FAILED then
+					c.failed = c.failed + 1
+				elseif node.status == M.Status.SKIPPED then
+					c.skipped = c.skipped + 1
+				end
 			end
 		end
 	end
 	return c
 end
 
+--- Parse a formatted duration string back to milliseconds
+---@param dur string|nil
+---@return number
+local function parse_duration_ms(dur)
+	if not dur then
+		return 0
+	end
+	local val, unit = dur:match("^([%d%.]+)(.*)")
+	local n = tonumber(val) or 0
+	if unit == "ms" then
+		return n
+	elseif unit == "s" then
+		return n * 1000
+	elseif unit == "m" then
+		return n * 60000
+	end
+	return 0
+end
+
+--- Format milliseconds to a human-readable duration
+---@param ms number
+---@return string
+function M.format_ms(ms)
+	if ms <= 0 then
+		return ""
+	elseif ms >= 60000 then
+		return string.format("%.1fm", ms / 60000)
+	elseif ms >= 1000 then
+		return string.format("%.1fs", ms / 1000)
+	end
+	return string.format("%.0fms", ms)
+end
+
+--- Sum durations of all test descendants
+---@param node_id string
+---@return number ms
+function M.total_duration_ms(node_id)
+	local total = 0
+	for _, child in ipairs(M.children(node_id)) do
+		if child.type == M.Type.TEST then
+			total = total + parse_duration_ms(child.duration)
+		else
+			total = total + M.total_duration_ms(child.id)
+		end
+	end
+	return total
+end
+
 function M.cancel()
 	if M.active_job then
-		vim.fn.jobstop(M.active_job)
+		pcall(vim.fn.jobstop, M.active_job)
 		M.active_job = nil
 	end
+	for _, job in ipairs(M.active_jobs) do
+		pcall(vim.fn.jobstop, job)
+	end
+	M.active_jobs = {}
 end
 
 return M

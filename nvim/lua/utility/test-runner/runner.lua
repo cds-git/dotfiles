@@ -482,52 +482,70 @@ local function format_duration(trx_duration)
 	return string.format("%.0fms", ms)
 end
 
+--- Apply TRX results from one or more files
+---@param trx_paths string[]
+local function apply_trx_results(trx_paths)
+	for _, trx_file in ipairs(trx_paths) do
+		for test_name, result in pairs(M.parse_trx(trx_file)) do
+			local test_id = "test:" .. test_name
+			if state.get(test_id) then
+				state.update_status(test_id, outcome_map[result.outcome] or state.Status.IDLE, {
+					duration = format_duration(result.duration),
+					error_message = result.error_message,
+					stack_trace = result.stack_trace,
+					stdout = result.stdout,
+				})
+			end
+		end
+	end
+end
+
+--- Mark remaining RUNNING tests after a run completes
+---@param exit_code number
+---@param stderr_lines string[]
+---@param project_path string|nil  -- nil = all tests
+local function finalize_running_tests(exit_code, stderr_lines, project_path)
+	local build_error = (exit_code ~= 0 and #stderr_lines > 0) and table.concat(stderr_lines, "\n") or nil
+	for _, n in pairs(state.nodes) do
+		if n.type == state.Type.TEST and n.status == state.Status.RUNNING then
+			if not project_path or n.project_path == project_path then
+				if exit_code ~= 0 then
+					state.update_status(n.id, state.Status.FAILED, {
+						error_message = build_error or "Test did not produce results (build failure?)",
+					})
+				else
+					-- Tests passed overall but these weren't in TRX/stdout — reset to idle
+					state.update_status(n.id, state.Status.IDLE)
+				end
+			end
+		end
+	end
+
+	-- Auto-expand parents of failed tests
+	for _, n in pairs(state.nodes) do
+		if n.type == state.Type.TEST and n.status == state.Status.FAILED and n.parent_id then
+			local parent = state.get(n.parent_id)
+			if parent then
+				parent.expanded = true
+			end
+		end
+	end
+end
+
 --- Common exit handler for test runs
 ---@param trx_file string
 ---@param tmp_dir string
 ---@param stderr_lines string[]
+---@param project_path string|nil  -- scope "mark remaining as failed" to this project only
 ---@param callback? fun(exit_code: number)
 ---@return fun(exit_code: number)
-local function make_on_exit(trx_file, tmp_dir, stderr_lines, callback)
+local function make_on_exit(trx_file, tmp_dir, stderr_lines, project_path, callback)
 	return function(_, exit_code)
 		vim.schedule(function()
 			state.active_job = nil
-
-			-- Apply TRX results
-			for test_name, result in pairs(M.parse_trx(trx_file)) do
-				local test_id = "test:" .. test_name
-				if state.get(test_id) then
-					state.update_status(test_id, outcome_map[result.outcome] or state.Status.IDLE, {
-						duration = format_duration(result.duration),
-						error_message = result.error_message,
-						stack_trace = result.stack_trace,
-						stdout = result.stdout,
-					})
-				end
-			end
-
-			-- Failed tests without results (build failure)
-			local build_error = (exit_code ~= 0 and #stderr_lines > 0) and table.concat(stderr_lines, "\n") or nil
-			for _, n in pairs(state.nodes) do
-				if n.type == state.Type.TEST and n.status == state.Status.RUNNING then
-					state.update_status(n.id, state.Status.FAILED, {
-						error_message = build_error or "Test did not produce results (build failure?)",
-					})
-				end
-			end
-
-			-- Auto-expand parents of failed tests
-			for _, n in pairs(state.nodes) do
-				if n.type == state.Type.TEST and n.status == state.Status.FAILED and n.parent_id then
-					local parent = state.get(n.parent_id)
-					if parent then
-						parent.expanded = true
-					end
-				end
-			end
-
+			apply_trx_results({ trx_file })
+			finalize_running_tests(exit_code, stderr_lines, project_path)
 			vim.fn.delete(tmp_dir, "rf")
-
 			if callback then
 				callback(exit_code)
 			end
@@ -535,13 +553,100 @@ local function make_on_exit(trx_file, tmp_dir, stderr_lines, callback)
 	end
 end
 
+--- Run a single MTP project node
+---@param node TestNode
+---@param project_path string
+---@param tmp_dir string
+---@param trx_file string
+---@param callback? fun(exit_code: number)
+local function run_mtp(node, project_path, tmp_dir, trx_file, callback)
+	local proj_name = vim.fn.fnamemodify(project_path, ":t:r")
+	local proj_dir = vim.fn.fnamemodify(project_path, ":h")
+	local stderr_lines = {}
+	local dlls = vim.fn.glob(proj_dir .. "/bin/Debug/**/" .. proj_name .. ".dll", false, true)
+
+	local function start_test(dll)
+		local cmd = { "dotnet", "exec", dll }
+		vim.list_extend(cmd, M.build_mtp_filter_args(node))
+		vim.list_extend(cmd, { "-trx", trx_file })
+		return vim.fn.jobstart(cmd, {
+			on_stderr = collect_lines(stderr_lines),
+			on_exit = make_on_exit(trx_file, tmp_dir, stderr_lines, project_path, callback),
+		})
+	end
+
+	if #dlls == 0 then
+		return vim.fn.jobstart({ "dotnet", "build", project_path, "--verbosity", "quiet", "--nologo" }, {
+			on_exit = function(_, build_code)
+				vim.schedule(function()
+					if build_code ~= 0 then
+						for _, n in pairs(state.nodes) do
+							if n.type == state.Type.TEST and n.status == state.Status.RUNNING and n.project_path == project_path then
+								state.update_status(n.id, state.Status.FAILED, { error_message = "Build failed" })
+							end
+						end
+						if callback then
+							callback(build_code)
+						end
+						return
+					end
+					dlls = vim.fn.glob(proj_dir .. "/bin/Debug/**/" .. proj_name .. ".dll", false, true)
+					if #dlls == 0 then
+						if callback then
+							callback(1)
+						end
+						return
+					end
+					state.active_job = start_test(dlls[1])
+				end)
+			end,
+		})
+	end
+
+	return start_test(dlls[1])
+end
+
+--- Run a single VSTest project/node
+---@param node TestNode
+---@param project_path string|nil
+---@param tmp_dir string
+---@param trx_file string
+---@param callback? fun(exit_code: number)
+local function run_vstest(node, project_path, tmp_dir, trx_file, callback)
+	local stderr_lines = {}
+	local filter = M.build_filter(node)
+	local cmd = { "dotnet", "test" }
+	if project_path then
+		cmd[#cmd + 1] = project_path
+	end
+	if filter then
+		vim.list_extend(cmd, { "--filter", filter })
+	end
+	vim.list_extend(cmd, { "--logger", "trx;LogFileName=" .. trx_file, "--results-directory", tmp_dir, "--nologo", "-v", "normal" })
+
+	return vim.fn.jobstart(cmd, {
+		on_stdout = function(_, data)
+			vim.schedule(function()
+				for _, line in ipairs(data) do
+					local result = parse_result_line(line)
+					if result then
+						local test_id = "test:" .. result.name
+						if state.get(test_id) then
+							state.update_status(test_id, result.status, { duration = result.duration })
+						end
+					end
+				end
+			end)
+		end,
+		on_stderr = collect_lines(stderr_lines),
+		on_exit = make_on_exit(trx_file, tmp_dir, stderr_lines, project_path, callback),
+	})
+end
+
 ---@param node TestNode
 ---@param callback? fun(exit_code: number)
 function M.run(node, callback)
 	state.cancel()
-
-	local project_path = M.get_project_path(node)
-	local uses_mtp = M.get_uses_mtp(node)
 
 	-- Mark running
 	if node.type == state.Type.TEST then
@@ -554,84 +659,45 @@ function M.run(node, callback)
 		end
 	end
 
-	local tmp_dir = vim.fn.tempname()
-	vim.fn.mkdir(tmp_dir, "p")
-	local trx_file = tmp_dir .. "/results.trx"
-	local stderr_lines = {}
+	-- SOLUTION-level: single dotnet test command (matches CLI behavior and performance)
+	if node.type == state.Type.SOLUTION then
+		local sln_file = state.sln_path .. "/" .. node.display_name
+		local tmp_dir = vim.fn.tempname()
+		vim.fn.mkdir(tmp_dir, "p")
+		local stderr_lines = {}
 
-	if uses_mtp then
-		-- MTP: run the DLL directly with xUnit v3 native args
-		-- For SOLUTION nodes, find the first MTP project child
-		if not project_path and node.type == state.Type.SOLUTION then
-			for _, child in ipairs(state.children(node.id)) do
-				if child.uses_mtp and child.project_path then
-					project_path = child.project_path
-					break
+		-- Check for MTP projects that need separate execution
+		local mtp_projects = {}
+		for _, proj in ipairs(state.children(node.id)) do
+			if proj.type == state.Type.PROJECT and proj.uses_mtp then
+				mtp_projects[#mtp_projects + 1] = proj
+			end
+		end
+
+		local remaining = 1 + #mtp_projects
+		local any_failed = false
+		local jobs = {}
+
+		local function on_part_done(exit_code)
+			if exit_code ~= 0 then
+				any_failed = true
+			end
+			remaining = remaining - 1
+			if remaining == 0 then
+				state.active_job = nil
+				if callback then
+					callback(any_failed and 1 or 0)
 				end
 			end
 		end
-		if not project_path then
-			vim.notify("No MTP project found", vim.log.levels.ERROR)
-			return
-		end
-		local proj_name = vim.fn.fnamemodify(project_path, ":t:r")
-		local proj_dir = vim.fn.fnamemodify(project_path, ":h")
-		local dlls = vim.fn.glob(proj_dir .. "/bin/Debug/**/" .. proj_name .. ".dll", false, true)
 
-		if #dlls == 0 then
-			vim.notify("No DLL found for " .. proj_name .. ", building...", vim.log.levels.INFO)
-			-- Need to build first, then run
-			state.active_job = vim.fn.jobstart({ "dotnet", "build", project_path, "--verbosity", "quiet", "--nologo" }, {
-				on_exit = function(_, build_code)
-					vim.schedule(function()
-						if build_code ~= 0 then
-							state.active_job = nil
-							for _, n in pairs(state.nodes) do
-								if n.type == state.Type.TEST and n.status == state.Status.RUNNING then
-									state.update_status(n.id, state.Status.FAILED, { error_message = "Build failed" })
-								end
-							end
-							return
-						end
-						dlls = vim.fn.glob(proj_dir .. "/bin/Debug/**/" .. proj_name .. ".dll", false, true)
-						if #dlls == 0 then
-							return
-						end
-						local cmd = { "dotnet", "exec", dlls[1] }
-						vim.list_extend(cmd, M.build_mtp_filter_args(node))
-						vim.list_extend(cmd, { "-trx", trx_file })
-
-						state.active_job = vim.fn.jobstart(cmd, {
-							on_stderr = collect_lines(stderr_lines),
-							on_exit = make_on_exit(trx_file, tmp_dir, stderr_lines, callback),
-						})
-					end)
-				end,
-			})
-			return
-		end
-
-		local cmd = { "dotnet", "exec", dlls[1] }
-		vim.list_extend(cmd, M.build_mtp_filter_args(node))
-		vim.list_extend(cmd, { "-trx", trx_file })
-
-		state.active_job = vim.fn.jobstart(cmd, {
-			on_stderr = collect_lines(stderr_lines),
-			on_exit = make_on_exit(trx_file, tmp_dir, stderr_lines, callback),
-		})
-	else
-		-- VSTest: dotnet test with --filter and TRX logger
-		local filter = M.build_filter(node)
-		local cmd = { "dotnet", "test" }
-		if not (node.type == state.Type.SOLUTION and state.sln_path) and project_path then
-			cmd[#cmd + 1] = project_path
-		end
-		if filter then
-			vim.list_extend(cmd, { "--filter", filter })
-		end
-		vim.list_extend(cmd, { "--logger", "trx;LogFileName=" .. trx_file, "--results-directory", tmp_dir, "--nologo", "-v", "normal" })
-
-		state.active_job = vim.fn.jobstart(cmd, {
+		-- Single dotnet test on the solution
+		local sln_job = vim.fn.jobstart({
+			"dotnet", "test", sln_file,
+			"--logger", "trx",
+			"--results-directory", tmp_dir,
+			"--nologo", "-v", "normal",
+		}, {
 			on_stdout = function(_, data)
 				vim.schedule(function()
 					for _, line in ipairs(data) do
@@ -646,8 +712,73 @@ function M.run(node, callback)
 				end)
 			end,
 			on_stderr = collect_lines(stderr_lines),
-			on_exit = make_on_exit(trx_file, tmp_dir, stderr_lines, callback),
+			on_exit = function(_, exit_code)
+				vim.schedule(function()
+					-- Parse all TRX files in the results directory
+					local trx_files = vim.fn.glob(tmp_dir .. "/*.trx", false, true)
+					apply_trx_results(trx_files)
+
+					-- Finalize remaining RUNNING tests (only non-MTP)
+					for _, n in pairs(state.nodes) do
+						if n.type == state.Type.TEST and n.status == state.Status.RUNNING then
+							local proj = n.project_path and state.get("proj:" .. n.project_path)
+							if not proj or not proj.uses_mtp then
+								if exit_code ~= 0 then
+									local build_error = #stderr_lines > 0 and table.concat(stderr_lines, "\n") or nil
+									state.update_status(n.id, state.Status.FAILED, {
+										error_message = build_error or "Test did not produce results (build failure?)",
+									})
+								else
+									state.update_status(n.id, state.Status.IDLE)
+								end
+							end
+						end
+					end
+
+					-- Auto-expand parents of failed tests
+					for _, n in pairs(state.nodes) do
+						if n.type == state.Type.TEST and n.status == state.Status.FAILED and n.parent_id then
+							local parent = state.get(n.parent_id)
+							if parent then
+								parent.expanded = true
+							end
+						end
+					end
+
+					vim.fn.delete(tmp_dir, "rf")
+					on_part_done(exit_code)
+				end)
+			end,
 		})
+		jobs[#jobs + 1] = sln_job
+
+		-- MTP projects need separate execution
+		for _, proj in ipairs(mtp_projects) do
+			local mtp_tmp = vim.fn.tempname()
+			vim.fn.mkdir(mtp_tmp, "p")
+			local trx_file = mtp_tmp .. "/results.trx"
+			jobs[#jobs + 1] = run_mtp(proj, proj.project_path, mtp_tmp, trx_file, on_part_done)
+		end
+
+		state.active_jobs = jobs
+		return
+	end
+
+	-- Non-solution nodes: single project run
+	local project_path = M.get_project_path(node)
+	local uses_mtp = M.get_uses_mtp(node)
+	local tmp_dir = vim.fn.tempname()
+	vim.fn.mkdir(tmp_dir, "p")
+	local trx_file = tmp_dir .. "/results.trx"
+
+	if uses_mtp then
+		if not project_path then
+			vim.notify("No MTP project found", vim.log.levels.ERROR)
+			return
+		end
+		state.active_job = run_mtp(node, project_path, tmp_dir, trx_file, callback)
+	else
+		state.active_job = run_vstest(node, project_path, tmp_dir, trx_file, callback)
 	end
 end
 

@@ -22,7 +22,7 @@ local function start_spinner()
 		return
 	end
 	spinner_timer = vim.uv.new_timer()
-	spinner_timer:start(0, 80, vim.schedule_wrap(function()
+	spinner_timer:start(0, 100, vim.schedule_wrap(function()
 		spinner_idx = (spinner_idx % #spinner_frames) + 1
 		M.refresh()
 	end))
@@ -35,6 +35,9 @@ local function stop_spinner()
 		spinner_timer = nil
 	end
 end
+
+-- Throttle: coalesce rapid state.on_update calls into one refresh
+local refresh_queued = false
 
 -- Display config tables
 local type_icons = {
@@ -118,39 +121,68 @@ local function node_status_icon(node)
 	return "", nil
 end
 
---- Build header lines and their highlights
+--- Build the header line with right-aligned stats
 ---@param has_running boolean
----@return string left, string right
-local function build_header(has_running)
+---@param win_width number
+---@return string line, { col: number, len: number, hl: string }[]
+local function build_header(has_running, win_width)
 	local counts = state.counts()
 
-	local left
+	local title
 	if has_running then
-		left = " " .. spinner_char() .. " Running..."
+		title = " " .. spinner_char() .. " Running..."
 	elseif counts.failed > 0 then
-		left = "  Tests"
+		title = "  Tests"
 	elseif counts.passed > 0 then
-		left = "  Tests"
+		title = "  Tests"
 	else
-		left = "  Tests"
+		title = "  Tests"
+	end
+
+	if counts.total == 0 then
+		return title, {}
+	end
+
+	-- Build right-aligned stats: "  3 failed  2334 tests  3.5m"
+	local parts = {}
+	if counts.failed > 0 then
+		parts[#parts + 1] = { label = " " .. counts.failed .. " failed", hl = "DotnetTestFailed" }
+	end
+	parts[#parts + 1] = { label = counts.total .. " tests", hl = "DotnetTestHeaderCount" }
+	if state.root_id then
+		local dur_str = state.format_ms(state.total_duration_ms(state.root_id))
+		if dur_str ~= "" then
+			parts[#parts + 1] = { label = dur_str, hl = "DotnetTestDuration" }
+		end
 	end
 
 	local right = ""
-	if counts.total > 0 then
-		local parts = {}
-		if counts.passed > 0 then
-			parts[#parts + 1] = " " .. counts.passed
+	for i, part in ipairs(parts) do
+		if i > 1 then
+			right = right .. "  "
 		end
-		if counts.failed > 0 then
-			parts[#parts + 1] = " " .. counts.failed
+		right = right .. part.label
+	end
+	right = right .. " "
+
+	local pad = win_width - #title - #right
+	if pad < 2 then
+		pad = 2
+	end
+	local line = title .. string.rep(" ", pad) .. right
+
+	-- Compute highlight positions
+	local line_hls = {}
+	local pos = #title + pad
+	for i, part in ipairs(parts) do
+		if i > 1 then
+			pos = pos + 2
 		end
-		if counts.skipped > 0 then
-			parts[#parts + 1] = " " .. counts.skipped
-		end
-		right = table.concat(parts, "  ") .. "  (" .. counts.total .. ")"
+		line_hls[#line_hls + 1] = { col = pos, len = #part.label, hl = part.hl }
+		pos = pos + #part.label
 	end
 
-	return left, right
+	return line, line_hls
 end
 
 function M.refresh()
@@ -177,48 +209,72 @@ function M.refresh()
 		stop_spinner()
 	end
 
-	-- Header
-	local header_left, header_right = build_header(has_running)
-	lines[1] = header_left
-	hls[#hls + 1] = { 0, 0, #header_left, "DotnetTestHeader" }
+	-- Header (single line with right-aligned stats)
+	local win_width = main_win:win_valid() and vim.api.nvim_win_get_width(main_win.win) or 80
+	local header, header_hls = build_header(has_running, win_width)
+	lines[1] = header
+	hls[#hls + 1] = { 0, 0, #header, "DotnetTestHeader" }
+	for _, sh in ipairs(header_hls) do
+		hls[#hls + 1] = { 0, sh.col, sh.col + sh.len, sh.hl }
+	end
 	lines[2] = ""
 
 	-- Tree
-	local row = 2
+	local row = #lines
 	state.traverse_visible(function(node, depth)
 		local indent = string.rep("  ", depth)
 		local has_children = #state.children(node.id) > 0
 		local expand = has_children and (node.expanded and "▼ " or "▶ ") or "  "
 		local icon = type_icons[node.type] or ""
 		local status_icon, shl = node_status_icon(node)
-		local duration = (node.type == state.Type.TEST and node.duration) and ("  " .. node.duration) or ""
 
-		local line = indent .. expand .. icon .. status_icon .. node.display_name .. duration
-		lines[#lines + 1] = line
+		local base = indent .. expand .. icon .. status_icon .. node.display_name
 
 		-- Highlight: status color takes priority, else type color
 		local hl_start = #indent + #expand + #icon
 		local hl_end = hl_start + #status_icon + #node.display_name
 		local hl_group = (shl and status_icon ~= "  ") and shl or type_hl[node.type]
-		if hl_group then
-			hls[#hls + 1] = { row, hl_start, hl_end, hl_group }
-		end
 
-		if duration ~= "" then
-			hls[#hls + 1] = { row, #line - #duration, #line, "DotnetTestDuration" }
-		end
+		if node.type == state.Type.TEST then
+			-- Test node: show individual duration
+			local duration = node.duration and ("  " .. node.duration) or ""
+			local line = base .. duration
+			lines[#lines + 1] = line
 
-		-- Inline error preview for failed tests
-		if node.type == state.Type.TEST and node.status == state.Status.FAILED and node.error_message then
-			local err_line = node.error_message:match("^([^\n]+)")
-			if err_line then
-				row = row + 1
-				local err = indent .. "    " .. err_line
-				if #err > 100 then
-					err = err:sub(1, 97) .. "..."
+			if hl_group then
+				hls[#hls + 1] = { row, hl_start, hl_end, hl_group }
+			end
+			if duration ~= "" then
+				hls[#hls + 1] = { row, #line - #duration, #line, "DotnetTestDuration" }
+			end
+
+			-- Inline error preview for failed tests
+			if node.status == state.Status.FAILED and node.error_message then
+				local err_line = node.error_message:match("^([^\n]+)")
+				if err_line then
+					row = row + 1
+					local err = indent .. "    " .. err_line
+					if #err > 100 then
+						err = err:sub(1, 97) .. "..."
+					end
+					lines[#lines + 1] = err
+					hls[#hls + 1] = { row, 0, #err, "DiagnosticError" }
 				end
-				lines[#lines + 1] = err
-				hls[#hls + 1] = { row, 0, #err, "DiagnosticError" }
+			end
+		else
+			-- Parent node: show aggregate duration
+			local dur_ms = state.total_duration_ms(node.id)
+			local dur_str = state.format_ms(dur_ms)
+			local duration = dur_str ~= "" and ("  " .. dur_str) or ""
+
+			local line = base .. duration
+			lines[#lines + 1] = line
+
+			if hl_group then
+				hls[#hls + 1] = { row, hl_start, hl_end, hl_group }
+			end
+			if duration ~= "" then
+				hls[#hls + 1] = { row, #line - #duration, #line, "DotnetTestDuration" }
 			end
 		end
 
@@ -243,19 +299,6 @@ function M.refresh()
 		vim.api.nvim_buf_add_highlight(buf, ns, hl[4], hl[1], hl[2], hl[3])
 	end
 
-	-- Right-aligned header counts
-	if header_right ~= "" and main_win:win_valid() then
-		local win_w = vim.api.nvim_win_get_width(main_win.win)
-		local pad = win_w - vim.fn.strdisplaywidth(header_left) - vim.fn.strdisplaywidth(header_right) - 3
-		if pad > 0 then
-			vim.bo[buf].modifiable = true
-			local full = header_left .. string.rep(" ", pad) .. header_right
-			vim.api.nvim_buf_set_lines(buf, 0, 1, false, { full })
-			vim.bo[buf].modifiable = false
-			vim.api.nvim_buf_add_highlight(buf, ns, "DotnetTestHeader", 0, 0, #header_left)
-			vim.api.nvim_buf_add_highlight(buf, ns, "DotnetTestHeaderCount", 0, #header_left, #full)
-		end
-	end
 end
 
 ---@param node_id string
@@ -610,6 +653,12 @@ local keymap_defs = {
 			M.refresh()
 		end)
 	end,
+	["<CR>"] = function()
+		with_cursor_node(function(n)
+			n.expanded = not n.expanded
+			M.refresh()
+		end)
+	end,
 	["?"] = M.show_help,
 	q = function()
 		M.close()
@@ -629,7 +678,7 @@ function M.open()
 
 	main_win = Snacks.win({
 		position = "float",
-		width = 0.5,
+		width = 0.7,
 		height = 0.7,
 		border = "rounded",
 		title = " Test Runner ",
@@ -651,7 +700,14 @@ function M.open()
 	})
 
 	state.on_update = function()
-		vim.schedule(M.refresh)
+		if refresh_queued then
+			return
+		end
+		refresh_queued = true
+		vim.schedule(function()
+			refresh_queued = false
+			M.refresh()
+		end)
 	end
 
 	M.refresh()
