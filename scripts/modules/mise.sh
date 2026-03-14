@@ -7,16 +7,13 @@ install_mise() {
     echo ""
     echo "=== mise (Tool Manager) ==="
 
-    if command_exists mise; then
+    if command -v mise &> /dev/null; then
         echo "✓ mise already installed"
     else
         echo "Installing mise..."
-        curl https://mise.run | sh
+        curl https://mise.run/zsh | sh
 
-        # Add mise to PATH for current session
-        export PATH="$HOME/.local/bin:$PATH"
-
-        if wait_for_command mise; then
+        if command -v mise &> /dev/null; then
             echo "✓ mise installed"
         else
             echo "✗ mise installed but not in PATH yet. Restart shell."
