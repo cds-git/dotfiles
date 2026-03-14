@@ -142,25 +142,27 @@ local function has_tests()
 	return false
 end
 
---- Start discovery from a chosen path, calling all queued callbacks when done
----@param search_dir string
----@param root_name string
-local function do_discover(search_dir, root_name)
-	state().sln_path = search_dir
+--- Start discovery from a solution file, calling all queued callbacks when done
+---@param sln_file string  Full path to the .sln or .slnx file
+local function do_discover(sln_file)
+	local sln_dir = vim.fn.fnamemodify(sln_file, ":h")
+	local root_name = vim.fn.fnamemodify(sln_file, ":t")
+	state().sln_path = sln_dir
+	state().sln_file = sln_file
 	state().clear()
 
 	state().register({
-		id = "root:" .. search_dir,
+		id = "root:" .. sln_dir,
 		display_name = root_name .. " (discovering...)",
 		type = state().Type.SOLUTION,
 		status = state().Status.DISCOVERING,
 		expanded = true,
 		parent_id = nil,
 	})
-	state().root_id = "root:" .. search_dir
+	state().root_id = "root:" .. sln_dir
 	ui().refresh()
 
-	runner().discover(search_dir, root_name, function()
+	runner().discover(sln_file, root_name, function()
 		discovering = false
 		ui().refresh()
 		local counts = state().counts()
@@ -193,14 +195,13 @@ local function discover(on_done)
 	local solutions = runner().find_solutions()
 
 	if #solutions == 0 then
-		local cwd = vim.fn.getcwd()
-		do_discover(cwd, vim.fn.fnamemodify(cwd, ":t"))
+		discovering = false
+		vim.notify("No solution file found", vim.log.levels.WARN)
 		return
 	end
 
 	if #solutions == 1 then
-		local sln = solutions[1]
-		do_discover(vim.fn.fnamemodify(sln, ":h"), vim.fn.fnamemodify(sln, ":t"))
+		do_discover(solutions[1])
 		return
 	end
 
@@ -215,8 +216,7 @@ local function discover(on_done)
 		confirm = function(picker, item)
 			picker:close()
 			if item then
-				local sln = item.item
-				do_discover(vim.fn.fnamemodify(sln, ":h"), vim.fn.fnamemodify(sln, ":t"))
+				do_discover(item.item)
 			else
 				discovering = false
 			end
@@ -226,16 +226,15 @@ end
 
 --- Ensure tests are discovered, then run an action.
 --- If tests exist, runs action immediately. Otherwise discovers first.
---- Opens the runner UI when waiting for discovery.
 ---@param on_done fun()
 local function ensure_discovered(on_done)
 	if has_tests() then
 		on_done()
 		return
 	end
-	ensure_open()
 	if discovering then
-		vim.notify("Discovery in progress, action queued...", vim.log.levels.INFO)
+		discover_callbacks[#discover_callbacks + 1] = on_done
+		return
 	end
 	discover(on_done)
 end
@@ -243,7 +242,9 @@ end
 --- Open the test runner, discover tests if not yet done
 function M.open()
 	ensure_open()
-	ensure_discovered(function() end)
+	if not has_tests() and not discovering then
+		discover()
+	end
 end
 
 --- Toggle the test runner window

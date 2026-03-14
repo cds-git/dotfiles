@@ -61,6 +61,8 @@ M.nodes = {}
 M.root_id = nil
 ---@type string|nil
 M.sln_path = nil
+---@type string|nil
+M.sln_file = nil
 ---@type number|nil
 M.active_job = nil
 ---@type number[]

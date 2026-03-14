@@ -33,12 +33,52 @@ function M.find_solutions()
 	return {}
 end
 
----@param search_dir string
+--- Parse a .sln file and return relative project paths
+---@param sln_path string
+---@return string[]
+local function parse_sln_projects(sln_path)
+	local paths = {}
+	for _, line in ipairs(vim.fn.readfile(sln_path)) do
+		local rel = line:match('^Project%(".-"%)')
+		if rel then
+			rel = line:match('^Project%(".-"%)[^,]*,%s*"(.-)"')
+			if rel and rel:match("%.csproj$") then
+				paths[#paths + 1] = rel:gsub("\\", "/")
+			end
+		end
+	end
+	return paths
+end
+
+--- Parse a .slnx file and return relative project paths
+---@param slnx_path string
+---@return string[]
+local function parse_slnx_projects(slnx_path)
+	local paths = {}
+	local content = table.concat(vim.fn.readfile(slnx_path), "\n")
+	for path in content:gmatch('<Project[^>]-Path="(.-)"') do
+		if path:match("%.csproj$") then
+			paths[#paths + 1] = path:gsub("\\", "/")
+		end
+	end
+	return paths
+end
+
+---@param sln_file string  Full path to the .sln or .slnx file
 ---@return { path: string, uses_mtp: boolean }[]
-function M.find_test_projects(search_dir)
+function M.find_test_projects(sln_file)
+	local sln_dir = vim.fn.fnamemodify(sln_file, ":h")
+	local rel_paths
+	if sln_file:match("%.slnx$") then
+		rel_paths = parse_slnx_projects(sln_file)
+	else
+		rel_paths = parse_sln_projects(sln_file)
+	end
+
 	local projects = {}
-	for _, path in ipairs(vim.fn.globpath(search_dir, "**/*.csproj", false, true)) do
-		if not path:match("/bin/") and not path:match("/obj/") and not path:match("/node_modules/") then
+	for _, rel in ipairs(rel_paths) do
+		local path = vim.fn.simplify(sln_dir .. "/" .. rel)
+		if vim.fn.filereadable(path) == 1 then
 			local content = table.concat(vim.fn.readfile(path), "\n")
 			if content:find("Microsoft%.NET%.Test%.Sdk") or content:find("<IsTestProject>true</IsTestProject>") then
 				local uses_mtp = content:find("TestingPlatformDotnetTestSupport") ~= nil
@@ -111,7 +151,7 @@ function M.build_tree(root_name, root_path, project_tests)
 		local tests = info.tests
 		local proj_name = vim.fn.fnamemodify(project_path, ":t:r")
 		local proj_id = "proj:" .. project_path
-		reg({ id = proj_id, display_name = proj_name, type = state.Type.PROJECT, expanded = true, parent_id = root_id, project_path = project_path, uses_mtp = info.uses_mtp })
+		reg({ id = proj_id, display_name = proj_name, type = state.Type.PROJECT, expanded = false, parent_id = root_id, project_path = project_path, uses_mtp = info.uses_mtp })
 
 		-- Group by namespace.class
 		local classes = {}
@@ -130,7 +170,7 @@ function M.build_tree(root_name, root_path, project_tests)
 			if info.namespace ~= "" then
 				local ns_id = proj_id .. ":ns:" .. info.namespace
 				if not state.get(ns_id) then
-					reg({ id = ns_id, display_name = info.namespace, type = state.Type.NAMESPACE, expanded = true, parent_id = proj_id })
+					reg({ id = ns_id, display_name = info.namespace, type = state.Type.NAMESPACE, expanded = false, parent_id = proj_id })
 				end
 				parent = ns_id
 			end
@@ -210,11 +250,12 @@ local function collect_lines(tbl)
 	end
 end
 
----@param search_dir string
+---@param sln_file string  Full path to the .sln or .slnx file
 ---@param root_name string
 ---@param callback fun()
-function M.discover(search_dir, root_name, callback)
-	local projects = M.find_test_projects(search_dir)
+function M.discover(sln_file, root_name, callback)
+	local search_dir = vim.fn.fnamemodify(sln_file, ":h")
+	local projects = M.find_test_projects(sln_file)
 
 	if #projects == 0 then
 		vim.notify("No test projects found", vim.log.levels.WARN)
@@ -661,7 +702,7 @@ function M.run(node, callback)
 
 	-- SOLUTION-level: single dotnet test command (matches CLI behavior and performance)
 	if node.type == state.Type.SOLUTION then
-		local sln_file = state.sln_path .. "/" .. node.display_name
+		local sln_file = state.sln_file or (state.sln_path .. "/" .. node.display_name)
 		local tmp_dir = vim.fn.tempname()
 		vim.fn.mkdir(tmp_dir, "p")
 		local stderr_lines = {}

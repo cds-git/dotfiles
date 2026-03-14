@@ -364,8 +364,16 @@ function M.peek_results(node)
 	end
 
 	local function add_test_result(test_node)
-		add(" " .. test_node.display_name, status_hl[test_node.status] or "Normal")
-		add("", "Normal")
+		local status_icon = status_icons[test_node.status] or ""
+		local dur = test_node.duration and ("  " .. test_node.duration) or ""
+		add(status_icon .. test_node.display_name .. dur, status_hl[test_node.status] or "Normal")
+
+		local has_details = test_node.error_message or test_node.stack_trace or test_node.stdout
+		if not has_details then
+			add("  No details available", "Comment")
+			add("", "Normal")
+			return
+		end
 
 		if test_node.error_message then
 			add_block("Error:", "DiagnosticError", test_node.error_message)
@@ -386,11 +394,9 @@ function M.peek_results(node)
 
 	-- For TEST nodes, show their own results
 	if node.type == state.Type.TEST then
-		if not node.error_message and not node.stack_trace and not node.stdout then
-			vim.notify(
-				node.status == state.Status.PASSED and "Test passed" or "No results available",
-				vim.log.levels.INFO
-			)
+		if node.status == state.Status.PASSED and not node.error_message and not node.stack_trace and not node.stdout then
+			local dur = node.duration and (" in " .. node.duration) or ""
+			vim.notify("Test passed" .. dur, vim.log.levels.INFO)
 			return
 		end
 		add_test_result(node)
@@ -552,6 +558,7 @@ function M.show_help()
 		{ "o", "Toggle expand/collapse" },
 		{ "O", "Expand all under cursor" },
 		{ "W", "Collapse all under cursor" },
+		{ "L", "Collapse to projects" },
 		{ "r", "Run test/class/project" },
 		{ "R", "Run all tests" },
 		{ "d", "Debug test under cursor" },
@@ -634,10 +641,10 @@ local keymap_defs = {
 		vim.notify("Test run cancelled", vim.log.levels.INFO)
 	end,
 	D = function()
-		if not state.sln_path then
+		if not state.sln_file then
 			return
 		end
-		local root_name = vim.fn.fnamemodify(state.sln_path, ":t")
+		local root_name = vim.fn.fnamemodify(state.sln_file, ":t")
 		state.clear()
 		state.register({
 			id = "root:" .. state.sln_path,
@@ -649,7 +656,7 @@ local keymap_defs = {
 		})
 		state.root_id = "root:" .. state.sln_path
 		M.refresh()
-		runner.discover(state.sln_path, root_name, function()
+		runner.discover(state.sln_file, root_name, function()
 			M.refresh()
 		end)
 	end,
@@ -658,6 +665,15 @@ local keymap_defs = {
 			n.expanded = not n.expanded
 			M.refresh()
 		end)
+	end,
+	L = function()
+		-- Collapse everything, then expand only solution → shows just project nodes
+		local root = state.root_id and state.get(state.root_id)
+		if root then
+			state.collapse_all(root.id)
+			root.expanded = true
+			M.refresh()
+		end
 	end,
 	["?"] = M.show_help,
 	q = function()
