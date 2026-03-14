@@ -154,27 +154,36 @@ else
     echo "✓ Zsh already default shell"
 fi
 
-# Setup zsh to source dotfiles zshrc (allows machine-specific config above/below)
-ZSHRC_SOURCE='source "$HOME/dotfiles/zsh/zshrc"'
-
 # Remove old symlink if present, but don't touch real files
 if [ -L "$HOME/.zshrc" ]; then
     rm "$HOME/.zshrc"
     echo "Removed old .zshrc symlink"
 fi
 
-if [ -f "$HOME/.zshrc" ]; then
-    if grep -qF 'dotfiles/zsh/zshrc' "$HOME/.zshrc" 2>/dev/null; then
-        echo "✓ .zshrc already sources dotfiles"
+# Ensure .zshrc exists
+[ ! -f "$HOME/.zshrc" ] && touch "$HOME/.zshrc"
+
+# Lines to ensure are present in .zshrc
+# Each entry: grep pattern | line to append
+zshrc_entries=(
+    'dotfiles/zsh/zshrc|source "$HOME/dotfiles/zsh/zshrc"'
+    'mise activate zsh|eval "$(mise activate zsh)"'
+    'fzf --zsh|source <(fzf --zsh)'
+    'zoxide init|eval "$(zoxide init --cmd cd zsh)"'
+    'starship init zsh|eval "$(starship init zsh)"'
+    '.opencode/bin|export PATH="$HOME/.opencode/bin:$PATH"'
+)
+
+for entry in "${zshrc_entries[@]}"; do
+    pattern="${entry%%|*}"
+    line="${entry##*|}"
+    if ! grep -qF "$pattern" "$HOME/.zshrc" 2>/dev/null; then
+        echo "$line" >> "$HOME/.zshrc"
+        echo "✓ Added to .zshrc: $line"
     else
-        echo "" >> "$HOME/.zshrc"
-        echo "$ZSHRC_SOURCE" >> "$HOME/.zshrc"
-        echo "✓ Appended dotfiles source to existing .zshrc"
+        echo "✓ .zshrc already has: $pattern"
     fi
-else
-    echo "$ZSHRC_SOURCE" > "$HOME/.zshrc"
-    echo "✓ Created .zshrc (sources dotfiles)"
-fi
+done
 
 if [ -L "$HOME/.tmux.conf" ]; then
     echo "✓ .tmux.conf symlink exists"

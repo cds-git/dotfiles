@@ -11,7 +11,7 @@ install_mise() {
         echo "✓ mise already installed"
     else
         echo "Installing mise..."
-        curl https://mise.run/zsh | sh
+        curl https://mise.run | sh
 
         if command -v mise &> /dev/null; then
             echo "✓ mise installed"

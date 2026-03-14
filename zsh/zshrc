@@ -77,27 +77,3 @@ alias lg='lazygit'
 alias gs='git status'
 ## Misc
 alias k='kubectl'
-
-# Shell integrations
-if command -v fzf &> /dev/null; then
-    # fzf 0.48+ supports --zsh, older versions need manual sourcing
-    eval "$(fzf --zsh 2>/dev/null)" || {
-        local fzf_share="${FZF_BASE:-$(dirname $(dirname $(command -v fzf)))/share/fzf}"
-        [[ -f "$fzf_share/key-bindings.zsh" ]] && source "$fzf_share/key-bindings.zsh"
-        [[ -f "$fzf_share/completion.zsh" ]] && source "$fzf_share/completion.zsh"
-    }
-fi
-if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init --cmd cd zsh)"
-fi
-
-# Starship prompt
-if command -v starship &> /dev/null; then
-    eval "$(starship init zsh)"
-fi
-
-# opencode
-export PATH="$HOME/.opencode/bin:$PATH"
-
-# Added by get-aspire-cli.sh
-export PATH="$HOME/.aspire/bin:$PATH"
