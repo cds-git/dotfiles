@@ -56,6 +56,7 @@ $modules = @(
     'lazygit.ps1'
     'lazydocker.ps1'
     'yazi.ps1'
+    'lazysql.ps1'
     'opencode.ps1'
     'powershell.ps1'
 )
@@ -84,6 +85,7 @@ Install-Python
 Install-Bat
 Install-Eza
 Install-Lazydocker
+Install-Lazysql
 Install-Yazi
 Install-OpenCode
 

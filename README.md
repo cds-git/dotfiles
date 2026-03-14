@@ -10,9 +10,18 @@ Greatest config known to mankind
 - **Starship** - Fast, customizable shell prompt
 - **Git** - Git configuration with delta integration and useful aliases
 - **Lazygit** - Terminal UI for git with Catppuccin theme
+- **Lazysql** - Terminal UI for database management
 - **PowerShell/Zsh** - Shell configurations and aliases
 
 **Theme**: Catppuccin across all tools
+
+## Tools Managed by mise (Linux)
+
+[mise](https://mise.jdx.dev) manages CLI tool versions on Linux from a single `mise/config.toml`:
+
+bat, btop, delta, eza, fd, fzf, lazydocker, lazygit, lazysql, neovim, node, dotnet, ripgrep, starship, tealdeer, yazi, zoxide
+
+On Windows, tools are installed via winget/chocolatey/GitHub releases through PowerShell modules.
 
 ## Installation and Setup
 
@@ -26,7 +35,7 @@ Run the following command in PowerShell as Administrator:
 
 This will:
 1. Install development tools (Chocolatey, .NET SDK, Node.js)
-2. Install terminal tools (WezTerm, Neovim, Starship, Lazygit)
+2. Install terminal tools (WezTerm, Neovim, Starship, Lazygit, Lazysql)
 3. Configure Git with shared settings and useful aliases
 4. Set up PowerShell profile
 5. Install git hooks (automatic JIRA ticket extraction from branch names)
@@ -38,6 +47,19 @@ To install and configure everything:
 ```bash
 ./scripts/install.sh
 ```
+
+This will:
+1. Install OS-level packages (zsh, tmux, build tools)
+2. Install mise and all CLI tools from `mise/config.toml`
+3. Configure symlinks for all tool configs
+4. Set zsh as default shell
+5. Add tool activations (mise, fzf, zoxide, starship) to `~/.zshrc`
+
+### Shell Configuration Approach
+
+The dotfiles `zsh/zshrc` contains your preferences: plugins, aliases, keybindings, history, and completion styling.
+
+Tool activations (`eval "$(mise activate zsh)"`, `eval "$(starship init zsh)"`, etc.) are added to the machine's `~/.zshrc` by the install script. This keeps tool init visible on the machine and avoids conflicts when tools re-add themselves on update.
 
 ## Post-Installation
 
@@ -59,6 +81,18 @@ For existing git repositories, install the commit-msg hook by either:
 - Or manually copying: `cp ~/.git-templates/hooks/commit-msg <repo>/.git/hooks/commit-msg`
 
 New clones will automatically get the hooks via the git template directory.
+
+### 3. GitHub Token for mise (Optional)
+
+mise uses the GitHub API to fetch tool releases. Without a token, you're limited to 60 requests/hr which can cause rate limit errors during setup. To fix this:
+
+1. Create a token at https://github.com/settings/tokens with no scopes (just the default, no checkboxes)
+2. Add to your machine's `~/.zshrc` **before** the mise activate line:
+   ```bash
+   export GITHUB_TOKEN="ghp_yourtoken"
+   ```
+
+This is machine-local and not committed to the dotfiles repo.
 
 ## Keybinding Philosophy
 
