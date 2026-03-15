@@ -171,6 +171,7 @@ fi
 # Each entry: grep pattern | line to append
 zshrc_entries=(
     'dotfiles/zsh/zshrc|source "$HOME/dotfiles/zsh/zshrc"'
+    '.local/bin.*mise.*shims|export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"'
     'mise activate zsh|eval "$(mise activate zsh --shims)"'
     'fzf --zsh|source <(fzf --zsh 2>/dev/null) || true'
     'zoxide init|eval "$(zoxide init --cmd cd zsh)"'
