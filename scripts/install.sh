@@ -171,6 +171,7 @@ fi
 # Each entry: grep pattern | line to append
 zshrc_entries=(
     'dotfiles/zsh/zshrc|source "$HOME/dotfiles/zsh/zshrc"'
+    '.local/bin.*mise.*shims|export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"'
     'mise activate zsh|eval "$(mise activate zsh --shims)"'
     'fzf --zsh|source <(fzf --zsh 2>/dev/null) || true'
     'zoxide init|eval "$(zoxide init --cmd cd zsh)"'
@@ -202,8 +203,22 @@ echo '========================================'
 echo 'Installation Complete!'
 echo '========================================'
 echo ""
+
+read -p "Enter your git user.name: " git_name
+read -p "Enter your git user.email: " git_email
+
+if [ -n "$git_name" ]; then
+    git config --global user.name "$git_name"
+    echo "✓ Set git user.name to: $git_name"
+fi
+
+if [ -n "$git_email" ]; then
+    git config --global user.email "$git_email"
+    echo "✓ Set git user.email to: $git_email"
+fi
+
+echo ""
 echo 'Next steps:'
-echo '  1. Configure git identity'
-echo '  2. Reload shell (exec zsh or logout/login)'
-echo '  3. Run git init in repos to install hooks'
+echo '  1. Reload shell (exec zsh or logout/login)'
+echo '  2. Run git init in repos to install hooks'
 echo ""

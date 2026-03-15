@@ -111,7 +111,21 @@ Write-Host '========================================' -ForegroundColor Green
 Write-Host 'Installation Complete!' -ForegroundColor Green
 Write-Host '========================================' -ForegroundColor Green
 Write-Host ''
+
+$gitName = Read-Host 'Enter your git user.name'
+$gitEmail = Read-Host 'Enter your git user.email'
+
+if ($gitName) {
+    git config --global user.name $gitName
+    Write-Host "[OK] Set git user.name to: $gitName" -ForegroundColor Green
+}
+
+if ($gitEmail) {
+    git config --global user.email $gitEmail
+    Write-Host "[OK] Set git user.email to: $gitEmail" -ForegroundColor Green
+}
+
+Write-Host ''
 Write-Host 'Next steps:' -ForegroundColor Yellow
-Write-Host '  1. Configure git identity' -ForegroundColor Cyan
-Write-Host '  2. Reload PowerShell profile' -ForegroundColor Cyan
-Write-Host '  3. Run git init in repos to install hooks' -ForegroundColor Cyan
+Write-Host '  1. Reload PowerShell profile' -ForegroundColor Cyan
+Write-Host '  2. Run git init in repos to install hooks' -ForegroundColor Cyan
