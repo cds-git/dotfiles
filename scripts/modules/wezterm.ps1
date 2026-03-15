@@ -5,14 +5,14 @@ function Install-Wezterm {
     
     # Check if already installed
     if (Get-Command wezterm -ErrorAction SilentlyContinue) {
-        Write-Host "✓ WezTerm already installed" -ForegroundColor Green
+        Write-Host "[OK] WezTerm already installed" -ForegroundColor Green
     } else {
         Write-Host "Installing WezTerm..." -ForegroundColor Yellow
         winget install wez.wezterm --accept-source-agreements --accept-package-agreements
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "✓ WezTerm installed" -ForegroundColor Green
+            Write-Host "[OK] WezTerm installed" -ForegroundColor Green
         } else {
-            Write-Host "✗ Failed to install WezTerm" -ForegroundColor Red
+            Write-Host "[FAIL] Failed to install WezTerm" -ForegroundColor Red
         }
     }
     
@@ -23,16 +23,16 @@ function Install-Wezterm {
     if (Test-Path $weztermConfig) {
         $item = Get-Item $weztermConfig
         if ($item.LinkType -eq "SymbolicLink") {
-            Write-Host "✓ WezTerm config symlink exists" -ForegroundColor Green
+            Write-Host "[OK] WezTerm config symlink exists" -ForegroundColor Green
         } else {
-            Write-Host "⚠ Backing up existing config" -ForegroundColor Yellow
+            Write-Host "[WARN] Backing up existing config" -ForegroundColor Yellow
             Move-Item $weztermConfig "$weztermConfig.backup"
             New-Item -ItemType SymbolicLink -Force -Path $weztermConfig -Target $dotfilesWezterm | Out-Null
-            Write-Host "✓ Created WezTerm config symlink" -ForegroundColor Green
+            Write-Host "[OK] Created WezTerm config symlink" -ForegroundColor Green
         }
     } else {
         New-Item -ItemType SymbolicLink -Force -Path $weztermConfig -Target $dotfilesWezterm | Out-Null
-        Write-Host "✓ Created WezTerm config symlink" -ForegroundColor Green
+        Write-Host "[OK] Created WezTerm config symlink" -ForegroundColor Green
     }
     
     # Install FiraCode Nerd Font
@@ -45,7 +45,7 @@ function Install-WeztermFont {
     # Check if font is already installed
     $weztermCheck = wezterm ls-fonts --list-system 2>$null | Select-String -Pattern "FiraCode Nerd Font" -Quiet
     if ($weztermCheck) {
-        Write-Host "✓ FiraCode Nerd Font already installed" -ForegroundColor Green
+        Write-Host "[OK] FiraCode Nerd Font already installed" -ForegroundColor Green
         return
     }
     
@@ -73,14 +73,14 @@ function Install-WeztermFont {
             Copy-Item $font.FullName $userFontsPath -Force
         }
         
-        Write-Host "✓ FiraCode Nerd Font installed ($($fonts.Count) fonts)" -ForegroundColor Green
+        Write-Host "[OK] FiraCode Nerd Font installed ($($fonts.Count) fonts)" -ForegroundColor Green
         
         # Cleanup
         Remove-Item $tempZip -Force -ErrorAction SilentlyContinue
         Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
         
     } catch {
-        Write-Host "✗ Failed to install font: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "[FAIL] Failed to install font: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 

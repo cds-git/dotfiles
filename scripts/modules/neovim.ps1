@@ -4,14 +4,14 @@ function Install-Neovim {
     Write-Host "`n=== Neovim ===" -ForegroundColor Cyan
 
     if (Get-Command nvim -ErrorAction SilentlyContinue) {
-        Write-Host "✓ Neovim already installed" -ForegroundColor Green
+        Write-Host "[OK] Neovim already installed" -ForegroundColor Green
     } else {
         Write-Host "Installing Neovim..." -ForegroundColor Yellow
         winget install Neovim.Neovim --accept-source-agreements --accept-package-agreements
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "✓ Neovim installed" -ForegroundColor Green
+            Write-Host "[OK] Neovim installed" -ForegroundColor Green
         } else {
-            Write-Host "✗ Failed to install Neovim" -ForegroundColor Red
+            Write-Host "[FAIL] Failed to install Neovim" -ForegroundColor Red
             return
         }
     }
@@ -55,16 +55,16 @@ function Install-Neovim {
     if (Test-Path $nvimConfig) {
         $item = Get-Item $nvimConfig
         if ($item.LinkType -eq "SymbolicLink") {
-            Write-Host "Neovim config symlink exists" -ForegroundColor Green
+            Write-Host "[OK] Neovim config symlink exists" -ForegroundColor Green
         } else {
-            Write-Host "Backing up existing config" -ForegroundColor Yellow
+            Write-Host "[WARN] Backing up existing config" -ForegroundColor Yellow
             Move-Item $nvimConfig "$nvimConfig.backup"
             New-Item -ItemType SymbolicLink -Force -Path $nvimConfig -Target $dotfilesNvim | Out-Null
-            Write-Host "Created Neovim config symlink" -ForegroundColor Green
+            Write-Host "[OK] Created Neovim config symlink" -ForegroundColor Green
         }
     } else {
         New-Item -ItemType SymbolicLink -Force -Path $nvimConfig -Target $dotfilesNvim | Out-Null
-        Write-Host "Created Neovim config symlink" -ForegroundColor Green
+        Write-Host "[OK] Created Neovim config symlink" -ForegroundColor Green
     }
 }
 
