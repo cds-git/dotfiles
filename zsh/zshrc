@@ -36,6 +36,10 @@ fi
 
 zinit cdreplay -q
 
+# Editor
+export EDITOR='nvim'
+export VISUAL='nvim'
+
 # Keybindings
 bindkey -e
 bindkey '^p' history-search-backward
