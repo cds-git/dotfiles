@@ -12,9 +12,7 @@ Set-Alias lg lazygit
 Set-Alias k kubectl
 
 # Modern CLI tool aliases (remove built-in aliases and create functions)
-Remove-Item Alias:cat -Force -ErrorAction SilentlyContinue
 Remove-Item Alias:ls -Force -ErrorAction SilentlyContinue
-function cat { bat $args }
 function ls { eza --icons $args }
 function ll { eza --icons -lha $args }
 
