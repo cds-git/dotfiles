@@ -74,6 +74,22 @@ install_opencode_config() {
         echo "✓ OpenCode skills configured"
     fi
 
+    # Symlink tui.json
+    local tui_file="$config_dir/tui.json"
+    local dotfiles_tui="$HOME/dotfiles/opencode/tui.json"
+
+    if [ -L "$tui_file" ]; then
+        echo "✓ OpenCode tui.json already configured"
+    elif [ -f "$tui_file" ]; then
+        echo "⚠ Backing up existing tui.json"
+        mv "$tui_file" "$tui_file.backup"
+        ln -sf "$dotfiles_tui" "$tui_file"
+        echo "✓ OpenCode tui.json configured"
+    else
+        ln -sf "$dotfiles_tui" "$tui_file"
+        echo "✓ OpenCode tui.json configured"
+    fi
+
     # Symlink agents directory
     local agents_dir="$config_dir/agents"
     local dotfiles_agents_dir="$HOME/dotfiles/opencode/agents"

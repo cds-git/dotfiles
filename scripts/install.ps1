@@ -57,7 +57,6 @@ $modules = @(
     'lazydocker.ps1'
     'yazi.ps1'
     'lazysql.ps1'
-    'opencode.ps1'
     'powershell.ps1'
 )
 
@@ -87,7 +86,6 @@ Install-Eza
 Install-Lazydocker
 Install-Lazysql
 Install-Yazi
-Install-OpenCode
 
 Write-Host ''
 Write-Host '--- Terminal and Utilities ---' -ForegroundColor Magenta
@@ -103,7 +101,6 @@ Install-GitHooks
 Install-BatConfig
 Install-LazydockerConfig
 Install-YaziConfig
-Install-OpenCodeConfig
 Install-PowerShellProfile
 
 Write-Host ''
