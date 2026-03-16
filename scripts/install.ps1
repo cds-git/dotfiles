@@ -109,17 +109,27 @@ Write-Host 'Installation Complete!' -ForegroundColor Green
 Write-Host '========================================' -ForegroundColor Green
 Write-Host ''
 
-$gitName = Read-Host 'Enter your git user.name'
-$gitEmail = Read-Host 'Enter your git user.email'
+$existingName = git config --global user.name 2>$null
+$existingEmail = git config --global user.email 2>$null
 
-if ($gitName) {
-    git config --global user.name $gitName
-    Write-Host "[OK] Set git user.name to: $gitName" -ForegroundColor Green
+if (-not $existingName) {
+    $gitName = Read-Host 'Enter your git user.name'
+    if ($gitName) {
+        git config --global user.name $gitName
+        Write-Host "[OK] Set git user.name to: $gitName" -ForegroundColor Green
+    }
+} else {
+    Write-Host "[OK] Git user.name already set: $existingName" -ForegroundColor Green
 }
 
-if ($gitEmail) {
-    git config --global user.email $gitEmail
-    Write-Host "[OK] Set git user.email to: $gitEmail" -ForegroundColor Green
+if (-not $existingEmail) {
+    $gitEmail = Read-Host 'Enter your git user.email'
+    if ($gitEmail) {
+        git config --global user.email $gitEmail
+        Write-Host "[OK] Set git user.email to: $gitEmail" -ForegroundColor Green
+    }
+} else {
+    Write-Host "[OK] Git user.email already set: $existingEmail" -ForegroundColor Green
 }
 
 Write-Host ''

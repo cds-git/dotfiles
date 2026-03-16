@@ -204,17 +204,27 @@ echo 'Installation Complete!'
 echo '========================================'
 echo ""
 
-read -p "Enter your git user.name: " git_name
-read -p "Enter your git user.email: " git_email
+existing_name=$(git config --global user.name 2>/dev/null)
+existing_email=$(git config --global user.email 2>/dev/null)
 
-if [ -n "$git_name" ]; then
-    git config --global user.name "$git_name"
-    echo "✓ Set git user.name to: $git_name"
+if [ -z "$existing_name" ]; then
+    read -p "Enter your git user.name: " git_name
+    if [ -n "$git_name" ]; then
+        git config --global user.name "$git_name"
+        echo "✓ Set git user.name to: $git_name"
+    fi
+else
+    echo "✓ Git user.name already set: $existing_name"
 fi
 
-if [ -n "$git_email" ]; then
-    git config --global user.email "$git_email"
-    echo "✓ Set git user.email to: $git_email"
+if [ -z "$existing_email" ]; then
+    read -p "Enter your git user.email: " git_email
+    if [ -n "$git_email" ]; then
+        git config --global user.email "$git_email"
+        echo "✓ Set git user.email to: $git_email"
+    fi
+else
+    echo "✓ Git user.email already set: $existing_email"
 fi
 
 echo ""
