@@ -4,7 +4,7 @@
 
 [tools]
 # Runtimes
-dotnet = "10"
+dotnet = "latest"
 node = "lts"
 
 # CLI tools (aqua backend — pre-built binaries, no compilation)
@@ -22,3 +22,5 @@ starship = "latest"
 "aqua:sharkdp/fd" = "latest"
 "aqua:aristocratos/btop" = "latest"
 "github:jorgerojas26/lazysql" = "latest"
+
+[env]

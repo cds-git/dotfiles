@@ -57,7 +57,7 @@ function Install-Bat {
 function Install-BatConfig {
     Write-Host "`n=== bat Configuration ===" -ForegroundColor Cyan
     
-    $dotfilesRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+    $dotfilesRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
     $source = Join-Path $dotfilesRoot 'bat\config'
     $target = "$env:APPDATA\bat\config"
     $targetDir = Split-Path $target -Parent
