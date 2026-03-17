@@ -31,9 +31,11 @@ config.term = "xterm-256color"
 config.alternate_buffer_wheel_scroll_speed = 1
 config.bypass_mouse_reporting_modifiers = "SHIFT" -- Hold Shift to bypass app mouse handling
 
--- Cursor - force_reverse_video_cursor makes text under block cursor always visible
+-- Cursor
 config.default_cursor_style = "BlinkingBlock"
 config.force_reverse_video_cursor = true
+config.cursor_fg_color = "#1e1e2e"
+config.cursor_bg_color = "#cdd6f4"
 
 -- Tabs
 config.hide_tab_bar_if_only_one_tab = false
