@@ -9,13 +9,13 @@
                 "apiKey": "dummy"
             },
             "models": {
-                "qwen3-coder-next-fp8": {
-                    "name": "Qwen3 Coder Next",
-                    "limit": {
-                        "context": 150000,
-                        "output": 32768
-                    }
-                }
+                "gemma-4-31b-it": {
+                  "name": "Gemma 4 31B",
+                  "limit": {
+                      "context": 200000,
+                      "output": 32768
+                  }
+              }
             }
         }
     },
