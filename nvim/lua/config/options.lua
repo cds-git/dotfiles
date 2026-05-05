@@ -42,8 +42,13 @@ vim.opt.splitbelow = true
 -- i-ci-ve: vertical bar (25% width) in insert modes
 -- r-cr: horizontal bar (20% height) in replace modes
 -- o: horizontal bar (50% height) in operator-pending mode
+-- Cursor/lCursor: name the highlight groups so nvim emits OSC 12 with the
+-- Cursor highlight's bg on every mode change. Without this, the terminal's
+-- cursor color can be left in a bad state by another app in the same wezterm
+-- window (e.g. OpenCode in a sibling tmux window) and the glyph under the
+-- block cursor renders invisibly.
 -- Add blinking to all modes
-vim.opt.guicursor = "n-v-c:block-blinkon300-blinkwait200-blinkoff300,i-ci-ve:ver25-blinkon300-blinkwait200-blinkoff300,r-cr:hor20,o:hor50"
+vim.opt.guicursor = "n-v-c:block-Cursor/lCursor-blinkon300-blinkwait200-blinkoff300,i-ci-ve:ver25-Cursor/lCursor-blinkon300-blinkwait200-blinkoff300,r-cr:hor20-Cursor/lCursor,o:hor50-Cursor/lCursor"
 
 vim.opt.termguicolors = true
 

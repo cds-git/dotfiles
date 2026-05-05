@@ -33,7 +33,12 @@ config.bypass_mouse_reporting_modifiers = "SHIFT" -- Hold Shift to bypass app mo
 
 -- Cursor
 config.default_cursor_style = "BlinkingBlock"
-config.force_reverse_video_cursor = true
+-- force_reverse_video_cursor doesn't work reliably for nvim inside tmux when
+-- the colorscheme uses transparent backgrounds: cells are emitted with
+-- bg=default, reverse-video resolves the cursor fg to the same default, and
+-- the glyph renders invisible. Use explicit cursor colors so the block is
+-- always painted in cursor_bg with the glyph drawn on top in cursor_fg.
+config.force_reverse_video_cursor = false
 config.cursor_fg_color = "#1e1e2e"
 config.cursor_bg_color = "#cdd6f4"
 
