@@ -87,7 +87,7 @@ vim.diagnostic.config({
 })
 
 -- Disable LSP log because it's slowing down Neovim
-vim.lsp.set_log_level("OFF")
+vim.lsp.log.set_level("OFF")
 
 -- set no swap files
 vim.opt.swapfile = false

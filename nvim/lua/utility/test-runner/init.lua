@@ -37,9 +37,9 @@ local function find_method_at_cursor()
 	end
 
 	local method_name = nil
-	local ok, ts_utils = pcall(require, "nvim-treesitter.ts_utils")
-	if ok then
-		local node = ts_utils.get_node_at_cursor()
+	-- Use the core treesitter API (nvim-treesitter's `main` branch removed ts_utils).
+	local ok, node = pcall(vim.treesitter.get_node)
+	if ok and node then
 		while node do
 			if node:type() == "method_declaration" then
 				for child in node:iter_children() do
