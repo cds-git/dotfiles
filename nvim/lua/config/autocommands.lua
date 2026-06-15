@@ -21,8 +21,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		-- LSP actions
 		map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, "See available code actions")
 		map("n", "<leader>rn", vim.lsp.buf.rename, "[LSP] Rename")
-		map("n", "<leader>rs", ":LspRestart<CR>", "Restart LSP")
-		map("n", "<leader>rr", ":Roslyn restart<CR>", "Restart Roslyn LSP")
+		map("n", "<leader>rs", ":lsp restart<CR>", "Restart LSP")
 		map("n", "<leader>rt", ":Roslyn target<CR>", "Select solution file with Roslyn LSP")
 
 		-- workspace
