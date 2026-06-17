@@ -113,7 +113,4 @@ return {
 			-- "roslyn_ls", -- enable when roslyn.nvim is no longer needed
 		})
 	end,
-	dependencies = {
-		{ "Issafalcon/lsp-overloads.nvim", event = "BufReadPre" },
-	},
 }

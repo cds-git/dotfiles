@@ -30,43 +30,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("n", "<leader>wl", function()
 			print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
 		end, "List workspace folders")
-
-		local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
-		if client:supports_method("textDocument/signatureHelp") then
-			local lsp_overloads_ok, lsp_overloads = pcall(require, "lsp-overloads")
-			if lsp_overloads_ok then
-				lsp_overloads.setup(client, {
-					-- UI options are mostly the same as those passed to vim.lsp.util.open_floating_preview
-					ui = {
-						border = "rounded", -- The border to use for the signature popup window. Accepts same border values as |nvim_open_win()|.
-						floating_window_above_cur_line = true, -- Attempt to float the popup above the cursor position
-						-- (note, if the height of the float would be greater than the space left above the cursor, it will default
-						-- to placing the float below the cursor. The max_height option allows for finer tuning of this)
-					},
-					keymaps = {
-						next_signature = "<C-j>",
-						previous_signature = "<C-k>",
-						next_parameter = "<C-l>",
-						previous_parameter = "<C-h>",
-						close_signature = "<A-s>",
-					},
-					display_automatically = false, -- Uses trigger characters to automatically display the signature overloads when typing a method signature
-				})
-
-				vim.keymap.set(
-					"n",
-					"<leader>sh",
-					"<cmd>LspOverloadsSignature<CR>",
-					{ buffer = args.buf, desc = "Show signature help", remap = true }
-				)
-				vim.keymap.set(
-					"i",
-					"<c-k>",
-					"<cmd>LspOverloadsSignature<CR>",
-					{ buffer = args.buf, desc = "Show signature help", remap = true }
-				)
-			end
-		end
 	end,
 })
 
