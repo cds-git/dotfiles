@@ -48,7 +48,7 @@ return {
 		},
 		-- My super-TAB configuration
 		keymap = {
-			["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
+			["<A-.>"] = { "show", "show_documentation", "hide_documentation" },
 			["<C-e>"] = { "hide", "fallback" },
 			["<CR>"] = { "accept", "fallback" },
 			["<Tab>"] = {
