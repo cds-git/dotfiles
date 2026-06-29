@@ -3,10 +3,10 @@
 
 #Requires -RunAsAdministrator
 
-Write-Host '╔═══════════════════════════════════════╗' -ForegroundColor Cyan
-Write-Host '║   Dotfiles Installation Script        ║' -ForegroundColor Cyan
-Write-Host '║   Greatest config known to mankind    ║' -ForegroundColor Cyan
-Write-Host '╚═══════════════════════════════════════╝' -ForegroundColor Cyan
+Write-Host '=========================================' -ForegroundColor Cyan
+Write-Host '   Dotfiles Installation Script' -ForegroundColor Cyan
+Write-Host '   Greatest config known to mankind' -ForegroundColor Cyan
+Write-Host '=========================================' -ForegroundColor Cyan
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ModulesDir = Join-Path $ScriptDir 'modules'
@@ -51,6 +51,7 @@ $modules = @(
     'eza.ps1'
     'git.ps1'
     'wezterm.ps1'
+    'glazewm.ps1'
     'neovim.ps1'
     'starship.ps1'
     'lazygit.ps1'
@@ -90,6 +91,7 @@ Install-Yazi
 Write-Host ''
 Write-Host '--- Terminal and Utilities ---' -ForegroundColor Magenta
 Install-Wezterm
+Install-GlazeWM
 Install-Starship
 Install-Lazygit
 Install-Neovim

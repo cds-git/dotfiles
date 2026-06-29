@@ -39,8 +39,14 @@ config.default_cursor_style = "BlinkingBlock"
 -- the glyph renders invisible. Use explicit cursor colors so the block is
 -- always painted in cursor_bg with the glyph drawn on top in cursor_fg.
 config.force_reverse_video_cursor = false
-config.cursor_fg_color = "#1e1e2e"
-config.cursor_bg_color = "#cdd6f4"
+-- Cursor colors are overrides applied on top of the color_scheme; they live
+-- under config.colors (cursor_fg/cursor_bg/cursor_border), not as top-level
+-- config fields.
+config.colors = {
+	cursor_fg = "#1e1e2e",
+	cursor_bg = "#cdd6f4",
+	cursor_border = "#cdd6f4",
+}
 
 -- Tabs
 config.hide_tab_bar_if_only_one_tab = false
