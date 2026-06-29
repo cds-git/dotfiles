@@ -147,17 +147,8 @@ config.keys = {
 		action = act.ScrollByPage(0.5),
 	},
 
-	-- Alt+Arrow scroll shortcuts (outside tmux only)
-	{
-		key = "UpArrow",
-		mods = "ALT",
-		action = act.ScrollByLine(-1),
-	},
-	{
-		key = "DownArrow",
-		mods = "ALT",
-		action = act.ScrollByLine(1),
-	},
+	-- (Removed Alt+Up/Down scroll: they shadowed tmux's Alt-arrow pane nav.
+	-- Use Ctrl+Shift+j/k to scroll by line instead.)
 
 	-- TAB MANAGEMENT
 	-- Create new tab with default shell
