@@ -4,16 +4,22 @@ function Install-Neovim {
     Write-Host "`n=== Neovim ===" -ForegroundColor Cyan
 
     if (Get-Command nvim -ErrorAction SilentlyContinue) {
-        Write-Host "[OK] Neovim already installed" -ForegroundColor Green
+        $current = (nvim --version 2>$null | Select-Object -First 1)
+        Write-Host "Current Neovim version: $current" -ForegroundColor Yellow
+        Write-Host "Upgrading to latest stable Neovim..." -ForegroundColor Yellow
     } else {
-        Write-Host "Installing Neovim..." -ForegroundColor Yellow
-        winget install Neovim.Neovim --accept-source-agreements --accept-package-agreements
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "[OK] Neovim installed" -ForegroundColor Green
-        } else {
-            Write-Host "[FAIL] Failed to install Neovim" -ForegroundColor Red
-            return
-        }
+        Write-Host "Installing latest stable Neovim..." -ForegroundColor Yellow
+    }
+
+    # winget install upgrades the package in place when already present
+    winget install Neovim.Neovim --accept-source-agreements --accept-package-agreements
+    if ($LASTEXITCODE -eq 0) {
+        Refresh-EnvironmentPath
+        $version = (nvim --version 2>$null | Select-Object -First 1)
+        Write-Host "[OK] Neovim installed ($version)" -ForegroundColor Green
+    } else {
+        Write-Host "[FAIL] Failed to install Neovim" -ForegroundColor Red
+        return
     }
 
     # Install utilities for Neovim
