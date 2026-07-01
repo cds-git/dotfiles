@@ -19,6 +19,7 @@
             }
         }
     },
+    "lsp": true,
     "share": "disabled",
     "permission": {
         "*": "ask",
