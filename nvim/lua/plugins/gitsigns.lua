@@ -24,6 +24,13 @@ return {
 
 			-- diff
 			vim.keymap.set("n", "<leader>gD", gitsigns.diffthis, { desc = "[Gitsigns] Diff this" })
+
+			-- stage / reset hunks (visual mode stages just the selected lines)
+			vim.keymap.set({ "n", "v" }, "<leader>hs", "<cmd>Gitsigns stage_hunk<CR>", { buffer = bufnr, desc = "[Gitsigns] Stage hunk" })
+			vim.keymap.set({ "n", "v" }, "<leader>hr", "<cmd>Gitsigns reset_hunk<CR>", { buffer = bufnr, desc = "[Gitsigns] Reset hunk" })
+			vim.keymap.set("n", "<leader>hS", gitsigns.stage_buffer, { buffer = bufnr, desc = "[Gitsigns] Stage buffer" })
+			vim.keymap.set("n", "<leader>hR", gitsigns.reset_buffer, { buffer = bufnr, desc = "[Gitsigns] Reset buffer" })
+			vim.keymap.set("n", "<leader>hu", gitsigns.undo_stage_hunk, { buffer = bufnr, desc = "[Gitsigns] Undo stage hunk" })
 		end,
 	},
 }

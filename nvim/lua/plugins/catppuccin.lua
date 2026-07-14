@@ -22,15 +22,20 @@ return {
 			integrations = {
 				blink_cmp = true,
 				gitsigns = true,
-				neotest = true,
 				neotree = true,
 				treesitter = true,
 				treesitter_context = true,
 				which_key = true,
 				semantic_tokens = true,
 				snacks = true,
-				notify = true,
-				noice = true,
+				dap = true,
+				dap_ui = true,
+				mason = true,
+				render_markdown = true,
+				diffview = true,
+				grug_far = true,
+				nvim_surround = true,
+				dadbod_ui = true,
 			},
 		})
 		vim.cmd.colorscheme("catppuccin")

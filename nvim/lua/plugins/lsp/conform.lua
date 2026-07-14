@@ -25,7 +25,7 @@ return {
 		conform.setup(opts)
 
 		vim.keymap.set("n", "<leader>fm", function()
-			conform.format({ async = true, lsp_fallback = true })
+			conform.format({ async = true, lsp_format = "fallback" })
 		end, { desc = "Format file" })
 	end,
 }

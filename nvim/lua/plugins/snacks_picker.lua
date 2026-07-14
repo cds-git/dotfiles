@@ -5,6 +5,7 @@ return {
 			enabled = true,
 			prompt = "   ",
 			ui_select = true,
+			matcher = { frecency = true }, -- boost frequently/recently used items
 			formatters = {
 				file = {
 					filename_first = true,

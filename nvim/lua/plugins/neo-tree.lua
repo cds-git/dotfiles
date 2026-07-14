@@ -7,7 +7,14 @@ return {
 		"MunifTanjim/nui.nvim",
 		-- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
 	},
-	config = function()
+	opts = {
+		filesystem = {
+			use_libuv_file_watcher = true, -- auto-refresh on external file changes
+		},
+	},
+	config = function(_, opts)
+		require("neo-tree").setup(opts)
+
 		vim.keymap.set(
 			"n",
 			"<leader>e",
