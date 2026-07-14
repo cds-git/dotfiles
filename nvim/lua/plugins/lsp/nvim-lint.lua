@@ -14,7 +14,7 @@ return {
 
 		local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
 
-		vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
+		vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost", "InsertLeave" }, {
 			group = lint_augroup,
 			callback = function()
 				local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients

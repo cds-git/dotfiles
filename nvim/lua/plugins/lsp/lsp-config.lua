@@ -1,5 +1,9 @@
 return {
 	"neovim/nvim-lspconfig",
+	-- Load just before the first real file buffer. BufReadPre fires before
+	-- FileType (which triggers attach), so LSP still starts at the earliest
+	-- possible moment while staying off the pure startup path (dashboard).
+	event = { "BufReadPre", "BufNewFile" },
 	config = function()
 		-- Improve LSP hover / signature floats. Some servers (Roslyn) emit XML-doc
 		-- text as markdown with things Neovim's renderer shows raw:

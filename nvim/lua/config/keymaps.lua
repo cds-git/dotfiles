@@ -26,9 +26,6 @@ map("v", "<A-k>", ":m '<-2<cr>gv=gv", { desc = "Move up" })
 map({ "n", "v" }, "<leader>y", '"+y', { desc = "Copy to clipboard" })
 map("n", "<leader>Y", '"+Y', { desc = "Copy to clipboard" })
 
--- Window splitting
-map("n", "<leader>sx", ":split<Return><C-w>w", { desc = "[Window] Horisontal Split" })
-map("n", "<leader>sv", ":vsplit<Return><C-w>w", { desc = "[Window] Vertical Split" })
 map("n", "<leader>q", "<C-w>q", { desc = "[Window] Quit" })
 
 -- Window navigations

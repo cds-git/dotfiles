@@ -11,6 +11,6 @@ return {
 	ft = { "markdown" },
 	opts = {},
 	keys = {
-		{ "<leader>mp", "<cmd>RenderMarkdown toggle<CR>", desc = "Toggle markdown render" },
+		{ "<leader>um", "<cmd>RenderMarkdown toggle<CR>", desc = "Toggle Markdown Render" },
 	},
 }

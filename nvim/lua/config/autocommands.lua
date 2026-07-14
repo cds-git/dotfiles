@@ -33,25 +33,17 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	end,
 })
 
-vim.api.nvim_create_autocmd({ "BufRead", "BufEnter" }, {
-	pattern = { "*.props" },
-	callback = function()
-		vim.bo.filetype = "xml"
-	end,
-})
-
-vim.api.nvim_create_autocmd({ "BufRead", "BufEnter" }, {
-	pattern = { "*.component.html" },
-	callback = function()
-		vim.bo.filetype = "htmlangular"
-	end,
-})
-
-vim.api.nvim_create_autocmd({ "BufRead", "BufEnter" }, {
-	pattern = { "*.json" },
-	callback = function()
-		vim.bo.filetype = "jsonc"
-	end,
+-- Filetype overrides. Registered once via vim.filetype.add (resolved at buffer
+-- creation) instead of BufRead/BufEnter autocmds, which re-ran the whole
+-- FileType chain on every window switch.
+vim.filetype.add({
+	extension = {
+		props = "xml",
+		json = "jsonc",
+	},
+	pattern = {
+		[".*%.component%.html"] = "htmlangular",
+	},
 })
 
 -- .NET test runner

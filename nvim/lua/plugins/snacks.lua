@@ -22,14 +22,14 @@ return {
 	},
 	keys = {
 		{
-			"<leader>z",
+			"<leader>uz",
 			function()
 				Snacks.zen()
 			end,
 			desc = "Toggle Zen Mode",
 		},
 		{
-			"<leader>Z",
+			"<leader>uZ",
 			function()
 				Snacks.zen.zoom()
 			end,
@@ -50,7 +50,7 @@ return {
 			desc = "Select Scratch Buffer",
 		},
 		{
-			"<leader>n",
+			"<leader>uN",
 			function()
 				Snacks.notifier.show_history()
 			end,
