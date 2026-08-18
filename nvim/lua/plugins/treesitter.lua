@@ -9,6 +9,26 @@ return {
 		config = function()
 			require("nvim-treesitter").setup()
 
+			-- Highlight .razor with the `html` parser instead of `razor`.
+			--
+			-- The razor grammar can't parse real Blazor markup: `@* ... *@`
+			-- comments inside an element, unclosed void elements (`<br>`) and an
+			-- `@expr` on its own line before a tag (parsed as `context.Label < br`)
+			-- all fail, and one failure turns the whole file's root into an ERROR
+			-- node. It also has no nodes for tag names or attributes at all, so it
+			-- delegates every tag to an html injection over each `(element)` with
+			-- `injection.combined` -- which on a broken tree collapses into a
+			-- single region built from ~60 overlapping, out-of-order ranges. The
+			-- highlighter only parses the visible range, so which of those ranges
+			-- have materialised (and therefore what colour a line gets) changes as
+			-- you scroll.
+			--
+			-- The html parser handles the same file cleanly (root `document`,
+			-- errors only inside `@code {}`), and Roslyn's semantic tokens sit on
+			-- top at priority 125 for everything C#. Only tradeoff: `@* ... *@`
+			-- comments lose their comment colour, since neither layer claims them.
+			vim.treesitter.language.register("html", "razor")
+
 			-- The `main` branch dropped the old `auto_install`/`ensure_installed`
 			-- options, so we replicate auto-install: when a buffer's filetype has
 			-- a parser available upstream, install it on demand (once), then enable
