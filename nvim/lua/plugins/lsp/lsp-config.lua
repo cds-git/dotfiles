@@ -104,45 +104,43 @@ return {
 			-- root_markers = { ".git" },
 		})
 
+		-- yamlls validates a file against every schema whose pattern matches it.
+		-- There used to be a blanket `kubernetes = { "*.yaml", ...15 negations... }`
+		-- mapping here, but yaml-language-server (1.24.0) silently IGNORES
+		-- `!`-prefixed exclusions -- only positive patterns are honoured. So every
+		-- yaml file (helm values, flux, plain config) was being checked against the
+		-- strict Kubernetes object schema and lit up with bogus errors like
+		-- `Property enabled is not allowed`.
+		--
+		-- Now: only schemas that key off an exact filename are mapped. Anything else
+		-- opts in per file with a first-line modeline:
+		--   # yaml-language-server: $schema=<url>
+		--
+		-- Prefer a specific kind's schema when opting in. The kubernetes `all.json`
+		-- bundle is a oneOf across every kind, so it reports "Matches multiple
+		-- schemas when only one must validate" even on a valid manifest.
 		vim.lsp.config("yamlls", {
 			settings = {
 				yaml = {
 					schemas = {
-						kubernetes = {
-							"*.yaml",
-							-- Helm
-							"!**/values.yaml",
-							"!**/values-*.yaml",
-							"!**/values/*.yaml",
-							"!**/value-files/**/*.yaml",
-							"!**/templates/**/*.yaml",
-							"!Chart.yaml",
-							"!chart.yaml",
-							-- Flux GitOps (own CRD schemas below)
-							"!**/hr-*.yaml",
-							"!**/patch-image-tags.yaml",
-							"!**/image-automations.yaml",
-							"!**/image-update-automations.yaml",
-							"!**/flux-system/**/*.yaml",
-							-- Other tools
-							"!kustomization.yaml",
-							"!helmfile.yaml",
-							"!docker-compose*.yaml",
-							"!.github/**/*.yaml",
-						},
 						["http://json.schemastore.org/kustomization"] = "kustomization.{yml,yaml}",
 						["http://json.schemastore.org/chart"] = "Chart.{yml,yaml}",
 						["http://json.schemastore.org/github-workflow"] = ".github/workflows/*",
 						["http://json.schemastore.org/github-action"] = ".github/action.{yml,yaml}",
-						["http://json.schemastore.org/compose"] = "docker-compose*.{yml,yaml}",
+						-- docker-compose is intentionally absent: schemaStore's catalog
+						-- already maps it (and covers compose.yaml / compose.*.yaml too).
+						-- The old http://json.schemastore.org/compose URL now 404s, which
+						-- surfaced as "Unable to load schema ... No content." on every file.
 						["http://json.schemastore.org/helmfile"] = "helmfile.{yml,yaml}",
 
 						-- Flux CRDs (datreeio/CRDs-catalog).
-						-- Only mapped here for single-kind files; mixed-kind multi-doc files
-						-- (e.g. image-automations.yaml) must use per-doc modelines instead.
+						-- Only mapped for files that are a COMPLETE HelmRelease. Kustomize
+						-- patches (patch-image-tags.yaml) are partial documents, so the CRD's
+						-- required fields are legitimately absent -- mapping them here produced
+						-- 25 bogus `Missing property "interval"`. Mixed-kind multi-doc files
+						-- (e.g. image-automations.yaml) need per-doc modelines instead.
 						["https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/helm.toolkit.fluxcd.io/helmrelease_v2.json"] = {
 							"**/hr-*.yaml",
-							"**/patch-image-tags.yaml",
 						},
 					},
 					schemaStore = {
