@@ -17,7 +17,7 @@ return {
 				auto_show_delay_ms = 250,
 				update_delay_ms = 50,
 				treesitter_highlighting = true,
-				window = { border = "rounded" },
+				window = { border = vim.g.border_style },
 			},
 			list = {
 				selection = {
@@ -26,7 +26,7 @@ return {
 				},
 			},
 			menu = {
-				border = "rounded",
+				border = vim.g.border_style,
 				draw = {
 					columns = {
 						{ "label", "label_description", gap = 1 },
@@ -40,7 +40,7 @@ return {
 		-- Experimental signature help support
 		signature = {
 			enabled = false,
-			window = { border = "rounded" },
+			window = { border = vim.g.border_style },
 		},
 		-- My super-TAB configuration
 		keymap = {

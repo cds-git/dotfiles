@@ -60,8 +60,13 @@ vim.opt.completeopt = "menuone,noselect"
 -- Mode is shown in lualine, so we don't need it one line below
 vim.opt.showmode = false
 
--- Rounded borders
-vim.opt.winborder = "rounded"
+-- Border style for every floating window in this config. This is the only
+-- place to change it: plugin specs and the utility UIs all read
+-- vim.g.border_style, and config.options loads before config.lazy so the
+-- value is set before any plugin spec is evaluated.
+-- Valid: "single", "rounded", "double", "solid", "shadow", "none".
+vim.g.border_style = "single"
+vim.opt.winborder = vim.g.border_style
 
 -- Inline hints
 vim.diagnostic.config({

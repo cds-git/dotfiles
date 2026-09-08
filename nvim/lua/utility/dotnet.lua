@@ -171,7 +171,7 @@ M.project_view = function()
 			col = math.floor((vim.o.columns - width) / 2),
 			row = math.floor((vim.o.lines - height) / 2),
 			style = "minimal",
-			border = "rounded",
+			border = vim.g.border_style,
 			title = " " .. project.name .. " ",
 			title_pos = "center",
 		})
