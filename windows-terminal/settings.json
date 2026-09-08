@@ -19,7 +19,7 @@
             "colorScheme": "Catppuccin Mocha",
             "font": {
                 "face": "FiraCode Nerd Font",
-                "size": 13.2,
+                "size": 13,
                 "features": {
                     "liga": 1,
                     "calt": 1
@@ -28,7 +28,7 @@
             "cursorShape": "filledBox",
             "padding": "0",
             "scrollbarState": "visible",
-            "antialiasingMode": "cleartype"
+            "antialiasingMode": "grayscale"
         },
         "list": [
             {
