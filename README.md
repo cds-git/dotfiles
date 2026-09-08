@@ -44,11 +44,19 @@ On Windows, tools are installed via winget/chocolatey/GitHub releases through Po
 
 ### Windows
 
-Run as Administrator:
+Run as Administrator. The default is deliberately minimal - if the real work
+happens in WSL, all Windows needs is a themed terminal and a working distro:
 
 ```powershell
-.\scripts\install.ps1
+.\scripts\install.ps1                # Windows Terminal config + WSL setup
+.\scripts\install.ps1 --tools        # ...plus the CLI/dev toolchain
+.\scripts\install.ps1 --twm          # ...plus GlazeWM + Zebar
+.\scripts\install.ps1 --all          # everything
 ```
+
+`--tools` covers .NET/Node/Python, bat, eza, yazi, neovim, starship, lazygit,
+lazydocker, lazysql, the git config, and the PowerShell profile. Flags combine,
+and `-Tools` / `-Twm` work too. `--help` lists them.
 
 ### Linux
 

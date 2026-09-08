@@ -1,12 +1,73 @@
 # Master installation script for dotfiles
 # Run as Administrator
+#
+# Usage:
+#   .\scripts\install.ps1                Windows Terminal config + WSL setup
+#   .\scripts\install.ps1 --tools        ...plus the full CLI/dev toolchain
+#   .\scripts\install.ps1 --twm          ...plus GlazeWM + Zebar
+#   .\scripts\install.ps1 --tools --twm  both
+#   .\scripts\install.ps1 --all          everything
+#
+# The default is deliberately small: if the actual work happens in WSL, all
+# Windows needs is a themed terminal and a working distro. Everything else is
+# opt-in.
 
 #Requires -RunAsAdministrator
+
+[CmdletBinding()]
+param(
+    [switch]$Tools,
+    [switch]$Twm,
+    [switch]$All,
+    [switch]$Help,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$ExtraArgs
+)
+
+# PowerShell binds -Tools natively; accept GNU-style --tools too, since that
+# is how these are documented and how they get typed in practice.
+foreach ($arg in $ExtraArgs) {
+    switch ($arg.ToLowerInvariant()) {
+        '--tools' { $Tools = $true }
+        '--twm' { $Twm = $true }
+        '--all' { $All = $true }
+        '--help' { $Help = $true }
+        '-h' { $Help = $true }
+        default {
+            Write-Host "Unknown option: $arg" -ForegroundColor Red
+            $Help = $true
+        }
+    }
+}
+
+if ($All) { $Tools = $true; $Twm = $true }
+
+if ($Help) {
+    Write-Host ''
+    Write-Host 'Usage: .\scripts\install.ps1 [--tools] [--twm] [--all]' -ForegroundColor Cyan
+    Write-Host ''
+    Write-Host '  (no flags)  Windows Terminal + its Catppuccin config, and WSL setup' -ForegroundColor Gray
+    Write-Host '  --tools     .NET/Node/Python, bat, eza, yazi, neovim, starship,' -ForegroundColor Gray
+    Write-Host '              lazygit, lazydocker, lazysql, git config, PS profile' -ForegroundColor Gray
+    Write-Host '  --twm       GlazeWM + Zebar tiling window manager' -ForegroundColor Gray
+    Write-Host '  --all       everything above' -ForegroundColor Gray
+    Write-Host ''
+    exit 0
+}
 
 Write-Host '=========================================' -ForegroundColor Cyan
 Write-Host '   Dotfiles Installation Script' -ForegroundColor Cyan
 Write-Host '   Greatest config known to mankind' -ForegroundColor Cyan
 Write-Host '=========================================' -ForegroundColor Cyan
+
+$selected = @('windows terminal + wsl')
+if ($Tools) { $selected += 'tools' }
+if ($Twm) { $selected += 'twm' }
+Write-Host ''
+Write-Host ('Selected: ' + ($selected -join ', ')) -ForegroundColor Yellow
+if (-not $Tools -and -not $Twm) {
+    Write-Host 'Add --tools and/or --twm for more (--help to see what they cover)' -ForegroundColor Gray
+}
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ModulesDir = Join-Path $ScriptDir 'modules'
@@ -178,24 +239,31 @@ function Wait-ForCommand {
     return $false
 }
 
+# Load only the modules the selected groups need.
+$modules = @('windows-terminal.ps1', 'wsl.ps1')
+
+if ($Tools) {
+    $modules += @(
+        'dev-tools.ps1'
+        'bat.ps1'
+        'eza.ps1'
+        'git.ps1'
+        'neovim.ps1'
+        'starship.ps1'
+        'lazygit.ps1'
+        'lazydocker.ps1'
+        'yazi.ps1'
+        'lazysql.ps1'
+        'powershell.ps1'
+    )
+}
+
+if ($Twm) {
+    $modules += 'glazewm.ps1'
+}
+
 Write-Host ''
 Write-Host 'Loading modules...' -ForegroundColor Yellow
-$modules = @(
-    'dev-tools.ps1'
-    'bat.ps1'
-    'eza.ps1'
-    'git.ps1'
-    'windows-terminal.ps1'
-    'glazewm.ps1'
-    'neovim.ps1'
-    'starship.ps1'
-    'lazygit.ps1'
-    'lazydocker.ps1'
-    'yazi.ps1'
-    'lazysql.ps1'
-    'powershell.ps1'
-)
-
 foreach ($module in $modules) {
     $modulePath = Join-Path $ModulesDir $module
     if (Test-Path $modulePath) {
@@ -211,65 +279,87 @@ Write-Host '========================================' -ForegroundColor Cyan
 Write-Host 'Starting installation...' -ForegroundColor Cyan
 Write-Host '========================================' -ForegroundColor Cyan
 
+# --- Always: the terminal and a working WSL ---
 Write-Host ''
-Write-Host '--- Development Tools ---' -ForegroundColor Magenta
-Install-Chocolatey
-Install-DotNetSDK
-Install-NodeJS
-Install-Python
-Install-Bat
-Install-Eza
-Install-Lazydocker
-Install-Lazysql
-Install-Yazi
-
-Write-Host ''
-Write-Host '--- Terminal and Utilities ---' -ForegroundColor Magenta
+Write-Host '--- Terminal ---' -ForegroundColor Magenta
 Install-WindowsTerminal
-Install-GlazeWM
-Install-Starship
-Install-Lazygit
-Install-Neovim
 
 Write-Host ''
-Write-Host '--- Configurations ---' -ForegroundColor Magenta
-Install-GitConfig
-Install-GitHooks
-Install-BatConfig
-Install-LazydockerConfig
-Install-YaziConfig
-Install-PowerShellProfile
+Write-Host '--- WSL ---' -ForegroundColor Magenta
+Install-WslSetup
+
+# --- Optional: the full Windows-side toolchain ---
+if ($Tools) {
+    Write-Host ''
+    Write-Host '--- Development Tools ---' -ForegroundColor Magenta
+    Install-Chocolatey
+    Install-DotNetSDK
+    Install-NodeJS
+    Install-Python
+    Install-Bat
+    Install-Eza
+    Install-Lazydocker
+    Install-Lazysql
+    Install-Yazi
+    Install-Starship
+    Install-Lazygit
+    Install-Neovim
+
+    Write-Host ''
+    Write-Host '--- Configurations ---' -ForegroundColor Magenta
+    Install-GitConfig
+    Install-GitHooks
+    Install-BatConfig
+    Install-LazydockerConfig
+    Install-YaziConfig
+    # The PS profile initializes starship and aliases eza/nvim/lazygit, so it
+    # is only safe to install once --tools has provided them.
+    Install-PowerShellProfile
+}
+
+# --- Optional: tiling window manager ---
+if ($Twm) {
+    Write-Host ''
+    Write-Host '--- Tiling Window Manager ---' -ForegroundColor Magenta
+    Install-GlazeWM
+}
 
 Write-Host ''
 Write-Host '========================================' -ForegroundColor Green
 Write-Host 'Installation Complete!' -ForegroundColor Green
 Write-Host '========================================' -ForegroundColor Green
-Write-Host ''
 
-$existingName = git config --global user.name 2>$null
-$existingEmail = git config --global user.email 2>$null
+# Git identity only matters if git is being used on the Windows side.
+if ($Tools) {
+    Write-Host ''
+    $existingName = git config --global user.name 2>$null
+    $existingEmail = git config --global user.email 2>$null
 
-if (-not $existingName) {
-    $gitName = Read-Host 'Enter your git user.name'
-    if ($gitName) {
-        git config --global user.name $gitName
-        Write-Host "[OK] Set git user.name to: $gitName" -ForegroundColor Green
+    if (-not $existingName) {
+        $gitName = Read-Host 'Enter your git user.name'
+        if ($gitName) {
+            git config --global user.name $gitName
+            Write-Host "[OK] Set git user.name to: $gitName" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "[OK] Git user.name already set: $existingName" -ForegroundColor Green
     }
-} else {
-    Write-Host "[OK] Git user.name already set: $existingName" -ForegroundColor Green
-}
 
-if (-not $existingEmail) {
-    $gitEmail = Read-Host 'Enter your git user.email'
-    if ($gitEmail) {
-        git config --global user.email $gitEmail
-        Write-Host "[OK] Set git user.email to: $gitEmail" -ForegroundColor Green
+    if (-not $existingEmail) {
+        $gitEmail = Read-Host 'Enter your git user.email'
+        if ($gitEmail) {
+            git config --global user.email $gitEmail
+            Write-Host "[OK] Set git user.email to: $gitEmail" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "[OK] Git user.email already set: $existingEmail" -ForegroundColor Green
     }
-} else {
-    Write-Host "[OK] Git user.email already set: $existingEmail" -ForegroundColor Green
 }
 
 Write-Host ''
 Write-Host 'Next steps:' -ForegroundColor Yellow
-Write-Host '  1. Reload PowerShell profile' -ForegroundColor Cyan
-Write-Host '  2. Run git init in repos to install hooks' -ForegroundColor Cyan
+Write-Host '  1. Restart Windows Terminal to pick up the config' -ForegroundColor Cyan
+if ($Tools) {
+    Write-Host '  2. Reload PowerShell profile' -ForegroundColor Cyan
+    Write-Host '  3. Run git init in repos to install hooks' -ForegroundColor Cyan
+}
