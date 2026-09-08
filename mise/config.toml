@@ -14,6 +14,7 @@ yazi = "latest"
 lazygit = "latest"
 lazydocker = "latest"
 delta = "latest"
+yq = "latest"
 "aqua:neovim/neovim" = "latest"
 # Required by nvim-treesitter (main branch) to compile parsers via `tree-sitter build`
 "aqua:tree-sitter/tree-sitter" = "latest"
