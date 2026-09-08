@@ -10,5 +10,7 @@ folder = [
 
 [open]
 prepend_rules = [
-	{ name = "*/", use = "folder" },
+	# yazi renamed this rule key from `name` to `url`; the old key now errors
+	# with "at least one of `url` or `mime` must be specified".
+	{ url = "*/", use = "folder" },
 ]

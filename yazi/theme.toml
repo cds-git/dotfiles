@@ -110,6 +110,8 @@ rules = [
 	{ mime = "application/vnd.ms-excel", fg = "green" },
 	
 	# Fallback
-	{ name = "*", fg = "white" },
-	{ name = "*/", fg = "blue" }
+	# yazi renamed the rule key from `name` to `url`; the old key errors with
+	# "at least one of `url` or `mime` must be specified".
+	{ url = "*", fg = "white" },
+	{ url = "*/", fg = "blue" }
 ]
