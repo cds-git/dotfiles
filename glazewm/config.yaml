@@ -90,7 +90,7 @@ keybindings:
   - { commands: ['close'],                      bindings: ['lwin+shift+q'] }
 
   # Launch / WM control.
-  - { commands: ['shell-exec wt'],     bindings: ['lwin+enter'] }   # Windows Terminal; swap for wezterm
+  - { commands: ['shell-exec wt'],     bindings: ['lwin+enter'] }   # Windows Terminal
   - { commands: ['wm-reload-config'],  bindings: ['lwin+shift+r'] }
   - { commands: ['wm-exit'],           bindings: ['lwin+shift+e'] }
   - { commands: ['wm-enable-binding-mode --name resize'], bindings: ['lwin+r'] }

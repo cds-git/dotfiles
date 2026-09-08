@@ -50,7 +50,7 @@ $modules = @(
     'bat.ps1'
     'eza.ps1'
     'git.ps1'
-    'wezterm.ps1'
+    'windows-terminal.ps1'
     'glazewm.ps1'
     'neovim.ps1'
     'starship.ps1'
@@ -90,7 +90,7 @@ Install-Yazi
 
 Write-Host ''
 Write-Host '--- Terminal and Utilities ---' -ForegroundColor Magenta
-Install-Wezterm
+Install-WindowsTerminal
 Install-GlazeWM
 Install-Starship
 Install-Lazygit

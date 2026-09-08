@@ -66,7 +66,6 @@ modules=(
     "dev-tools.sh"
     "bat.sh"
     "git.sh"
-    "wezterm.sh"
     "neovim.sh"
     "lazygit.sh"
     "lazydocker.sh"
@@ -103,17 +102,6 @@ echo '--- mise + Development Tools ---'
 install_mise
 install_mise_tools
 install_opencode
-
-# --- Phase 3: GUI applications (non-WSL only) ---
-echo ""
-echo '--- GUI Applications ---'
-if [ "$WSL_MODE" = false ]; then
-    install_wezterm
-else
-    echo ""
-    echo "=== WezTerm ==="
-    echo "⊘ Skipped (WSL mode - GUI application)"
-fi
 
 # --- Phase 4: Configurations ---
 echo ""

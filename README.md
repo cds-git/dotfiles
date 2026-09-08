@@ -5,7 +5,7 @@ Greatest config known to mankind
 ## What's Included
 
 ### Terminal
-- **WezTerm** - GPU-accelerated terminal emulator
+- **Windows Terminal** - Terminal on Windows (Catppuccin Mocha)
 - **Tmux** - Terminal multiplexer with status bar
 
 ### Code Editor

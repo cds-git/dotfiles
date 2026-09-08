@@ -7,7 +7,7 @@ return {
 	config = function()
 		require("catppuccin").setup({
 			flavour = "mocha",
-			transparent_background = true, -- disables setting the background color
+			transparent_background = false,
 			background = { -- :h background
 				light = "latte",
 				dark = "mocha",
