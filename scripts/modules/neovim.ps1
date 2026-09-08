@@ -3,74 +3,42 @@
 function Install-Neovim {
     Write-Host "`n=== Neovim ===" -ForegroundColor Cyan
 
-    if (Get-Command nvim -ErrorAction SilentlyContinue) {
+    if (Test-CommandExists 'nvim') {
         $current = (nvim --version 2>$null | Select-Object -First 1)
         Write-Host "Current Neovim version: $current" -ForegroundColor Yellow
-        Write-Host "Upgrading to latest stable Neovim..." -ForegroundColor Yellow
-    } else {
-        Write-Host "Installing latest stable Neovim..." -ForegroundColor Yellow
     }
 
-    # winget install upgrades the package in place when already present
-    winget install Neovim.Neovim --accept-source-agreements --accept-package-agreements
-    if ($LASTEXITCODE -eq 0) {
-        Refresh-EnvironmentPath
-        $version = (nvim --version 2>$null | Select-Object -First 1)
-        Write-Host "[OK] Neovim installed ($version)" -ForegroundColor Green
-    } else {
-        Write-Host "[FAIL] Failed to install Neovim" -ForegroundColor Red
+    if (-not (Install-WingetPackage -Id 'Neovim.Neovim' -Label 'Neovim')) {
         return
     }
 
-    # Install utilities for Neovim
+    $version = (nvim --version 2>$null | Select-Object -First 1)
+    if ($version) {
+        Write-Host "[OK] Neovim at $version" -ForegroundColor Green
+    }
+
+    # Utilities Neovim expects on PATH
     Write-Host "Installing Neovim utilities..." -ForegroundColor Yellow
 
     $tools = @(
-        @{Name = "ripgrep"; Package = "BurntSushi.ripgrep.MSVC" }
-        @{Name = "fzf"; Package = "fzf" }
-        @{Name = "fd"; Package = "sharkdp.fd" }
+        @{ Id = 'BurntSushi.ripgrep.MSVC'; Label = 'ripgrep' }
+        # NOTE: the winget id is junegunn.fzf - a bare "fzf" matches nothing
+        # when queried with --id --exact.
+        @{ Id = 'junegunn.fzf'; Label = 'fzf' }
+        @{ Id = 'sharkdp.fd'; Label = 'fd' }
     )
 
     foreach ($tool in $tools) {
-        if (Get-Command $tool.Name -ErrorAction SilentlyContinue) {
-            Write-Host "  $($tool.Name) already installed" -ForegroundColor Green
-        } else {
-            winget install $tool.Package --accept-source-agreements --accept-package-agreements | Out-Null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "  Installed $($tool.Name)" -ForegroundColor Green
-            }
-        }
+        Install-WingetPackage -Id $tool.Id -Label $tool.Label | Out-Null
     }
 
-    # Install build tools via choco
-    if (Get-Command choco -ErrorAction SilentlyContinue) {
-        if (-not (Get-Command make -ErrorAction SilentlyContinue)) {
-            choco install make -y | Out-Null
-            Write-Host "  Installed make" -ForegroundColor Green
-        }
-        if (-not (Get-Command gcc -ErrorAction SilentlyContinue)) {
-            choco install mingw -y | Out-Null
-            Write-Host "  Installed mingw" -ForegroundColor Green
-        }
-    }
-
-    # Create symlink
-    $nvimConfig = "$HOME/AppData/Local/nvim"
-    $dotfilesNvim = "$HOME/dotfiles/nvim"
-
-    if (Test-Path $nvimConfig) {
-        $item = Get-Item $nvimConfig
-        if ($item.LinkType -eq "SymbolicLink") {
-            Write-Host "[OK] Neovim config symlink exists" -ForegroundColor Green
-        } else {
-            Write-Host "[WARN] Backing up existing config" -ForegroundColor Yellow
-            Move-Item $nvimConfig "$nvimConfig.backup"
-            New-Item -ItemType SymbolicLink -Force -Path $nvimConfig -Target $dotfilesNvim | Out-Null
-            Write-Host "[OK] Created Neovim config symlink" -ForegroundColor Green
-        }
+    # Build tools for compiling treesitter parsers
+    if (Test-CommandExists 'choco') {
+        Install-ChocoPackage -Id 'make' -Label 'make' | Out-Null
+        Install-ChocoPackage -Id 'mingw' -Label 'mingw' | Out-Null
     } else {
-        New-Item -ItemType SymbolicLink -Force -Path $nvimConfig -Target $dotfilesNvim | Out-Null
-        Write-Host "[OK] Created Neovim config symlink" -ForegroundColor Green
+        Write-Host "[SKIP] Chocolatey not installed - skipping make/mingw" -ForegroundColor Yellow
     }
-}
 
+    Ensure-Link "$HOME\dotfiles\nvim" "$HOME\AppData\Local\nvim" 'Neovim config'
+}

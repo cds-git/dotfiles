@@ -8,7 +8,9 @@ install_common_packages() {
     echo "=== Common Packages ==="
 
     if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
-        local packages=("jq" "curl" "wget" "unzip" "build-essential" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip" "gawk")
+        # python3-venv: mason.nvim builds a venv for its pip-based packages
+        # (e.g. xmlformatter); without ensurepip those installs fail.
+        local packages=("jq" "curl" "wget" "unzip" "build-essential" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip" "python3-venv" "gawk")
         sudo apt update
         sudo apt install -y "${packages[@]}"
 

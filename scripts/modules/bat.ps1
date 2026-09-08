@@ -2,25 +2,16 @@
 
 function Install-Bat {
     Write-Host "`n=== bat (Syntax Highlighter) ===" -ForegroundColor Cyan
-    
-    if (Get-Command bat -ErrorAction SilentlyContinue) {
-        $version = bat --version
-        Write-Host "[OK] bat already installed ($version)" -ForegroundColor Green
-    } else {
-        Write-Host "Installing bat..." -ForegroundColor Yellow
-        winget install sharkdp.bat --accept-source-agreements --accept-package-agreements
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "[OK] bat installed" -ForegroundColor Green
-        } else {
-            Write-Host "[ERROR] Failed to install bat" -ForegroundColor Red
-            return
-        }
+
+    if (-not (Install-WingetPackage -Id 'sharkdp.bat' -Label 'bat')) {
+        return
     }
-    
-    # Install Catppuccin theme
+
+    # Catppuccin Mocha theme - also referenced by delta's syntax-theme and
+    # yazi's syntect_theme, so it has to be registered in bat's cache.
     $batConfigDir = "$env:APPDATA\bat\themes"
     $themeFile = "$batConfigDir\Catppuccin Mocha.tmTheme"
-    
+
     if (Test-Path $themeFile) {
         Write-Host "[OK] Catppuccin Mocha theme already installed" -ForegroundColor Green
     } else {
@@ -28,8 +19,8 @@ function Install-Bat {
         if (-not (Test-Path $batConfigDir)) {
             New-Item -ItemType Directory -Force -Path $batConfigDir | Out-Null
         }
-        
-        $themeUrl = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Mocha.tmTheme"
+
+        $themeUrl = 'https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Mocha.tmTheme'
         try {
             Invoke-WebRequest -Uri $themeUrl -OutFile $themeFile
             Write-Host "[OK] Catppuccin Mocha theme installed" -ForegroundColor Green
@@ -38,12 +29,10 @@ function Install-Bat {
             return
         }
     }
-    
-    # Build bat cache to register themes
+
     Write-Host "Building bat cache..." -ForegroundColor Yellow
     try {
-        $batExe = Get-Command bat -ErrorAction SilentlyContinue
-        if ($batExe) {
+        if (Test-CommandExists 'bat') {
             & bat cache --build | Out-Null
             Write-Host "[OK] bat cache built successfully" -ForegroundColor Green
         } else {
@@ -56,30 +45,6 @@ function Install-Bat {
 
 function Install-BatConfig {
     Write-Host "`n=== bat Configuration ===" -ForegroundColor Cyan
-    
-    $dotfilesRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-    $source = Join-Path $dotfilesRoot 'bat\config'
-    $target = "$env:APPDATA\bat\config"
-    $targetDir = Split-Path $target -Parent
-    
-    if (-not (Test-Path $targetDir)) {
-        Write-Host "Creating bat config directory..." -ForegroundColor Yellow
-        New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-    }
-    
-    if (Test-Path $target) {
-        if ((Get-Item $target).LinkType -eq 'SymbolicLink') {
-            Write-Host "[OK] bat config already symlinked" -ForegroundColor Green
-        } else {
-            Write-Host "[WARN] bat config exists but is not a symlink" -ForegroundColor Yellow
-            Write-Host "  Backing up existing config..." -ForegroundColor Yellow
-            Move-Item $target "$target.backup" -Force
-            New-Item -ItemType SymbolicLink -Path $target -Target $source -Force | Out-Null
-            Write-Host "[OK] bat config symlinked (old config backed up)" -ForegroundColor Green
-        }
-    } else {
-        Write-Host "Creating symlink for bat config..." -ForegroundColor Yellow
-        New-Item -ItemType SymbolicLink -Path $target -Target $source -Force | Out-Null
-        Write-Host "[OK] bat config symlinked" -ForegroundColor Green
-    }
+
+    Ensure-Link "$HOME\dotfiles\bat\config" "$env:APPDATA\bat\config" 'bat config'
 }
