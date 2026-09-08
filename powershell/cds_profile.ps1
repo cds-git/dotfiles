@@ -23,8 +23,10 @@ if (Get-Command kubectl -ErrorAction SilentlyContinue) {
 # Modern CLI tools (replace the built-in ls alias with eza)
 if (Get-Command eza -ErrorAction SilentlyContinue) {
     Remove-Item Alias:ls -Force -ErrorAction SilentlyContinue
-    function ls { eza --icons $args }
-    function ll { eza --icons -lha $args }
+    # --icons takes an optional WHEN value, so bare `--icons` swallows a
+    # following path as that value. Pass it explicitly.
+    function ls { eza --icons=auto $args }
+    function ll { eza --icons=auto -lha $args }
 }
 
 # Prompt

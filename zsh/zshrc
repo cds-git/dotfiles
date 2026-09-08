@@ -76,9 +76,12 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 alias reload='source ~/.zshrc'
 alias zshconf='nvim ~/.zshrc'
 ## Modern CLI tools
-alias ls='eza --icons'
-alias ll='eza --icons -lha'
-alias tree='eza --icons --tree'
+# --icons takes an optional WHEN value, so bare `--icons` swallows a following
+# path as that value ("invalid value 'foo/' for '--icons [<WHEN>]'"). Always
+# pass it explicitly. auto = icons on a terminal, none when piped.
+alias ls='eza --icons=auto'
+alias ll='eza --icons=auto -lha'
+alias tree='eza --icons=auto --tree'
 ## Nvim
 alias vim='nvim'
 alias vi='nvim'

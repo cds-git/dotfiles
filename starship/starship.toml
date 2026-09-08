@@ -100,8 +100,16 @@ full_symbol = " "
 charging_symbol = " "
 discharging_symbol = " "
 format = "[$symbol$percentage]($style)"
-style = "yellow bold"
 disabled = false
+
+# The Battery module has no top-level `style`: $style resolves from whichever
+# [[battery.display]] threshold matches, so the old key warned with
+# "Error in 'Battery' at 'style': Unknown key" on starship 1.26. Only visible
+# on a machine that actually has a battery - the module is skipped otherwise.
+# threshold = 10 keeps the default "only show when low" behaviour.
+[[battery.display]]
+threshold = 10
+style = "yellow bold"
 
 [directory.substitutions]
 "Documents" = "󰈙 "
