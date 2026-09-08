@@ -1,3 +1,9 @@
+# zoxide's init-order check is satisfied in interactive shells (zoxide is
+# initialized last in ~/.zshrc), but it false-positives in non-interactive
+# shells where the hook arrays are built differently. Silence it rather than
+# print the warning on every scripted command.
+export _ZO_DOCTOR=0
+
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 

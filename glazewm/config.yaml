@@ -2,7 +2,7 @@
 #
 # Modifier-namespace model (no cross-layer collisions by construction):
 #   GlazeWM  -> Win/Super   (nothing in the terminal stack uses Win)
-#   WezTerm  -> Ctrl+Shift   tmux -> Ctrl+Space prefix   nvim/TUIs -> Ctrl / Alt+letter / Space
+#   Terminal -> Ctrl+Shift   tmux -> Ctrl+Space prefix   nvim/TUIs -> Ctrl / Alt+letter / Space
 #
 # OS-reserved Win combos that GlazeWM CANNOT intercept — never bind these:
 #   Win+L (lock), Win+Ctrl+arrows (virtual desktops), Win+Tab (Task View),

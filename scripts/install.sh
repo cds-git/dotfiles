@@ -15,7 +15,7 @@ if grep -iq Microsoft /proc/version 2>/dev/null; then
     WSL_MODE=true
     echo ""
     echo "⚠ WSL environment detected"
-    echo "  GUI applications (like WezTerm) will be skipped"
+    echo "  The terminal itself is Windows Terminal, configured by scripts/install.ps1"
 fi
 
 # Detect the Linux distribution
@@ -39,6 +39,58 @@ refresh_path() {
         source "$HOME/.zshrc" 2>/dev/null || true
     fi
     export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:/usr/local/bin:$PATH"
+}
+
+# Point a config path at a file/dir in the dotfiles repo.
+#
+# Unlike a bare `[ -L "$target" ]` check, this re-points symlinks that have
+# drifted to a stale target, so re-running the installer repairs the link
+# instead of reporting "already exists" and leaving it broken.
+ensure_link() {
+    local source="$1"
+    local target="$2"
+    local label="$3"
+
+    if [ ! -e "$source" ]; then
+        echo "✗ $label: missing in dotfiles ($source)"
+        return 1
+    fi
+
+    mkdir -p "$(dirname "$target")"
+
+    if [ -L "$target" ]; then
+        if [ "$(readlink -f "$target")" = "$(readlink -f "$source")" ]; then
+            echo "✓ $label already linked"
+            return 0
+        fi
+        echo "⚠ $label pointed at $(readlink -f "$target") — re-linking"
+        rm "$target"
+    elif [ -e "$target" ]; then
+        echo "⚠ $label exists as a real file — backing up to $target.backup"
+        mv "$target" "$target.backup"
+    fi
+
+    # -n so a directory target is replaced rather than linked *inside*
+    ln -sfn "$source" "$target"
+    echo "✓ $label linked"
+}
+
+# Append a line to ~/.zshrc unless a regex already matches it.
+#
+# Takes pattern and line as separate arguments: the previous "pattern|line"
+# encoding broke on values containing `||`, and matching with `grep -F`
+# meant regex patterns never matched and their lines were re-appended on
+# every run.
+ensure_zshrc_line() {
+    local pattern="$1"
+    local line="$2"
+
+    if grep -qE -- "$pattern" "$HOME/.zshrc" 2>/dev/null; then
+        echo "✓ .zshrc already has: $pattern"
+    else
+        printf '%s\n' "$line" >> "$HOME/.zshrc"
+        echo "✓ Added to .zshrc: $line"
+    fi
 }
 
 wait_for_command() {
@@ -137,8 +189,8 @@ if [ "$current_shell" != "$zsh_path" ]; then
     chsh -s "$zsh_path"
 
     echo "✓ Zsh set as default shell ($zsh_path)"
-    if grep -iq Microsoft /proc/version; then
-        echo "  Note: Restart WSL with 'wsl --terminate archlinux' then 'wsl'"
+    if [ "$WSL_MODE" = true ]; then
+        echo "  Note: Restart WSL with 'wsl --terminate <distro>' then 'wsl'"
     else
         echo "  Note: Log out and back in for changes to take effect"
     fi
@@ -155,36 +207,18 @@ fi
 # Ensure .zshrc exists
 [ ! -f "$HOME/.zshrc" ] && touch "$HOME/.zshrc"
 
-# Lines to ensure are present in .zshrc
-# Each entry: grep pattern | line to append
-zshrc_entries=(
-    'dotfiles/zsh/zshrc|source "$HOME/dotfiles/zsh/zshrc"'
-    '.local/bin.*mise.*shims|export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"'
-    'mise activate zsh|eval "$(mise activate zsh --shims)"'
-    'fzf --zsh|source <(fzf --zsh 2>/dev/null) || true'
-    'zoxide init|eval "$(zoxide init --cmd cd zsh)"'
-    'starship init zsh|eval "$(starship init zsh)"'
-    '.opencode/bin|export PATH="$HOME/.opencode/bin:$PATH"'
-)
+# Lines to ensure are present in .zshrc.
+# Order matters: mise/fzf/starship install shell hooks, and zoxide checks that
+# nothing registers a hook after it, so zoxide is initialized last.
+ensure_zshrc_line 'dotfiles/zsh/zshrc'        'source "$HOME/dotfiles/zsh/zshrc"'
+ensure_zshrc_line '\.local/bin.*mise.*shims'  'export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"'
+ensure_zshrc_line '\.opencode/bin'            'export PATH="$HOME/.opencode/bin:$PATH"'
+ensure_zshrc_line 'mise activate zsh'         'eval "$(mise activate zsh --shims)"'
+ensure_zshrc_line 'fzf --zsh'                 'source <(fzf --zsh 2>/dev/null) || true'
+ensure_zshrc_line 'starship init zsh'         'eval "$(starship init zsh)"'
+ensure_zshrc_line 'zoxide init'               'eval "$(zoxide init --cmd cd zsh)"'
 
-for entry in "${zshrc_entries[@]}"; do
-    pattern="${entry%%|*}"
-    line="${entry##*|}"
-    if ! grep -qF "$pattern" "$HOME/.zshrc" 2>/dev/null; then
-        echo "$line" >> "$HOME/.zshrc"
-        echo "✓ Added to .zshrc: $line"
-    else
-        echo "✓ .zshrc already has: $pattern"
-    fi
-done
-
-if [ -L "$HOME/.tmux.conf" ]; then
-    echo "✓ .tmux.conf symlink exists"
-else
-    [ -f "$HOME/.tmux.conf" ] && mv "$HOME/.tmux.conf" "$HOME/.tmux.conf.backup"
-    ln -sf "$HOME/dotfiles/tmux/tmux.conf" "$HOME/.tmux.conf"
-    echo "✓ Created .tmux.conf symlink"
-fi
+ensure_link "$HOME/dotfiles/tmux/tmux.conf" "$HOME/.tmux.conf" "tmux config"
 
 echo ""
 echo '========================================'

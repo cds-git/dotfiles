@@ -28,25 +28,5 @@ install_bat_config() {
         echo "✓ bat cache built successfully"
     fi
 
-    # Symlink config
-    local dotfiles_root="$HOME/dotfiles"
-    local source="$dotfiles_root/bat/config"
-    local target="$HOME/.config/bat/config"
-    local target_dir=$(dirname "$target")
-
-    mkdir -p "$target_dir"
-
-    if [ -L "$target" ]; then
-        echo "✓ bat config already symlinked"
-    elif [ -f "$target" ]; then
-        echo "⚠ bat config exists but is not a symlink"
-        echo "  Backing up existing config..."
-        mv "$target" "$target.backup"
-        ln -sf "$source" "$target"
-        echo "✓ bat config symlinked (old config backed up)"
-    else
-        echo "Creating symlink for bat config..."
-        ln -sf "$source" "$target"
-        echo "✓ bat config symlinked"
-    fi
+    ensure_link "$HOME/dotfiles/bat/config" "$HOME/.config/bat/config" "bat config"
 }

@@ -7,18 +7,25 @@ install_mise() {
     echo ""
     echo "=== mise (Tool Manager) ==="
 
-    if command -v mise &> /dev/null; then
-        echo "✓ mise already installed"
-    else
-        echo "Installing mise..."
-        curl https://mise.run | sh
-
-        if command -v mise &> /dev/null; then
-            echo "✓ mise installed"
+    if command_exists mise; then
+        echo "✓ mise already installed ($(mise --version 2>/dev/null | head -1))"
+        echo "Checking for a newer mise..."
+        if mise self-update -y &>/dev/null; then
+            echo "✓ mise up to date ($(mise --version 2>/dev/null | head -1))"
         else
-            echo "✗ mise installed but not in PATH yet. Restart shell."
-            return 1
+            echo "⊘ mise self-update unavailable (installed by a package manager?)"
         fi
+        return 0
+    fi
+
+    echo "Installing mise..."
+    curl https://mise.run | sh
+
+    if wait_for_command mise; then
+        echo "✓ mise installed"
+    else
+        echo "✗ mise installed but not in PATH yet. Restart shell."
+        return 1
     fi
 }
 
@@ -26,31 +33,28 @@ install_mise_tools() {
     echo ""
     echo "=== mise Tools ==="
 
-    # Symlink mise config from dotfiles
-    local config_dir="$HOME/.config/mise"
-    local config_file="$config_dir/config.toml"
     local dotfiles_config="$HOME/dotfiles/mise/config.toml"
 
-    mkdir -p "$config_dir"
-
-    if [ -L "$config_file" ]; then
-        echo "✓ mise config symlink exists"
-    else
-        [ -f "$config_file" ] && mv "$config_file" "$config_file.backup"
-        ln -sf "$dotfiles_config" "$config_file"
-        echo "✓ Created mise config symlink"
-    fi
+    ensure_link "$dotfiles_config" "$HOME/.config/mise/config.toml" "mise config"
 
     # Trust the config so mise doesn't prompt
-    mise trust "$dotfiles_config" 2>/dev/null
+    mise trust "$dotfiles_config" &>/dev/null
 
-    # Install all tools defined in config
-    echo "Installing tools (this may take a moment)..."
+    # Install anything listed in config.toml that isn't present yet.
+    echo "Installing missing tools..."
     mise install --yes
+
+    # `mise install` is satisfied by ANY already-installed version, so a
+    # `= "latest"` pin never moves forward once something is installed —
+    # this is why a new Neovim release was being skipped. `mise upgrade` is
+    # what actually fetches newer releases matching each pin.
+    echo ""
+    echo "Upgrading tools to the newest matching versions..."
+    mise upgrade --yes
 
     echo ""
     echo "Installed tools:"
     mise ls --current 2>/dev/null || mise ls
     echo ""
-    echo "✓ All mise tools installed"
+    echo "✓ mise tools installed and up to date"
 }
