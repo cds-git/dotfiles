@@ -10,7 +10,7 @@ install_common_packages() {
     if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
         # python3-venv: mason.nvim builds a venv for its pip-based packages
         # (e.g. xmlformatter); without ensurepip those installs fail.
-        local packages=("jq" "curl" "wget" "unzip" "build-essential" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip" "python3-venv" "gawk")
+        local packages=("curl" "wget" "unzip" "build-essential" "zsh" "tmux" "python3" "python3-pip" "python3-venv" "gawk")
         sudo apt update
         sudo apt install -y "${packages[@]}"
 
@@ -23,7 +23,7 @@ install_common_packages() {
         fi
     elif [ "$ID" = "arch" ]; then
         sudo pacman -Syu --noconfirm
-        local arch_packages=("jq" "curl" "wget" "unzip" "base-devel" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python" "python-pip" "gawk")
+        local arch_packages=("wget" "unzip" "base-devel" "zsh" "tmux" "python" "python-pip")
         sudo pacman -S --noconfirm "${arch_packages[@]}"
 
         # Install yay (AUR helper) if not present
@@ -39,7 +39,7 @@ install_common_packages() {
         fi
     elif [ "$ID" = "fedora" ]; then
         sudo dnf update -y
-        local fedora_packages=("jq" "curl" "unzip" "@development-tools" "zsh" "tmux" "fastfetch" "htop" "ncdu" "python3" "python3-pip" "gawk")
+        local fedora_packages=("curl" "unzip" "@development-tools" "zsh" "tmux" "python3" "python3-pip" "gawk")
         sudo dnf install -y "${fedora_packages[@]}"
     fi
 

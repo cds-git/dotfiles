@@ -25,5 +25,10 @@ starship = "latest"
 "aqua:sharkdp/fd" = "latest"
 "aqua:aristocratos/btop" = "latest"
 "github:jorgerojas26/lazysql" = "latest"
+jq = "latest"
+fastfetch = "latest"
+
+# AI CLI — replaces the `curl | sh` installer in scripts/modules/opencode.sh
+opencode = "latest"
 
 [env]

@@ -153,7 +153,6 @@ echo ""
 echo '--- mise + Development Tools ---'
 install_mise
 install_mise_tools
-install_opencode
 
 # --- Phase 4: Configurations ---
 echo ""
@@ -212,7 +211,6 @@ fi
 # nothing registers a hook after it, so zoxide is initialized last.
 ensure_zshrc_line 'dotfiles/zsh/zshrc'        'source "$HOME/dotfiles/zsh/zshrc"'
 ensure_zshrc_line '\.local/bin.*mise.*shims'  'export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"'
-ensure_zshrc_line '\.opencode/bin'            'export PATH="$HOME/.opencode/bin:$PATH"'
 ensure_zshrc_line 'mise activate zsh'         'eval "$(mise activate zsh --shims)"'
 ensure_zshrc_line 'fzf --zsh'                 'source <(fzf --zsh 2>/dev/null) || true'
 ensure_zshrc_line 'starship init zsh'         'eval "$(starship init zsh)"'

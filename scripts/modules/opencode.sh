@@ -1,32 +1,6 @@
 #!/bin/bash
-# OpenCode installation and configuration module
-
-install_opencode() {
-    echo ""
-    echo "=== OpenCode ==="
-
-    if command_exists opencode; then
-        echo "✓ OpenCode already installed"
-        echo "Checking for a newer OpenCode..."
-        if opencode upgrade; then
-            echo "✓ OpenCode up to date"
-        else
-            echo "⚠ OpenCode upgrade failed (continuing)"
-        fi
-        return 0
-    fi
-
-    echo "Installing OpenCode..."
-    curl -fsSL https://opencode.ai/install | bash
-    refresh_path
-
-    if command_exists opencode; then
-        echo "✓ OpenCode installed"
-    else
-        echo "✗ Failed to install OpenCode"
-        return 1
-    fi
-}
+# OpenCode configuration module
+# Installation handled by mise (opencode in mise/config.toml)
 
 install_opencode_config() {
     echo ""
