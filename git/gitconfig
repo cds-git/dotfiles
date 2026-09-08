@@ -80,14 +80,16 @@
 	line-numbers-plus-style = bold "#a6e3a1"
 	line-numbers-right-style = "#6c7086"
 	line-numbers-zero-style = "#6c7086"
-	# 25% red 75% base
-	minus-emph-style = bold syntax "#53394c"
-	# 10% red 90% base
-	minus-style = syntax "#6f424f"
-	# 25% green 75% base
-	plus-emph-style = bold syntax "#404f4a"
-	# 10% green 90% base
-	plus-style = syntax "#2c3239"
+	# Changed lines are colored by diff direction, not by syntax: the
+	# foreground is Catppuccin red/green over a faint tint of the same hue
+	# (10% for the line, 25% for the changed words within it). Using `syntax`
+	# as the foreground here instead — as the upstream Catppuccin theme does —
+	# makes additions and deletions look identical apart from the tint.
+	# Context lines are still syntax-highlighted via zero-style.
+	minus-style = "#f38ba8" "#33293a"
+	minus-emph-style = bold "#f38ba8" "#53394c"
+	plus-style = "#a6e3a1" "#2c3239"
+	plus-emph-style = bold "#a6e3a1" "#404f4a"
 	map-styles = \
 		bold purple => syntax "#494060", \
 		bold blue => syntax "#384361", \
