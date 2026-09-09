@@ -1,36 +1,34 @@
 gui:
-  # Catppuccin Mocha theme
+  # Catppuccin Mocha, matching lazygit/config.yml key for key. lazydocker's
+  # gui.theme supports exactly these four keys (see its docs/Config.md);
+  # lazygit-only keys such as selectedRangeBgColor are silently ignored here,
+  # so they are deliberately absent rather than left in looking effective.
   theme:
     activeBorderColor:
-      - '#89b4fa' # Blue
+      - '#fab387' # peach
       - bold
     inactiveBorderColor:
-      - '#6c7086' # Surface2
+      - '#a6adc8' # subtext0
     optionsTextColor:
-      - '#cdd6f4' # Text
+      - '#89b4fa' # blue
     selectedLineBgColor:
-      - '#45475a' # Surface1
-    selectedRangeBgColor:
-      - '#313244' # Surface0
+      - '#313244' # surface0
   scrollHeight: 2
   language: 'auto'
-  border: 'rounded'
-  # Show CPU and memory usage
-  showAllContainers: false
-  
+  # 'rounded' | 'single' | 'double' | 'hidden'. single matches nvim's
+  # vim.g.border_style and tmux's pane borders.
+  border: 'single'
+
 commandTemplates:
-  # Custom commands
   dockerCompose: docker compose
-  
-reporting: 'off'
 
-confirmOnQuit: false
-
+# Graph series colours encode data, not chrome, so they stay distinct from the
+# accent above.
 stats:
   graphs:
     - caption: CPU (%)
       statPath: DerivedStats.CPUPercentage
-      color: '#89b4fa' # Blue
+      color: '#89b4fa' # blue
     - caption: Memory (%)
-      statPath: DerivedStats.MemoryPercentage  
-      color: '#a6e3a1' # Green
+      statPath: DerivedStats.MemoryPercentage
+      color: '#a6e3a1' # green
