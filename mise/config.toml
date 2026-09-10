@@ -30,5 +30,6 @@ fastfetch = "latest"
 
 # AI CLI — replaces the `curl | sh` installer in scripts/modules/opencode.sh
 opencode = "latest"
+herdr = "latest"
 
 [env]

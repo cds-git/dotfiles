@@ -1,0 +1,97 @@
+# herdr configuration
+#
+# Keybindings mirror tmux/tmux.conf as closely as herdr allows, so the two can
+# be used side by side without relearning anything. The mapping of concepts is:
+#
+#   tmux session  ->  herdr workspace
+#   tmux window   ->  herdr tab
+#   tmux pane     ->  herdr pane
+#
+# Modifier-namespace model, unchanged from the tmux config:
+#   GlazeWM -> Win/Super    terminal -> Ctrl+Shift
+#   herdr   -> Ctrl+Space prefix, plus Alt for direct window/session keys
+
+[theme]
+# Catppuccin everywhere else in this repo, so Catppuccin here too.
+name = "catppuccin"
+
+[theme.custom]
+# Accent to the same blue GlazeWM draws its focus border in, so "this is the
+# active thing" looks identical in the window manager and the multiplexer.
+accent = "#89b4fa"
+
+[terminal]
+# New panes open where the current one is, matching tmux's -c "#{pane_current_path}".
+new_cwd = "follow"
+
+[keys]
+# Ctrl+Space, not the default Ctrl+B: Ctrl+B is a reader-movement key in vi
+# and readline, and the terminal layer already owns Ctrl+Shift.
+prefix = "ctrl+space"
+
+# --- Config and help ---
+# Reload is rare, so it does not get a prime key. Ctrl+R reads as refresh and
+# stays clear of prefix+r, which renames.
+reload_config = "prefix+ctrl+r"
+help = "prefix+?"
+# Both conventions: herdr's own q and tmux's d.
+detach = ["prefix+q", "prefix+d"]
+
+# --- Panes ---
+# Naming follows the divider, as tmux does: a "horizontal" split puts a
+# horizontal divider between panes, stacking them.
+split_horizontal = ["prefix+h", "alt+enter"]
+split_vertical = ["prefix+v", "alt+shift+enter"]
+close_pane = ["prefix+x", "alt+esc"]
+zoom = "prefix+z"
+
+# Modifier depth maps to scope, as in the window manager:
+# Ctrl+Alt navigates panes, adding Shift resizes them.
+focus_pane_left = "ctrl+alt+left"
+focus_pane_down = "ctrl+alt+down"
+focus_pane_up = "ctrl+alt+up"
+focus_pane_right = "ctrl+alt+right"
+
+resize_pane_left = "ctrl+shift+alt+left"
+resize_pane_down = "ctrl+shift+alt+down"
+resize_pane_up = "ctrl+shift+alt+up"
+resize_pane_right = "ctrl+shift+alt+right"
+
+# Unset: prefix+r is rename below, and the direct chords above cover resizing.
+resize_mode = ""
+
+# --- Tabs (tmux windows) ---
+new_tab = "prefix+c"
+rename_tab = "prefix+r"
+close_tab = "prefix+k"
+switch_tab = "alt+1..9"
+previous_tab = "alt+left"
+next_tab = "alt+right"
+move_tab_previous = "alt+shift+left"
+move_tab_next = "alt+shift+right"
+
+# --- Workspaces (tmux sessions) ---
+# Shift throughout, exactly as the tmux config uses capitals for session-level
+# versions of the window-level bindings.
+new_workspace = "prefix+shift+c"
+rename_workspace = "prefix+shift+r"
+close_workspace = "prefix+shift+k"
+previous_workspace = ["prefix+shift+p", "alt+up"]
+next_workspace = ["prefix+shift+n", "alt+down"]
+
+# --- Tools, reachable without leaving the multiplexer ---
+[[keys.command]]
+key = "prefix+alt+g"
+type = "popup"
+command = "lazygit"
+description = "lazygit"
+width = "90%"
+height = "90%"
+
+[[keys.command]]
+key = "prefix+alt+d"
+type = "popup"
+command = "lazydocker"
+description = "lazydocker"
+width = "90%"
+height = "90%"

@@ -217,6 +217,8 @@ ensure_zshrc_line 'starship init zsh'         'eval "$(starship init zsh)"'
 ensure_zshrc_line 'zoxide init'               'eval "$(zoxide init --cmd cd zsh)"'
 
 ensure_link "$HOME/dotfiles/tmux/tmux.conf" "$HOME/.tmux.conf" "tmux config"
+mkdir -p "$HOME/.config/herdr"
+ensure_link "$HOME/dotfiles/herdr/config.toml" "$HOME/.config/herdr/config.toml" "herdr config"
 
 echo ""
 echo '========================================'
