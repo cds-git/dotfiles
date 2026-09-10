@@ -45,13 +45,13 @@ general:
     trigger: 'monitor_focus'
 
 # 10px between adjacent windows and at the screen edge. The top gap also has
-# to clear Zebar, which is anchored top_left at 40px tall and full width, so
-# top = 40 + 10. Change this to match if you restyle or move the bar; without
+# to clear Zebar, which is anchored top_left at 28px tall and full width, so
+# top = 28 + 10. Change this to match if you restyle or move the bar; without
 # it, tiled windows sit underneath the bar.
 gaps:
   scale_with_dpi: true
   inner_gap: '10px'
-  outer_gap: { top: '50px', right: '10px', bottom: '10px', left: '10px' }
+  outer_gap: { top: '38px', right: '10px', bottom: '10px', left: '10px' }
 
 # Borders and corner style are DWM window attributes — set once per window,
 # no per-frame cost, so they are safe over RDP. Both are Windows 11 only.
@@ -109,23 +109,13 @@ window_rules:
       - window_process: { equals: 'mmc' }             # management consoles
       - window_process: { equals: 'PickerHost' }      # file pickers
       - window_process: { equals: 'CalculatorApp' }
+      # PiP / video example — float a Teams meeting window by title:
+      # - window_process: { equals: 'ms-teams', window_title: { regex: 'Meeting' } }
 
   # The keybinding cheatsheet pops centered and on top instead of tiling.
   - commands: ['set-floating --centered --shown-on-top']
     match:
       - window_title: { regex: '^Keybindings' }
-
-  # The admin terminal. This rule only bites if GlazeWM itself runs elevated:
-  # UIPI blocks an unelevated process from touching a higher-privilege window,
-  # so normally GlazeWM cannot manage it at all. That is not a problem in
-  # practice -- being unmanageable means it stays out of the tiling layout and
-  # floats anyway -- but its placement comes from open-admin-terminal.ps1
-  # rather than from here.
-  - commands: ['set-floating --centered --shown-on-top']
-    match:
-      - window_title: { regex: 'AdminTerminal' }
-      # PiP / video example — float a Teams meeting window by title:
-      # - window_process: { equals: 'ms-teams', window_title: { regex: 'Meeting' } }
 
 keybindings:
   # --- Window state ---
@@ -169,8 +159,6 @@ keybindings:
   - { commands: ['shell-exec msedge'],         bindings: ['lwin+shift+b'] }
   - { commands: ['shell-exec explorer'],       bindings: ['lwin+shift+f'] }      # file manager
   - { commands: ['shell-exec wt -p WSL nvim'], bindings: ['lwin+shift+n'] }      # editor
-  # Elevated PowerShell, centred and floating. Prompts for UAC.
-  - { commands: ['shell-exec powershell -NoProfile -WindowStyle Hidden -File %userprofile%\dotfiles\glazewm\open-admin-terminal.ps1'], bindings: ['lwin+ctrl+enter'] }
 
   # --- WM control ---
   - { commands: ['wm-reload-config'], bindings: ['lwin+shift+r'] }

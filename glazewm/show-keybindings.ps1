@@ -86,7 +86,6 @@ function Get-Description {
         '^wm-redraw$'                        { return 'Redraw all windows' }
         '^wm-toggle-pause$'                  { return 'Pause window management' }
         'show-keybindings'                   { return 'Show this list' }
-        'open-admin-terminal'                { return 'Terminal (admin, floating)' }
         '^shell-exec wt -p WSL nvim$'        { return 'Editor (nvim)' }
         '^shell-exec (msedge|chrome|firefox)$' { return 'Browser' }
         '^shell-exec wt$'                    { return 'Terminal' }

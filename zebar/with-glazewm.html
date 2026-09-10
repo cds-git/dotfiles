@@ -29,7 +29,7 @@
         network: { type: 'network' },
         glazewm: { type: 'glazewm' },
         cpu: { type: 'cpu' },
-        date: { type: 'date', formatting: 'EEE d MMM t' },
+        date: { type: 'date', formatting: 'EEEE HH:mm' },
         battery: { type: 'battery' },
         memory: { type: 'memory' },
         weather: { type: 'weather' },
@@ -133,7 +133,9 @@
                       }
                       key={workspace.name}
                     >
-                      {workspace.displayName ?? workspace.name}
+                      {workspace.hasFocus
+                        ? '󱓻'
+                        : (workspace.displayName ?? workspace.name)}
                     </button>
                   ))}
                 </div>
