@@ -17,6 +17,14 @@
   --surface0: #313244;
   --overlay0: #6c7086;
   --subtext0: #a6adc8;
+  --lavender: #b4befe;
+  --blue: #89b4fa;
+  --crust: #11111b;
+  --surface1: #45475a;
+
+  /* One shared height for every chip in the bar, so icons and text line up
+     regardless of their font metrics. */
+  --chip-height: 18px;
   --text: #cdd6f4;
   --red: #f38ba8;
   --peach: #fab387;
@@ -87,7 +95,14 @@ p {
   gap: 15px;
 }
 
+/* Nerd Font glyphs and digits sit on different baselines, so everything is
+   centred as a flex box of a shared height rather than aligned on baseline. */
 i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--chip-height);
+  line-height: 1;
   color: var(--text);
   margin-right: 6px;
   font-style: normal;
@@ -96,6 +111,7 @@ i {
 .logo {
   color: var(--text);
   margin-right: 0;
+  font-size: 14px;
 }
 
 /* --- Workspaces ---------------------------------------------------------- */
@@ -103,31 +119,51 @@ i {
 .workspaces {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .workspace {
   all: unset;
-  cursor: pointer;
-  min-width: 9px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--chip-height);
+  min-width: 20px;
   padding: 0 6px;
-  text-align: center;
+  border-radius: 4px;
   line-height: 1;
+  cursor: pointer;
   color: var(--text);
-  /* Workspaces that exist but are not on screen recede rather than disappear. */
-  opacity: 0.5;
-  transition: opacity 120ms ease;
+  /* Workspaces that exist but are not on screen recede rather than disappear.
+     The number is always readable; the focused one gets a filled box so it is
+     findable at a glance rather than needing to be read. */
+  opacity: 0.45;
+  font-weight: 400;
+  transition:
+    opacity 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease;
 
+  /* Shown on some monitor, but not the focused one. */
   &.displayed {
     opacity: 1;
+    background: var(--surface0);
   }
 
   &.focused {
     opacity: 1;
+    font-weight: 700;
+    background: var(--blue);
+    color: var(--crust);
   }
 
   &:hover {
     opacity: 1;
+  }
+
+  &:hover:not(.focused) {
+    background: var(--surface1);
   }
 }
 
