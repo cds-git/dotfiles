@@ -122,8 +122,15 @@
         // just the language, which is the part that actually changes here.
         function formatLayout(layout) {
           if (!layout) return '';
-          const lang = String(layout).split(/[-_]/)[0];
-          return lang.length <= 3 ? lang.toUpperCase() : String(layout);
+          // The provider returns the raw wide string including its NUL
+          // terminator (e.g. 'en-US\0', 'da\0'), so strip control characters
+          // before doing anything else or they end up rendered.
+          const clean = String(layout)
+            .replace(/[\u0000-\u001f]/g, '')
+            .trim();
+          if (!clean) return '';
+          const lang = clean.split(/[-_]/)[0];
+          return lang.length <= 3 ? lang.toUpperCase() : clean;
         }
 
         return (
