@@ -153,8 +153,23 @@ keybindings:
   - { commands: ['toggle-tiling-direction'],    bindings: ['lwin+j'] }
   - { commands: ['toggle-floating --centered'], bindings: ['lwin+t'] }
   - { commands: ['toggle-fullscreen'],          bindings: ['lwin+f'] }
-  # Pop the window out of the tiling layout: float it and pin it on top.
-  - { commands: ['set-floating --centered --shown-on-top'], bindings: ['lwin+o'] }
+  # Escape hatch: put the window back in the tiling layout whatever state it is
+  # in. The toggles above flip between two states each, so a window that is both
+  # floating and fullscreen can be awkward to get back; this always works.
+  - { commands: ['set-tiling'],                 bindings: ['lwin+shift+t'] }
+  # Pin: a small always-on-top window in the top-right corner, for keeping a
+  # meeting or a log in view while working underneath. The coordinates are for
+  # a 2560x1440 monitor -- x = 2560 - 520 - 10 (right gap), y = 26 (bar) + 10.
+  # Geometry has to go through the dedicated `size` and `position` commands:
+  # set-floating's own --width/--x-pos are ignored on a window that is already
+  # floating, and state_defaults.floating.centered re-centres it regardless.
+  - { commands: ['set-floating --shown-on-top=true', 'size --width 520 --height 360', 'position --x-pos 2030 --y-pos 36'], bindings: ['lwin+o'] }
+  # Focus moves within the tiling layout only, so a floating window is
+  # otherwise unreachable by keyboard. This cycles focus between the tiling,
+  # floating and fullscreen groups -- press it to jump to the pinned window and
+  # again to come back. Win+Space would be the conventional key but Windows
+  # reserves it for the input language.
+  - { commands: ['wm-cycle-focus'],             bindings: ['lwin+shift+o'] }
 
   # --- Focus and move ---
   # Arrows rather than hjkl, since Win+L would lock the screen.

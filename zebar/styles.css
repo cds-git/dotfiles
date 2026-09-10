@@ -211,6 +211,7 @@ i {
 
 /* --- Status modules ------------------------------------------------------ */
 
+.keyboard,
 .network,
 .memory,
 .cpu,

@@ -31,6 +31,7 @@
         cpu: { type: 'cpu' },
         date: { type: 'date', formatting: 'EEEE d MMM HH:mm' },
         battery: { type: 'battery' },
+        keyboard: { type: 'keyboard', refreshInterval: 1000 },
         memory: { type: 'memory' },
         weather: { type: 'weather' },
       });
@@ -117,6 +118,14 @@
           }
         }
 
+        // The provider reports a locale tag such as 'en-US' or 'da-DK'. Show
+        // just the language, which is the part that actually changes here.
+        function formatLayout(layout) {
+          if (!layout) return '';
+          const lang = String(layout).split(/[-_]/)[0];
+          return lang.length <= 3 ? lang.toUpperCase() : String(layout);
+        }
+
         return (
           <div className="app">
             <div className="left">
@@ -184,6 +193,13 @@
                     }
                   ></button>
                 </>
+              )}
+
+              {output.keyboard && (
+                <div className="keyboard">
+                  <i className="nf nf-md-keyboard_outline"></i>
+                  {formatLayout(output.keyboard.layout)}
+                </div>
               )}
 
               {output.network && (

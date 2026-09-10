@@ -66,7 +66,9 @@ function Get-Description {
         '^toggle-floating'                   { return 'Toggle floating' }
         '^toggle-fullscreen$'                { return 'Toggle fullscreen' }
         '^toggle-minimized$'                 { return 'Minimize window' }
-        '^set-floating .*shown-on-top'       { return 'Pop out: float and pin on top' }
+        '^set-floating .*shown-on-top'       { return 'Pin: small window, top-right, on top' }
+        '^set-tiling$'                       { return 'Put window back in the layout' }
+        '^wm-cycle-focus$'                   { return 'Cycle focus: tiling / floating / fullscreen' }
         '^focus --direction (\w+)$'          { return "Focus $($Matches[1])" }
         '^move --direction (\w+)$'           { return "Swap window $($Matches[1])" }
         '^move-workspace --direction (\w+)$' { return "Move workspace to $($Matches[1]) monitor" }
