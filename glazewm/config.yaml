@@ -1,4 +1,12 @@
-# GlazeWM config — Win (Super) as the mod key, to match a Linux tiling-WM setup.
+# GlazeWM config — Win (Super) as the mod key, to match a Linux tiling-WM
+# setup: Super+arrows to focus, Super+Shift+arrows to move, Super+number for
+# workspaces, and single-letter mnemonics for window state.
+#
+# Tuned for use over Azure RDP. Everything here is either a static DWM
+# attribute (borders, corner style) or a one-off window move, both of which
+# cost nothing per frame. Settings that would generate continuous frame or
+# cursor traffic are turned off, each marked "RDP:" below with the value to
+# use on a local machine.
 #
 # Modifier-namespace model (no cross-layer collisions by construction):
 #   GlazeWM  -> Win/Super   (nothing in the terminal stack uses Win)
@@ -8,28 +16,57 @@
 #   Win+L (lock), Win+Ctrl+arrows (virtual desktops), Win+Tab (Task View),
 #   Win+Space (input language), Win+G (Game Bar).
 # Hence focus uses Win+arrows (not hjkl — Win+L would lock the screen).
+#
+# Shell hotkeys GlazeWM's low-level hook should win, but worth testing on a
+# new machine: Win+W (Widgets), Win+T (taskbar), Win+J (snap hint), Win+O
+# (orientation lock). Over RDP these only reach the remote session if the
+# client's "Apply Windows key combinations" is set to the remote computer.
+#
+# No GlazeWM equivalent, so deliberately absent: scratchpad, window
+# groups/tabs, Super+drag to move/resize, pseudo-tiling, and monitor scaling
+# cycle. Ctrl+Alt+Del is the Windows secure attention sequence and cannot be
+# bound by anything. Launcher, screenshots and lock live outside the WM:
+# PowerToys Run, Win+Shift+S, Win+L.
 
 general:
   startup_commands: ['shell-exec zebar']                       # optional bar; remove if unused
   shutdown_commands: ['shell-exec taskkill /IM zebar.exe /F']
   config_reload_commands: []
+  # RDP: keep false. Cursor position arrives with the connection's latency, so
+  # focus-follows-mouse hands focus to whatever the stale pointer was over.
+  # Locally, true gives the usual Linux focus-follows-mouse behaviour.
   focus_follows_cursor: false
   toggle_workspace_on_refocus: false
   cursor_jump:
+    # RDP: 'monitor_focus' only. Warping the cursor desyncs it from the
+    # client's own pointer, so keep it rare. Locally, 'window_focus' warps on
+    # every window change, which is closer to a warping Linux WM.
     enabled: true
     trigger: 'monitor_focus'
 
+# 10px between adjacent windows and at the screen edge.
 gaps:
   scale_with_dpi: true
-  inner_gap: '8px'
-  outer_gap: { top: '8px', right: '8px', bottom: '8px', left: '8px' }
+  inner_gap: '10px'
+  outer_gap: { top: '10px', right: '10px', bottom: '10px', left: '10px' }
 
-# Focus border instead of animations — cheap to render, RDP-friendly.
+# Borders and corner style are DWM window attributes — set once per window,
+# no per-frame cost, so they are safe over RDP. Both are Windows 11 only.
+# GlazeWM has no border-width setting.
+#
+# RDP: leave transparency disabled. Layered windows are recomposited and
+# resent on every change, which is the single most expensive effect over a
+# remote session. Locally, `transparency: { enabled: true, opacity: '98.5%' }`
+# on focused and '96%' on other windows gives the usual subtle inactive fade.
 window_effects:
   focused_window:
     border: { enabled: true, color: '#8aadf4' }
+    corner_style: { enabled: true, style: 'square' }
+    transparency: { enabled: false, opacity: '98.5%' }
   other_windows:
-    border: { enabled: false, color: '#6c7086' }
+    border: { enabled: true, color: '#6c7086' }
+    corner_style: { enabled: true, style: 'square' }
+    transparency: { enabled: false, opacity: '96%' }
 
 window_behavior:
   initial_state: 'tiling'
@@ -41,6 +78,7 @@ window_behavior:
       maximized: false
       shown_on_top: true
 
+# Ten workspaces: Win+1..9 then Win+0.
 workspaces:
   - { name: '1' }
   - { name: '2' }
@@ -51,6 +89,7 @@ workspaces:
   - { name: '7' }
   - { name: '8' }
   - { name: '9' }
+  - { name: '10' }
 
 window_rules:
   # Don't manage the bar.
@@ -71,52 +110,89 @@ window_rules:
       # - window_process: { equals: 'ms-teams', window_title: { regex: 'Meeting' } }
 
 keybindings:
-  # Focus — arrows, like Hyprland's default movefocus.
+  # --- Window state (W=close, J=split direction, T=float, F=fullscreen) ---
+  - { commands: ['close'],                      bindings: ['lwin+w'] }
+  - { commands: ['toggle-tiling-direction'],    bindings: ['lwin+j'] }
+  - { commands: ['toggle-floating --centered'], bindings: ['lwin+t'] }
+  - { commands: ['toggle-fullscreen'],          bindings: ['lwin+f'] }
+  # Pop the window out of the tiling layout: float it and pin it on top.
+  - { commands: ['set-floating --centered --shown-on-top'], bindings: ['lwin+o'] }
+
+  # --- Focus / move. Arrows rather than hjkl, since Win+L locks the screen ---
   - { commands: ['focus --direction left'],  bindings: ['lwin+left'] }
   - { commands: ['focus --direction down'],  bindings: ['lwin+down'] }
   - { commands: ['focus --direction up'],    bindings: ['lwin+up'] }
   - { commands: ['focus --direction right'], bindings: ['lwin+right'] }
 
-  # Move window.
   - { commands: ['move --direction left'],  bindings: ['lwin+shift+left'] }
   - { commands: ['move --direction down'],  bindings: ['lwin+shift+down'] }
   - { commands: ['move --direction up'],    bindings: ['lwin+shift+up'] }
   - { commands: ['move --direction right'], bindings: ['lwin+shift+right'] }
 
-  # State (mnemonics match Hyprland: V=float, F=fullscreen).
-  - { commands: ['toggle-floating --centered'], bindings: ['lwin+v'] }   # float = pin-on-top
-  - { commands: ['toggle-fullscreen'],          bindings: ['lwin+f'] }
-  - { commands: ['toggle-tiling-direction'],    bindings: ['lwin+t'] }
-  - { commands: ['close'],                      bindings: ['lwin+shift+q'] }
+  # Move the whole workspace to another monitor.
+  - { commands: ['move-workspace --direction left'],  bindings: ['lwin+shift+alt+left'] }
+  - { commands: ['move-workspace --direction down'],  bindings: ['lwin+shift+alt+down'] }
+  - { commands: ['move-workspace --direction up'],    bindings: ['lwin+shift+alt+up'] }
+  - { commands: ['move-workspace --direction right'], bindings: ['lwin+shift+alt+right'] }
 
-  # Launch / WM control.
-  - { commands: ['shell-exec wt'],     bindings: ['lwin+enter'] }   # Windows Terminal
-  - { commands: ['wm-reload-config'],  bindings: ['lwin+shift+r'] }
-  - { commands: ['wm-exit'],           bindings: ['lwin+shift+e'] }
+  # --- Resize in 100px steps; Win+R enters a mode for repeated arrows/hjkl ---
+  - { commands: ['resize --width -100px'],  bindings: ['lwin+oem_minus'] }
+  - { commands: ['resize --width +100px'],  bindings: ['lwin+oem_plus'] }
+  - { commands: ['resize --height -100px'], bindings: ['lwin+shift+oem_minus'] }
+  - { commands: ['resize --height +100px'], bindings: ['lwin+shift+oem_plus'] }
   - { commands: ['wm-enable-binding-mode --name resize'], bindings: ['lwin+r'] }
 
-  # Workspaces — Win+number is the most reliable combo GlazeWM intercepts.
-  - { commands: ['focus --workspace 1'], bindings: ['lwin+1'] }
-  - { commands: ['focus --workspace 2'], bindings: ['lwin+2'] }
-  - { commands: ['focus --workspace 3'], bindings: ['lwin+3'] }
-  - { commands: ['focus --workspace 4'], bindings: ['lwin+4'] }
-  - { commands: ['focus --workspace 5'], bindings: ['lwin+5'] }
-  - { commands: ['focus --workspace 6'], bindings: ['lwin+6'] }
-  - { commands: ['focus --workspace 7'], bindings: ['lwin+7'] }
-  - { commands: ['focus --workspace 8'], bindings: ['lwin+8'] }
-  - { commands: ['focus --workspace 9'], bindings: ['lwin+9'] }
-  - { commands: ['focus --recent-workspace'], bindings: ['lwin+grave'] }
+  # --- Launchers ---
+  - { commands: ['shell-exec wt'],             bindings: ['lwin+enter'] }        # terminal
+  - { commands: ['shell-exec msedge'],         bindings: ['lwin+shift+enter'] }  # browser; swap for chrome/firefox
+  - { commands: ['shell-exec msedge'],         bindings: ['lwin+shift+b'] }
+  - { commands: ['shell-exec explorer'],       bindings: ['lwin+shift+f'] }      # file manager
+  - { commands: ['shell-exec wt -p WSL nvim'], bindings: ['lwin+shift+n'] }      # editor
 
-  # Move focused window to workspace.
-  - { commands: ['move --workspace 1'], bindings: ['lwin+shift+1'] }
-  - { commands: ['move --workspace 2'], bindings: ['lwin+shift+2'] }
-  - { commands: ['move --workspace 3'], bindings: ['lwin+shift+3'] }
-  - { commands: ['move --workspace 4'], bindings: ['lwin+shift+4'] }
-  - { commands: ['move --workspace 5'], bindings: ['lwin+shift+5'] }
-  - { commands: ['move --workspace 6'], bindings: ['lwin+shift+6'] }
-  - { commands: ['move --workspace 7'], bindings: ['lwin+shift+7'] }
-  - { commands: ['move --workspace 8'], bindings: ['lwin+shift+8'] }
-  - { commands: ['move --workspace 9'], bindings: ['lwin+shift+9'] }
+  # --- WM control ---
+  - { commands: ['wm-reload-config'], bindings: ['lwin+shift+r'] }
+  - { commands: ['wm-exit'],          bindings: ['lwin+shift+e'] }
+
+  # --- Workspaces ---
+  - { commands: ['focus --workspace 1'],  bindings: ['lwin+1'] }
+  - { commands: ['focus --workspace 2'],  bindings: ['lwin+2'] }
+  - { commands: ['focus --workspace 3'],  bindings: ['lwin+3'] }
+  - { commands: ['focus --workspace 4'],  bindings: ['lwin+4'] }
+  - { commands: ['focus --workspace 5'],  bindings: ['lwin+5'] }
+  - { commands: ['focus --workspace 6'],  bindings: ['lwin+6'] }
+  - { commands: ['focus --workspace 7'],  bindings: ['lwin+7'] }
+  - { commands: ['focus --workspace 8'],  bindings: ['lwin+8'] }
+  - { commands: ['focus --workspace 9'],  bindings: ['lwin+9'] }
+  - { commands: ['focus --workspace 10'], bindings: ['lwin+0'] }
+
+  # Cycle only the workspaces actually in use, not all ten.
+  - { commands: ['focus --next-active-workspace'], bindings: ['lwin+tab'] }
+  - { commands: ['focus --prev-active-workspace'], bindings: ['lwin+shift+tab'] }
+  - { commands: ['focus --recent-workspace'],      bindings: ['lwin+ctrl+tab'] }
+
+  # Move the focused window to a workspace and follow it.
+  - { commands: ['move --workspace 1',  'focus --workspace 1'],  bindings: ['lwin+shift+1'] }
+  - { commands: ['move --workspace 2',  'focus --workspace 2'],  bindings: ['lwin+shift+2'] }
+  - { commands: ['move --workspace 3',  'focus --workspace 3'],  bindings: ['lwin+shift+3'] }
+  - { commands: ['move --workspace 4',  'focus --workspace 4'],  bindings: ['lwin+shift+4'] }
+  - { commands: ['move --workspace 5',  'focus --workspace 5'],  bindings: ['lwin+shift+5'] }
+  - { commands: ['move --workspace 6',  'focus --workspace 6'],  bindings: ['lwin+shift+6'] }
+  - { commands: ['move --workspace 7',  'focus --workspace 7'],  bindings: ['lwin+shift+7'] }
+  - { commands: ['move --workspace 8',  'focus --workspace 8'],  bindings: ['lwin+shift+8'] }
+  - { commands: ['move --workspace 9',  'focus --workspace 9'],  bindings: ['lwin+shift+9'] }
+  - { commands: ['move --workspace 10', 'focus --workspace 10'], bindings: ['lwin+shift+0'] }
+
+  # Move it there without following.
+  - { commands: ['move --workspace 1'],  bindings: ['lwin+shift+alt+1'] }
+  - { commands: ['move --workspace 2'],  bindings: ['lwin+shift+alt+2'] }
+  - { commands: ['move --workspace 3'],  bindings: ['lwin+shift+alt+3'] }
+  - { commands: ['move --workspace 4'],  bindings: ['lwin+shift+alt+4'] }
+  - { commands: ['move --workspace 5'],  bindings: ['lwin+shift+alt+5'] }
+  - { commands: ['move --workspace 6'],  bindings: ['lwin+shift+alt+6'] }
+  - { commands: ['move --workspace 7'],  bindings: ['lwin+shift+alt+7'] }
+  - { commands: ['move --workspace 8'],  bindings: ['lwin+shift+alt+8'] }
+  - { commands: ['move --workspace 9'],  bindings: ['lwin+shift+alt+9'] }
+  - { commands: ['move --workspace 10'], bindings: ['lwin+shift+alt+0'] }
 
 binding_modes:
   - name: 'resize'
