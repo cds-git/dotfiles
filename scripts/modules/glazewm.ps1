@@ -24,6 +24,18 @@ function Install-Zebar {
     Ensure-Link "$HOME\dotfiles\zebar" `
         "$HOME\.glzr\zebar\dotfiles" 'Zebar pack'
 
+    # Ensure-Link leaves a .backup beside whatever it replaced. Zebar keys packs
+    # on the "name" in zpack.json rather than the folder, so a backup sitting in
+    # the packs directory declares the same name and shadows the real pack --
+    # silently serving stale HTML, CSS and bar height. Move it out of scope.
+    $staleBackup = "$HOME\.glzr\zebar\dotfiles.backup"
+    if (Test-Path $staleBackup) {
+        $movedTo = "$HOME\.glzr\zebar-dotfiles.backup"
+        if (Test-Path $movedTo) { Remove-Item $movedTo -Recurse -Force }
+        Move-Item $staleBackup $movedTo -Force
+        Write-Host '  Moved shadowing dotfiles.backup out of the packs directory' -ForegroundColor Yellow
+    }
+
     # Point the startup widget at our pack rather than 'starter'.
     $settingsPath = "$HOME\.glzr\zebar\settings.json"
     if (Test-Path $settingsPath) {
