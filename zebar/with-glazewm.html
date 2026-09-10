@@ -26,13 +26,17 @@
       import * as zebar from 'https://esm.sh/zebar@2';
 
       const providers = zebar.createProviderGroup({
-        network: { type: 'network' },
+        // refreshInterval is required by every polling provider -- omitting it
+        // falls back to a slow default, which is why cpu and memory looked
+        // frozen. Values are in milliseconds, chosen per how fast the thing
+        // actually changes: weather is left alone so its API is not hammered.
+        network: { type: 'network', refreshInterval: 5000 },
         glazewm: { type: 'glazewm' },
-        cpu: { type: 'cpu' },
+        cpu: { type: 'cpu', refreshInterval: 2000 },
         date: { type: 'date', formatting: 'EEEE d MMM HH:mm' },
-        battery: { type: 'battery' },
+        battery: { type: 'battery', refreshInterval: 60000 },
         keyboard: { type: 'keyboard', refreshInterval: 1000 },
-        memory: { type: 'memory' },
+        memory: { type: 'memory', refreshInterval: 5000 },
         weather: { type: 'weather' },
       });
 
