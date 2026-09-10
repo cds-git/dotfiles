@@ -21,6 +21,7 @@
   --blue: #89b4fa;
   --crust: #11111b;
   --surface1: #45475a;
+  --overlay1: #7f849c;
 
   /* One shared height for every chip in the bar, so icons and text line up
      regardless of their font metrics. */
@@ -51,6 +52,11 @@ body {
   font-size: 12px;
   line-height: 1;
   overflow: hidden;
+  /* Grayscale antialiasing rather than ClearType. Subpixel AA paints coloured
+     fringes along glyph edges, and a remote-desktop codec subsamples chroma,
+     which smears those fringes into visible speckle. Grayscale has no colour
+     to lose and survives the transport far better. */
+  -webkit-font-smoothing: antialiased;
 }
 
 div,
@@ -134,32 +140,33 @@ i {
   border-radius: 4px;
   line-height: 1;
   cursor: pointer;
-  color: var(--text);
   /* Workspaces that exist but are not on screen recede rather than disappear.
      The number is always readable; the focused one gets a filled box so it is
-     findable at a glance rather than needing to be read. */
-  opacity: 0.45;
+     findable at a glance rather than needing to be read.
+
+     Dimming uses a solid colour instead of opacity: a half-transparent glyph
+     blends into the background and gives the codec a low-contrast edge to
+     mangle, whereas a solid mid-grey keeps a crisp one. */
+  color: var(--overlay1);
   font-weight: 400;
   transition:
-    opacity 120ms ease,
     background-color 120ms ease,
     color 120ms ease;
 
   /* Shown on some monitor, but not the focused one. */
   &.displayed {
-    opacity: 1;
     background: var(--surface0);
+    color: var(--text);
   }
 
   &.focused {
-    opacity: 1;
     font-weight: 700;
     background: var(--blue);
     color: var(--crust);
   }
 
   &:hover {
-    opacity: 1;
+    color: var(--text);
   }
 
   &:hover:not(.focused) {
