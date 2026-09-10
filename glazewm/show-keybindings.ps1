@@ -69,6 +69,7 @@ function Get-Description {
         '^set-floating .*shown-on-top'       { return 'Pin: small window, top-right, on top' }
         '^set-tiling$'                       { return 'Put window back in the layout' }
         '^wm-cycle-focus$'                   { return 'Cycle focus: tiling / floating / fullscreen' }
+        'ensure-layout'                      { return 'Put apps back on their workspaces' }
         '^focus --direction (\w+)$'          { return "Focus $($Matches[1])" }
         '^move --direction (\w+)$'           { return "Swap window $($Matches[1])" }
         '^move-workspace --direction (\w+)$' { return "Move workspace to $($Matches[1]) monitor" }
