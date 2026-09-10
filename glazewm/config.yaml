@@ -117,6 +117,35 @@ window_rules:
     match:
       - window_title: { regex: '^Keybindings' }
 
+  # Fixed homes for the always-on applications, so finding them is muscle
+  # memory rather than a search. Frequency maps to finger distance: the two
+  # apps in constant rotation sit on the nearest keys, the interrupt-driven
+  # ones further out. 3-7 are deliberately left free -- that is where actual
+  # work sprawls, and assigning every workspace defeats the point.
+  #
+  # These match on process, so *every* window of an app goes to its home.
+  # `move` without a paired `focus` means windows land quietly rather than
+  # dragging focus along with them.
+  - commands: ['move --workspace 1']
+    match:
+      - window_process: { equals: 'firefox' }
+
+  - commands: ['move --workspace 2']
+    match:
+      - window_process: { equals: 'WindowsTerminal' }
+
+  - commands: ['move --workspace 8']
+    match:
+      - window_process: { equals: 'OUTLOOK' }        # classic Outlook
+
+  - commands: ['move --workspace 9']
+    match:
+      - window_process: { equals: 'msedge' }
+
+  - commands: ['move --workspace 10']
+    match:
+      - window_process: { equals: 'ms-teams' }       # new Teams
+
 keybindings:
   # --- Window state ---
   # W=close, J=split direction, T=float, F=fullscreen.
