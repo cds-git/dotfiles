@@ -114,6 +114,16 @@ window_rules:
   - commands: ['set-floating --centered --shown-on-top']
     match:
       - window_title: { regex: '^Keybindings' }
+
+  # The admin terminal. This rule only bites if GlazeWM itself runs elevated:
+  # UIPI blocks an unelevated process from touching a higher-privilege window,
+  # so normally GlazeWM cannot manage it at all. That is not a problem in
+  # practice -- being unmanageable means it stays out of the tiling layout and
+  # floats anyway -- but its placement comes from open-admin-terminal.ps1
+  # rather than from here.
+  - commands: ['set-floating --centered --shown-on-top']
+    match:
+      - window_title: { regex: 'AdminTerminal' }
       # PiP / video example — float a Teams meeting window by title:
       # - window_process: { equals: 'ms-teams', window_title: { regex: 'Meeting' } }
 
@@ -159,6 +169,8 @@ keybindings:
   - { commands: ['shell-exec msedge'],         bindings: ['lwin+shift+b'] }
   - { commands: ['shell-exec explorer'],       bindings: ['lwin+shift+f'] }      # file manager
   - { commands: ['shell-exec wt -p WSL nvim'], bindings: ['lwin+shift+n'] }      # editor
+  # Elevated PowerShell, centred and floating. Prompts for UAC.
+  - { commands: ['shell-exec powershell -NoProfile -WindowStyle Hidden -File %userprofile%\dotfiles\glazewm\open-admin-terminal.ps1'], bindings: ['lwin+ctrl+enter'] }
 
   # --- WM control ---
   - { commands: ['wm-reload-config'], bindings: ['lwin+shift+r'] }
