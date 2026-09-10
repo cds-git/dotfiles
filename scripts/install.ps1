@@ -260,6 +260,7 @@ if ($Tools) {
 
 if ($Twm) {
     $modules += 'glazewm.ps1'
+    $modules += 'powertoys.ps1'
 }
 
 Write-Host ''
@@ -322,6 +323,9 @@ if ($Twm) {
     Write-Host ''
     Write-Host '--- Tiling Window Manager ---' -ForegroundColor Magenta
     Install-GlazeWM
+    # PowerToys rides along with the WM: AlwaysOnTop covers GlazeWM's broken
+    # shown_on_top, and PowerToys Run is the application launcher.
+    Install-PowerToys
 }
 
 Write-Host ''

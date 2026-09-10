@@ -22,6 +22,10 @@ Greatest config known to mankind
 - **Git** - With delta pager and custom aliases
 - **Lazygit** - TUI for git
 
+### Window Management (Windows)
+- **GlazeWM** - Tiling window manager, with Zebar as the status bar
+- **PowerToys** - Run launcher (Alt+Space) and AlwaysOnTop (Win+Ctrl+T)
+
 ### Docker
 - **Lazydocker** - TUI for docker
 
