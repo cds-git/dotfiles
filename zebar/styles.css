@@ -3,8 +3,8 @@
  *
  * Deliberately has no pills, borders or rounded corners: modules sit directly
  * on the background and are separated by whitespace alone. Colour is reserved
- * for state that needs attention -- a binding mode being active, CPU pegged --
- * so that when something does go red it actually reads as a signal.
+ * for state that needs attention -- a binding mode being active, audio muted
+ * -- so that when something does change colour it actually reads as a signal.
  *
  * Icons come from Nerd Fonts.
  */
@@ -213,8 +213,7 @@ i {
 
 .keyboard,
 .network,
-.memory,
-.cpu,
+.audio,
 .battery,
 .weather {
   display: flex;
@@ -223,8 +222,27 @@ i {
   color: var(--subtext0);
 }
 
-.cpu .high-usage {
-  color: var(--red);
+/* --- Audio ---------------------------------------------------------------
+   The whole module is a control: scroll to change volume, click to mute,
+   right-click for the quick settings flyout, which is where the output
+   device picker and the rest of the system toggles live. */
+
+.audio {
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.audio:hover,
+.audio:hover i {
+  color: var(--text);
+}
+
+/* Muting is easy to forget about and confusing to debug from silence alone,
+   so it gets colour. Peach rather than red: it is normally deliberate, and red
+   stays reserved for things that are actually wrong. */
+.audio.muted,
+.audio.muted i {
+  color: var(--peach);
 }
 
 .battery {

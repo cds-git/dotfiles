@@ -21,24 +21,37 @@
       import React, {
         useState,
         useEffect,
+        useRef,
       } from 'https://esm.sh/react@18?dev';
       import { createRoot } from 'https://esm.sh/react-dom@18/client?dev';
-      import * as zebar from 'https://esm.sh/zebar@2';
+      import * as zebar from 'https://esm.sh/zebar@3';
 
       const providers = zebar.createProviderGroup({
-        // refreshInterval is required by every polling provider -- omitting it
-        // falls back to a slow default, which is why cpu and memory looked
-        // frozen. Values are in milliseconds, chosen per how fast the thing
-        // actually changes: weather is left alone so its API is not hammered.
+        // refreshInterval is in milliseconds. Every polling provider already
+        // defaults to a sane one, so these are spelled out only to keep the
+        // bar's update rates readable in one place; weather is left alone so
+        // its API is not hammered. audio and glazewm are push-based instead:
+        // they take no interval and emit whenever the thing they watch
+        // actually changes, which is why audio stays live.
         network: { type: 'network', refreshInterval: 5000 },
         glazewm: { type: 'glazewm' },
-        cpu: { type: 'cpu', refreshInterval: 2000 },
+        audio: { type: 'audio' },
         date: { type: 'date', formatting: 'EEEE d MMM HH:mm' },
         battery: { type: 'battery', refreshInterval: 60000 },
         keyboard: { type: 'keyboard', refreshInterval: 1000 },
-        memory: { type: 'memory', refreshInterval: 5000 },
         weather: { type: 'weather' },
       });
+
+      // Zebar exposes no Bluetooth provider, and there is little a bar running
+      // here could do with one: this session is an RDP session, where Windows
+      // hides the machine's real endpoints behind a single "Remote Audio"
+      // device and ships the sound down to the connecting client. A headset
+      // paired to the machine itself never appears in session, so its state is
+      // not the bar's to report. What the bar can say is where sound is
+      // actually leaving by, which is the question that changes day to day.
+      const REMOTE_DEVICE = /remote audio/i;
+      const HEADSET_DEVICE =
+        /bluetooth|hands-free|headset|headphone|earbud|airpod/i;
 
       createRoot(document.getElementById('root')).render(<App />);
 
@@ -122,6 +135,59 @@
           }
         }
 
+        // Zebar can only shell out if the widget declares shell privileges,
+        // but GlazeWM can already, and the bar is talking to it regardless.
+        function runScript(script) {
+          output.glazewm?.runCommand(
+            `shell-exec powershell -NoProfile -WindowStyle Hidden -File %userprofile%\\dotfiles\\zebar\\${script}`,
+          );
+        }
+
+        // Wheel ticks arrive far faster than the provider echoes a volume
+        // change back, so several in a row would all compute from the same
+        // stale reading and move the volume by one step instead of five.
+        // Steer from a local target until the provider catches up.
+        const targetVolume = useRef(null);
+        const [displayVolume, setDisplayVolume] = useState(null);
+
+        useEffect(() => {
+          const device = output.audio?.defaultPlaybackDevice;
+          if (
+            targetVolume.current !== null &&
+            device &&
+            Math.round(device.volume) === targetVolume.current
+          ) {
+            targetVolume.current = null;
+            setDisplayVolume(null);
+          }
+        }, [output.audio]);
+
+        function nudgeVolume(delta) {
+          const device = output.audio?.defaultPlaybackDevice;
+          if (!device) return;
+          const from = targetVolume.current ?? device.volume;
+          const next = Math.min(100, Math.max(0, Math.round(from + delta)));
+          targetVolume.current = next;
+          setDisplayVolume(next);
+          output.audio.setVolume(next);
+        }
+
+        function toggleMute() {
+          const device = output.audio?.defaultPlaybackDevice;
+          if (device) output.audio.setMute(!device.isMuted);
+        }
+
+        // The icon carries the device, not the level -- the percentage
+        // already says how loud it is, and what it is coming out of is the
+        // part a number cannot tell you. Over RDP that is nearly always the
+        // remote endpoint; the other two cases are for sitting at the machine.
+        function getAudioIcon(device) {
+          if (device.isMuted) return 'nf-md-volume_off';
+          if (REMOTE_DEVICE.test(device.name)) return 'nf-md-monitor_speaker';
+          if (HEADSET_DEVICE.test(device.name)) return 'nf-md-headphones';
+          return 'nf-md-volume_high';
+        }
+
         // The provider reports a locale tag such as 'en-US' or 'da-DK'. Show
         // just the language, which is the part that actually changes here.
         function formatLayout(layout) {
@@ -163,11 +229,7 @@
             <div
               className="center clock"
               title="Open notification centre and calendar"
-              onClick={() =>
-                output.glazewm?.runCommand(
-                  'shell-exec powershell -NoProfile -WindowStyle Hidden -File %userprofile%\\dotfiles\\zebar\\open-calendar.ps1',
-                )
-              }
+              onClick={() => runScript('open-calendar.ps1')}
             >
               {output.date?.formatted}
             </div>
@@ -220,23 +282,23 @@
                 </div>
               )}
 
-              {output.memory && (
-                <div className="memory">
-                  <i className="nf nf-fae-chip"></i>
-                  {Math.round(output.memory.usage)}%
-                </div>
-              )}
-
-              {output.cpu && (
-                <div className="cpu">
-                  <i className="nf nf-oct-cpu"></i>
-
-                  {/* Change the text color if the CPU usage is high. */}
-                  <span
-                    className={output.cpu.usage > 85 ? 'high-usage' : ''}
-                  >
-                    {Math.round(output.cpu.usage)}%
-                  </span>
+              {output.audio?.defaultPlaybackDevice && (
+                <div
+                  className={`audio ${output.audio.defaultPlaybackDevice.isMuted ? 'muted' : ''}`}
+                  title={`${output.audio.defaultPlaybackDevice.name} - scroll to change volume, click to mute, right-click for sound settings`}
+                  onWheel={e => nudgeVolume(e.deltaY < 0 ? 5 : -5)}
+                  onClick={toggleMute}
+                  onContextMenu={e => {
+                    e.preventDefault();
+                    runScript('open-quick-settings.ps1');
+                  }}
+                >
+                  <i
+                    className={`nf ${getAudioIcon(output.audio.defaultPlaybackDevice)}`}
+                  ></i>
+                  {displayVolume ??
+                    Math.round(output.audio.defaultPlaybackDevice.volume)}
+                  %
                 </div>
               )}
 
