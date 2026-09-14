@@ -12,10 +12,26 @@
 #   GlazeWM  -> Win/Super   (nothing in the terminal stack uses Win)
 #   Terminal -> Ctrl+Shift   tmux -> Ctrl+Space prefix   nvim/TUIs -> Ctrl / Alt+letter / Space
 #
-# OS-reserved Win combos that GlazeWM CANNOT intercept — never bind these:
-#   Win+L (lock), Win+Ctrl+arrows (virtual desktops), Win+Tab (Task View),
-#   Win+Space (input language), Win+G (Game Bar).
-# Hence focus uses Win+arrows (not hjkl — Win+L would lock the screen).
+# Win+L is genuinely unavailable: the lock screen is raised by winlogon before
+# a user-mode keyboard hook ever runs, so nothing here can see it, let alone
+# swallow it. Hence focus uses Win+arrows rather than hjkl.
+#
+# The other combos once listed here as unreachable — Win+Ctrl+arrows (virtual
+# desktops), Win+Tab (Task View), Win+Space (input language), Win+G (Game Bar)
+# — were an assumption, and two have since been measured wrong. Win+Tab is
+# bound below and was tested: the hook swallowed it and Task View never
+# appeared. Win+Space was tested the same way and also swallowed, leaving the
+# input language untouched. Both results are what the hook implies, since it
+# returns LRESULT(1) on a match and the shell then never receives the key.
+# Treat the remaining two as untested rather than forbidden: bind one and try
+# it before assuming.
+#
+# Win+Space is nonetheless left alone deliberately. It is the EN/DA switcher
+# and worth more in that role than as a binding; PowerToys Run keeps Alt+Space.
+# The legacy Alt+Shift switcher is turned off separately, in the install
+# module, because it fires by accident constantly. Note that the two are
+# independent: Alt+Shift lives in HKCU\Keyboard Layout\Toggle, while Win+Space
+# is built into the shell and is not governed by that key.
 #
 # Shell hotkeys GlazeWM's low-level hook should win, but worth testing on a
 # new machine: Win+W (Widgets), Win+T (taskbar), Win+J (snap hint), Win+O
@@ -85,17 +101,49 @@ window_behavior:
       shown_on_top: true
 
 # Ten workspaces: Win+1..9 then Win+0.
+# Only the workspaces that have a pinned application get a home. The rest are
+# deliberately left unbound, which makes them behave the way Hyprland's do:
+# they materialise on whichever monitor has focus, so ad-hoc work opens where
+# you are already looking instead of teleporting you somewhere else. GlazeWM
+# also prefers unbound configs when it needs a workspace for a monitor that
+# has just been connected, so they fill new screens on their own.
+#
+# bind_to_monitor is an INDEX, and monitors are sorted left-to-right by x
+# position, then top-to-bottom -- not by Windows' device order and not by which
+# one is primary. The index therefore tracks the physical arrangement:
+#
+#     0  portrait panel, far left   (nothing bound here, by choice)
+#     1  centre screen, primary     -- main
+#     2  right screen               -- secondary
+#
+# ---------------------------------------------------------------------------
+# WHEN THE PORTRAIT PANEL GOES AWAY, EVERY INDEX BELOW SHIFTS DOWN BY ONE.
+# It sits to the left of both other screens, so dropping it makes main 0 and
+# secondary 1. Rewrite the four bindings as: main 1 -> 0, secondary 2 -> 1.
+# There is no way to avoid this; bind_to_monitor takes no monitor name, as of
+# 3.10.1 either, so the binding cannot be pinned to a display that keeps its
+# identity across a change of arrangement.
+# ---------------------------------------------------------------------------
+#
+# Fewer monitors needs no second config regardless. A workspace bound to an
+# index that is not there falls back to the focused monitor, so over RDP on a
+# single screen the whole set collapses onto it and behaves as it always did.
+# Unplugging migrates a monitor's non-empty workspaces to a surviving screen;
+# plugging it back in moves the bound ones home again. Both are automatic.
+# Note that reloading this file does neither -- bindings apply when a
+# workspace is created or a monitor appears, so an existing workspace stays
+# where it is until something moves it.
 workspaces:
-  - { name: '1' }
-  - { name: '2' }
+  - { name: '1',  bind_to_monitor: 2 }   # firefox  -> secondary
+  - { name: '2',  bind_to_monitor: 1 }   # terminal -> main
   - { name: '3' }
   - { name: '4' }
   - { name: '5' }
   - { name: '6' }
   - { name: '7' }
-  - { name: '8' }
+  - { name: '8',  bind_to_monitor: 2 }   # outlook  -> secondary
   - { name: '9' }
-  - { name: '10' }
+  - { name: '10', bind_to_monitor: 1 }   # teams    -> main
 
 window_rules:
   # Don't manage the bar.
@@ -207,10 +255,16 @@ keybindings:
   - { commands: ['focus --workspace 9'],  bindings: ['lwin+9'] }
   - { commands: ['focus --workspace 10'], bindings: ['lwin+0'] }
 
-  # Cycle only the workspaces actually in use, not all ten.
-  - { commands: ['focus --next-active-workspace'], bindings: ['lwin+tab'] }
-  - { commands: ['focus --prev-active-workspace'], bindings: ['lwin+shift+tab'] }
-  - { commands: ['focus --recent-workspace'],      bindings: ['lwin+ctrl+tab'] }
+  # Cycle only the workspaces actually in use, not all ten, and only the ones
+  # on the monitor being looked at. The plain --next-active-workspace walks
+  # every active workspace on every screen, which with workspaces bound to
+  # monitors means Win+Tab quietly hauls focus onto another display mid-task —
+  # measured doing exactly that, secondary to main, before this changed.
+  - { commands: ['focus --next-active-workspace-on-monitor'], bindings: ['lwin+tab'] }
+  - { commands: ['focus --prev-active-workspace-on-monitor'], bindings: ['lwin+shift+tab'] }
+  # Left global on purpose: jumping back to wherever you just were is worth
+  # crossing a monitor for, which is the whole point of a "recent" key.
+  - { commands: ['focus --recent-workspace'], bindings: ['lwin+ctrl+tab'] }
 
   # Move the focused window to a workspace and follow it.
   - { commands: ['move --workspace 1',  'focus --workspace 1'],  bindings: ['lwin+shift+1'] }

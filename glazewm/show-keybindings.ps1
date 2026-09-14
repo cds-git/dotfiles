@@ -93,6 +93,15 @@ function Get-Description {
         '^shell-exec (msedge|chrome|firefox)$' { return 'Browser' }
         '^shell-exec wt$'                    { return 'Terminal' }
         '^shell-exec explorer$'              { return 'File manager' }
+        # Bundled helper scripts are invoked through powershell -File, which the
+        # catch-all below would report as "Launch powershell" for every one of
+        # them. Name the action instead, derived from the script's filename, so
+        # a new script reads correctly here without touching this list. Explicit
+        # rules above still win, since each branch returns.
+        '-File \S+\\([\w-]+)\.ps1' {
+            $n = $Matches[1] -replace '-', ' '
+            return $n.Substring(0, 1).ToUpper() + $n.Substring(1)
+        }
         '^shell-exec (\S+)'                  { return "Launch $($Matches[1])" }
     }
     return $c

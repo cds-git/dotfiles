@@ -35,7 +35,6 @@ $apps = @(
     @{ Process = 'firefox';         Launch = 'firefox';  Workspace = '1' }
     @{ Process = 'WindowsTerminal'; Launch = 'wt';       Workspace = '2' }
     @{ Process = 'OUTLOOK';         Launch = 'outlook';  Workspace = '8' }
-    @{ Process = 'msedge';          Launch = 'msedge';   Workspace = '9' }
     @{ Process = 'ms-teams';        Launch = 'ms-teams'; Workspace = '10' }
 )
 
