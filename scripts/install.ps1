@@ -240,7 +240,7 @@ function Wait-ForCommand {
 }
 
 # Load only the modules the selected groups need.
-$modules = @('windows-terminal.ps1', 'wsl.ps1')
+$modules = @('windows-settings.ps1', 'windows-terminal.ps1', 'wsl.ps1')
 
 if ($Tools) {
     $modules += @(
@@ -280,7 +280,11 @@ Write-Host '========================================' -ForegroundColor Cyan
 Write-Host 'Starting installation...' -ForegroundColor Cyan
 Write-Host '========================================' -ForegroundColor Cyan
 
-# --- Always: the terminal and a working WSL ---
+# --- Always: OS settings, the terminal and a working WSL ---
+Write-Host ''
+Write-Host '--- Windows settings ---' -ForegroundColor Magenta
+Set-WindowsSettings
+
 Write-Host ''
 Write-Host '--- Terminal ---' -ForegroundColor Magenta
 Install-WindowsTerminal
