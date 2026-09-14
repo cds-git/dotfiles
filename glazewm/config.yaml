@@ -133,17 +133,27 @@ window_behavior:
 # Note that reloading this file does neither -- bindings apply when a
 # workspace is created or a monitor appears, so an existing workspace stays
 # where it is until something moves it.
+#
+# keep_alive on the bound four is what stops an RDP round-trip from wedging
+# this. Without it an empty workspace is destroyed the moment it stops being
+# displayed, and a monitor whose only workspace was empty is left holding none
+# at all. That state cannot be undone from inside the WM: moving a workspace to
+# a monitor needs a workspace already on it to swap with, so move-workspace
+# fails with "No Workspace" and focus --monitor fails too, leaving every
+# workspace stranded on one screen. A kept-alive workspace cannot be destroyed,
+# so its monitor always has one and the deadlock cannot form. The cost is that
+# these four always show in the bar, empty or not.
 workspaces:
-  - { name: '1',  bind_to_monitor: 2 }   # firefox  -> secondary
-  - { name: '2',  bind_to_monitor: 1 }   # terminal -> main
+  - { name: '1',  bind_to_monitor: 2, keep_alive: true }   # firefox  -> secondary
+  - { name: '2',  bind_to_monitor: 1, keep_alive: true }   # terminal -> main
   - { name: '3' }
   - { name: '4' }
   - { name: '5' }
   - { name: '6' }
   - { name: '7' }
-  - { name: '8',  bind_to_monitor: 2 }   # outlook  -> secondary
+  - { name: '8',  bind_to_monitor: 2, keep_alive: true }   # outlook  -> secondary
   - { name: '9' }
-  - { name: '10', bind_to_monitor: 1 }   # teams    -> main
+  - { name: '10', bind_to_monitor: 1, keep_alive: true }   # teams    -> main
 
 window_rules:
   # Don't manage the bar.
