@@ -206,7 +206,26 @@
         return (
           <div className="app">
             <div className="left">
-              <i className="logo nf nf-fa-windows"></i>
+              {/* Drawn rather than typed. As a font glyph this is run
+                  through Windows' subpixel text antialiasing, which fringes
+                  the four panes with colour at 14px and reads as pixelation.
+                  Four rects on whole-pixel bounds with crispEdges get no
+                  antialiasing at all, so at 100% scaling each edge lands
+                  exactly on a device pixel. */}
+              <span className="logo">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  shapeRendering="crispEdges"
+                  aria-hidden="true"
+                >
+                  <rect x="0" y="0" width="5" height="5" />
+                  <rect x="7" y="0" width="5" height="5" />
+                  <rect x="0" y="7" width="5" height="5" />
+                  <rect x="7" y="7" width="5" height="5" />
+                </svg>
+              </span>
               {output.glazewm && (
                 <div className="workspaces">
                   {output.glazewm.currentWorkspaces.map(workspace => (

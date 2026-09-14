@@ -52,11 +52,14 @@ body {
   font-size: 12px;
   line-height: 1;
   overflow: hidden;
-  /* Grayscale antialiasing rather than ClearType. Subpixel AA paints coloured
-     fringes along glyph edges, and a remote-desktop codec subsamples chroma,
-     which smears those fringes into visible speckle. Grayscale has no colour
-     to lose and survives the transport far better. */
-  -webkit-font-smoothing: antialiased;
+  /* -webkit-font-smoothing used to be set here to force grayscale antialiasing.
+     It did nothing: the property is implemented only on macOS in Chromium, so
+     on Windows text keeps its subpixel antialiasing regardless and the coloured
+     fringing it was meant to remove was never removed. The way to actually get
+     grayscale here is to push an element onto its own compositing layer, e.g.
+     will-change: transform, which makes Chromium drop LCD text rendering for
+     it. Not done globally, because subpixel is the sharper choice for the
+     text; only the logo needed escaping from it, and that is an SVG now. */
 }
 
 div,
@@ -114,10 +117,18 @@ i {
   font-style: normal;
 }
 
+/* The logo sits in the same shared-height box as every other chip, so it is
+   centred by the same rule rather than by its own dimensions -- an SVG has no
+   side bearings or baseline to fall back on, unlike the font glyph this
+   replaced. 12px to match the text: the old glyph was set at 14px but drew
+   well inside that em box, so a 14px SVG filling its box edge to edge came out
+   heavier than the digits beside it. */
 .logo {
-  color: var(--text);
-  margin-right: 0;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--chip-height);
+  fill: var(--text);
 }
 
 /* --- Workspaces ---------------------------------------------------------- */
