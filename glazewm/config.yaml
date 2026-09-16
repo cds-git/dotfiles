@@ -63,14 +63,18 @@ general:
     enabled: true
     trigger: 'monitor_focus'
 
-# 10px between adjacent windows and at the screen edge. The top gap also has
-# to clear Zebar, which is anchored top_left at 26px tall and full width, so
-# top = 26 + 10. Change this to match if you restyle or move the bar; without
-# it, tiled windows sit underneath the bar.
+# No gaps anywhere: windows sit flush against each other and against the screen
+# edge.
+#
+# The top is the one exception, and it is not decoration: 26px is exactly
+# Zebar's height, which is anchored top_left and full width. Without it tiled
+# windows slide underneath the bar. It is the bar's height alone now, with no
+# margin added, so windows sit directly beneath it. Change this number to match
+# if you restyle the bar's height or move it.
 gaps:
   scale_with_dpi: true
-  inner_gap: '10px'
-  outer_gap: { top: '36px', right: '10px', bottom: '10px', left: '10px' }
+  inner_gap: '0px'
+  outer_gap: { top: '26px', right: '0px', bottom: '0px', left: '0px' }
 
 # Borders and corner style are DWM window attributes — set once per window,
 # no per-frame cost, so they are safe over RDP. Both are Windows 11 only.
