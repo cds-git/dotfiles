@@ -36,6 +36,8 @@ function Install-Zebar {
         Write-Host '  Moved shadowing dotfiles.backup out of the packs directory' -ForegroundColor Yellow
     }
 
+    Install-ZebarWatchdog
+
     # Point the startup widget at our pack rather than 'starter'.
     $settingsPath = "$HOME\.glzr\zebar\settings.json"
     if (Test-Path $settingsPath) {
@@ -49,4 +51,41 @@ function Install-Zebar {
             Write-Host '  Zebar startup pack -> dotfiles' -ForegroundColor Green
         }
     }
+}
+
+function Install-ZebarWatchdog {
+    # Zebar 3.3.1 crashes whenever Windows reports no default audio device --
+    # locking the machine, a Bluetooth headset connecting, a call switching
+    # device. See the header of zebar\watch-zebar.ps1. Upstream fix is open but
+    # unmerged (glzr-io/zebar#290); delete this function and the script once a
+    # release carries it.
+    #
+    # A scheduled task rather than a GlazeWM startup_command on purpose: GlazeWM
+    # crashes too, and anything it owns dies with it exactly when it is needed.
+    $name   = 'dotfiles-zebar-watchdog'
+    $script = Join-Path $env:USERPROFILE 'dotfiles\zebar\watch-zebar.ps1'
+
+    Unregister-ScheduledTask -TaskName $name -Confirm:$false -ErrorAction SilentlyContinue
+
+    $action = New-ScheduledTaskAction -Execute 'powershell.exe' `
+        -Argument ('-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}"' -f $script)
+    $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+
+    # ExecutionTimeLimit zero means no limit: this runs for the whole session,
+    # and the default three days would silently kill it. RestartCount watches
+    # the watchdog, in case it ever falls over itself.
+    $settings = New-ScheduledTaskSettingsSet `
+        -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+        -ExecutionTimeLimit ([TimeSpan]::Zero) `
+        -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) `
+        -MultipleInstances IgnoreNew -StartWhenAvailable
+    $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" `
+        -LogonType Interactive -RunLevel Limited
+
+    Register-ScheduledTask -TaskName $name -Action $action -Trigger $trigger `
+        -Settings $settings -Principal $principal `
+        -Description 'Restarts Zebar after it crashes (glzr-io/zebar#290).' | Out-Null
+
+    Start-ScheduledTask -TaskName $name
+    Write-Host '  Zebar watchdog scheduled task registered' -ForegroundColor Green
 }

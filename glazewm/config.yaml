@@ -48,9 +48,6 @@ general:
   # Zebar first, then lay out the applications once GlazeWM is up.
   startup_commands:
     - 'shell-exec zebar'
-    # Zebar 3.3.1 dies on every lock -- see the header of watch-zebar.ps1.
-    # Drop this line once a release carries glzr-io/zebar#290.
-    - 'shell-exec powershell -NoProfile -WindowStyle Hidden -File %userprofile%\dotfiles\zebar\watch-zebar.ps1'
     - 'shell-exec powershell -NoProfile -WindowStyle Hidden -File %userprofile%\dotfiles\glazewm\ensure-layout.ps1 -InitialDelaySeconds 3'                       # optional bar; remove if unused
   shutdown_commands: ['shell-exec taskkill /IM zebar.exe /F']
   config_reload_commands: []
