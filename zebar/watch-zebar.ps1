@@ -8,9 +8,9 @@
     provider calls wcslen on it, which faults in ucrtbase.dll with 0xc0000005.
     Locking the machine tears the audio endpoint down, and so does a Bluetooth
     headset connecting or a call changing device -- in practice several times a
-    day. The upstream fix is open but unmerged (glzr-io/zebar#290) and no
-    release carries it, so the bar is restarted rather than losing the audio
-    module.
+    day. The upstream fix (glzr-io/zebar#290) was merged on 2026-09-20 but no
+    release carries it yet, so the bar is restarted rather than losing the
+    audio module.
 
     Remove this once a Zebar release contains that fix: this file, and the
     scheduled task that Install-ZebarWatchdog registers.

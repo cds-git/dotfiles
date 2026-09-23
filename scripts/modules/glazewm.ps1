@@ -56,9 +56,9 @@ function Install-Zebar {
 function Install-ZebarWatchdog {
     # Zebar 3.3.1 crashes whenever Windows reports no default audio device --
     # locking the machine, a Bluetooth headset connecting, a call switching
-    # device. See the header of zebar\watch-zebar.ps1. Upstream fix is open but
-    # unmerged (glzr-io/zebar#290); delete this function and the script once a
-    # release carries it.
+    # device. See the header of zebar\watch-zebar.ps1. The upstream fix
+    # (glzr-io/zebar#290) is merged as of 2026-09-20 but no release carries it
+    # yet; delete this function and the script once one does.
     #
     # A scheduled task rather than a GlazeWM startup_command on purpose: GlazeWM
     # crashes too, and anything it owns dies with it exactly when it is needed.
@@ -67,13 +67,26 @@ function Install-ZebarWatchdog {
 
     Unregister-ScheduledTask -TaskName $name -Confirm:$false -ErrorAction SilentlyContinue
 
-    $action = New-ScheduledTaskAction -Execute 'powershell.exe' `
-        -Argument ('-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}"' -f $script)
-    $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+    # Launched through a headless conhost rather than powershell.exe directly.
+    # With Windows Terminal set as the default console, -WindowStyle Hidden is
+    # not honoured: the task pops a terminal window at logon, the user closes
+    # it, and the watchdog dies with STATUS_CONTROL_C_EXIT (0xC000013A) -- which
+    # is exactly how the first version of this task went missing. A headless
+    # conhost has no window to close and bypasses the terminal delegation.
+    $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\conhost.exe" `
+        -Argument ('--headless powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}"' -f $script)
+
+    # Two triggers: start at logon, and re-fire every five minutes for the rest
+    # of the session. The watchdog's mutex makes the repeats no-ops while it is
+    # alive, so all they do is revive it if something kills it. RestartCount
+    # below does not cover that case: the task only restarts on a failure
+    # result, and a killed process is not one.
+    $atLogon = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+    $repeat  = New-ScheduledTaskTrigger -Once -At (Get-Date).Date `
+        -RepetitionInterval (New-TimeSpan -Minutes 5)
 
     # ExecutionTimeLimit zero means no limit: this runs for the whole session,
-    # and the default three days would silently kill it. RestartCount watches
-    # the watchdog, in case it ever falls over itself.
+    # and the default three days would silently kill it.
     $settings = New-ScheduledTaskSettingsSet `
         -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
         -ExecutionTimeLimit ([TimeSpan]::Zero) `
@@ -82,7 +95,7 @@ function Install-ZebarWatchdog {
     $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" `
         -LogonType Interactive -RunLevel Limited
 
-    Register-ScheduledTask -TaskName $name -Action $action -Trigger $trigger `
+    Register-ScheduledTask -TaskName $name -Action $action -Trigger @($atLogon, $repeat) `
         -Settings $settings -Principal $principal `
         -Description 'Restarts Zebar after it crashes (glzr-io/zebar#290).' | Out-Null
 
