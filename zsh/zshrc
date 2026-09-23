@@ -91,3 +91,6 @@ alias lg='lazygit'
 alias gs='git status'
 ## Misc
 alias k='kubectl'
+
+# Local function files
+source "${0:A:h}/claude-skills.zsh"
