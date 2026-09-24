@@ -1,5 +1,6 @@
 {
     "$schema": "https://opencode.ai/config.json",
+    "share": "disabled",
     "provider": {
         "h100": {
             "npm": "@ai-sdk/openai-compatible",
@@ -10,14 +11,23 @@
             },
             "models": {
                 "gemma-4-31b-it": {
-                  "name": "Gemma 4 31B",
-                  "limit": {
-                      "context": 200000,
-                      "output": 32768
-                  }
-              }
+                    "name": "Gemma 4 31B",
+                    "attachment": true,
+                    "modalities": {
+                        "input": [
+                            "text",
+                            "image"
+                        ],
+                        "output": [
+                            "text"
+                        ]
+                    },
+                    "limit": {
+                        "context": 200000,
+                        "output": 32768
+                    }
+                }
             }
         }
-    },
-    "lsp": true
-  }
+    }
+}
