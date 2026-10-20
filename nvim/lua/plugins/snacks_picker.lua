@@ -108,20 +108,6 @@ return {
 			desc = "Recent",
 		},
 		-- git
-		{
-			"<leader>gc",
-			function()
-				Snacks.picker.git_log()
-			end,
-			desc = "Git Log",
-		},
-		{
-			"<leader>gs",
-			function()
-				Snacks.picker.git_status()
-			end,
-			desc = "Git Status",
-		},
 		-- Grep
 		{
 			"<leader>sb",
@@ -166,13 +152,6 @@ return {
 				Snacks.picker.autocmds()
 			end,
 			desc = "Autocmds",
-		},
-		{
-			"<leader>sc",
-			function()
-				Snacks.picker.command_history()
-			end,
-			desc = "Command History",
 		},
 		{
 			"<leader>sC",

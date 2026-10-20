@@ -71,7 +71,7 @@ return {
 			desc = "Rename File",
 		},
 		{
-			"<leader>gO",
+			"<leader>go",
 			function()
 				Snacks.gitbrowse()
 			end,
@@ -79,32 +79,11 @@ return {
 			mode = { "n", "v" },
 		},
 		{
-			"<leader>gb",
-			function()
-				Snacks.git.blame_line()
-			end,
-			desc = "Git Blame Line",
-		},
-		{
-			"<leader>gf",
-			function()
-				Snacks.lazygit.log_file()
-			end,
-			desc = "Lazygit Current File History",
-		},
-		{
 			"<leader>gg",
 			function()
 				Snacks.lazygit()
 			end,
 			desc = "Lazygit",
-		},
-		{
-			"<leader>gl",
-			function()
-				Snacks.lazygit.log()
-			end,
-			desc = "Lazygit Log (cwd)",
 		},
 		{
 			"<leader>un",

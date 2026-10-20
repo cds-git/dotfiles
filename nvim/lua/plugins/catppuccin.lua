@@ -50,7 +50,6 @@ return {
 				dap_ui = true,
 				mason = true,
 				render_markdown = true,
-				diffview = true,
 				grug_far = true,
 				nvim_surround = true,
 				dadbod_ui = true,

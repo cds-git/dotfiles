@@ -11,7 +11,7 @@ return {
 			-- hunks
 			vim.keymap.set("n", "]h", gitsigns.next_hunk, { buffer = bufnr, desc = "[Gitsigns] Next Hunk" })
 			vim.keymap.set("n", "[h", gitsigns.prev_hunk, { buffer = bufnr, desc = "[Gitsigns] Prev Hunk" })
-			vim.keymap.set("n", "<leader>gp", gitsigns.preview_hunk, { desc = "[Gitsigns] Preview git hunk" })
+			vim.keymap.set("n", "<leader>hp", gitsigns.preview_hunk, { buffer = bufnr, desc = "[Gitsigns] Preview hunk" })
 
 			-- blame
 			vim.keymap.set("n", "<leader>gB", function()
@@ -21,9 +21,6 @@ return {
 			vim.keymap.set("n", "<leader>gt", function()
 				gitsigns.toggle_current_line_blame()
 			end, { buffer = bufnr, desc = "[Gitsigns] Toggle blame line" })
-
-			-- diff
-			vim.keymap.set("n", "<leader>gD", gitsigns.diffthis, { desc = "[Gitsigns] Diff this" })
 
 			-- stage / reset hunks (visual mode stages just the selected lines)
 			vim.keymap.set({ "n", "v" }, "<leader>hs", "<cmd>Gitsigns stage_hunk<CR>", { buffer = bufnr, desc = "[Gitsigns] Stage hunk" })

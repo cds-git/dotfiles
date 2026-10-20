@@ -46,14 +46,14 @@
 
 [merge]
 	conflictstyle = diff3
-	tool = diffview
+	tool = codediff
 
 [mergetool]
 	prompt = false
 	keepBackup = false
 
-[mergetool "diffview"]
-	cmd = nvim -n -c "DiffviewOpen" "$MERGE"
+[mergetool "codediff"]
+	cmd = nvim "$MERGED" -c "CodeDiff --exit-on-close merge \"$MERGED\""
 
 [interactive]
 	diffFilter = delta --color-only

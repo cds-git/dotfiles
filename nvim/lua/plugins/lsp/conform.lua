@@ -57,7 +57,7 @@ return {
 		local conform = require("conform")
 		conform.setup(opts)
 
-		vim.keymap.set("n", "<leader>fm", function()
+		vim.keymap.set("n", "<leader>cf", function()
 			conform.format({ async = true, lsp_format = "fallback" })
 		end, { desc = "Format file" })
 	end,
