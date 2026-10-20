@@ -84,7 +84,8 @@ vim.diagnostic.config({
 			[vim.diagnostic.severity.HINT] = "DiagnosticSignHint",
 		},
 	},
-	virtual_text = false,
+	-- only on the cursor line, so the rest of the buffer stays clean
+	virtual_text = { current_line = true },
 	virtual_lines = false,
 })
 

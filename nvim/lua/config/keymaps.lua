@@ -1,8 +1,10 @@
--- Remove new default LSP keymaps
+-- Remove default LSP keymaps so our own `gr` fires without waiting for gr* chords
 vim.keymap.del("n", "grn")
-vim.keymap.del("n", "gra")
+vim.keymap.del({ "n", "x" }, "gra")
 vim.keymap.del("n", "grr")
 vim.keymap.del("n", "gri")
+vim.keymap.del("n", "grt")
+vim.keymap.del("n", "grx")
 vim.keymap.del("n", "gO")
 vim.keymap.del("i", "<C-s>")
 
@@ -12,7 +14,6 @@ map("n", "<Esc>", "<cmd>noh<CR>", { desc = "General clear highlights" })
 
 -- File mappings
 map("n", "<C-s>", "<cmd>w<CR>", { desc = "Save File" })
-map("n", "<C-c>", "<cmd>%y+<CR>", { desc = "File copy whole" })
 
 -- Move Lines
 map("n", "<A-j>", "<cmd>m .+1<cr>==", { desc = "Move down" })
@@ -24,7 +25,7 @@ map("v", "<A-k>", ":m '<-2<cr>gv=gv", { desc = "Move up" })
 
 -- Copy and paste clipboard
 map({ "n", "v" }, "<leader>y", '"+y', { desc = "Copy to clipboard" })
-map("n", "<leader>Y", '"+Y', { desc = "Copy to clipboard" })
+map("n", "<leader>Y", "<cmd>%y+<CR>", { desc = "Copy whole file to clipboard" })
 
 map("n", "<leader>q", "<C-w>q", { desc = "[Window] Quit" })
 
