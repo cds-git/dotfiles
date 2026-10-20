@@ -29,6 +29,12 @@ map("n", "<leader>Y", "<cmd>%y+<CR>", { desc = "Copy whole file to clipboard" })
 
 map("n", "<leader>q", "<C-w>q", { desc = "[Window] Quit" })
 
+-- Built-in undo tree, loaded the first time it's opened
+map("n", "<leader>uu", function()
+	vim.cmd.packadd("nvim.undotree")
+	vim.cmd("Undotree")
+end, { desc = "Toggle Undotree" })
+
 -- Window navigations
 map("n", "<C-h>", "<C-w>h", { desc = "[Window] Switch left" })
 map("n", "<C-j>", "<C-w>j", { desc = "[Window] Switch down" })
