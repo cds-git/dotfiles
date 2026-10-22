@@ -14,7 +14,6 @@ return {
 			{ "<leader>s", group = "search" },
 			{ "<leader>t", group = "test" },
 			{ "<leader>u", group = "ui/toggle" },
-			{ "<leader>v", group = "review" },
 			{ "<leader>w", group = "workspace" },
 		},
 	},
