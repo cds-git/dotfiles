@@ -29,6 +29,33 @@ map("n", "<leader>Y", "<cmd>%y+<CR>", { desc = "Copy whole file to clipboard" })
 
 map("n", "<leader>q", "<C-w>q", { desc = "[Window] Quit" })
 
+-- Cycle spell checking between English, Danish and both. Neovim can't fetch the Danish
+-- dictionary itself (its downloader needs netrw, which is disabled), so get it here.
+local spell_langs = { "en", "da", "en,da" }
+map("n", "<leader>ua", function()
+	local spell_dir = vim.fn.stdpath("data") .. "/site/spell"
+	local da_file = spell_dir .. "/da.utf-8.spl"
+	if vim.fn.filereadable(da_file) == 0 and vim.fn.globpath(vim.o.runtimepath, "spell/da.utf-8.spl") == "" then
+		vim.fn.mkdir(spell_dir, "p")
+		vim.notify("Downloading Danish spell file...")
+		vim.fn.system({ "curl", "-fsSLo", da_file, "https://ftp.nluug.nl/pub/vim/runtime/spell/da.utf-8.spl" })
+		if vim.v.shell_error ~= 0 then
+			vim.notify("Could not download the Danish spell file", vim.log.levels.ERROR)
+			return
+		end
+	end
+	local current = vim.bo.spelllang
+	local next_lang = spell_langs[1]
+	for i, lang in ipairs(spell_langs) do
+		if lang == current then
+			next_lang = spell_langs[i % #spell_langs + 1]
+		end
+	end
+	vim.opt_local.spelllang = next_lang
+	vim.opt_local.spell = true
+	vim.notify("Spell language: " .. next_lang)
+end, { desc = "Cycle spell language (en, da, en+da)" })
+
 -- Built-in undo tree, loaded the first time it's opened
 map("n", "<leader>uu", function()
 	vim.cmd.packadd("nvim.undotree")
