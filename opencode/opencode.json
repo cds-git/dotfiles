@@ -1,19 +1,44 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "share": "disabled",
-  "provider": {
+  "providers": {
     "h100": {
-      "npm": "@ai-sdk/openai-compatible",
       "name": "H100",
-      "options": {
+      "package": "aisdk:@ai-sdk/openai-compatible",
+      "settings": {
+        "apiKey": "dummy",
         "baseURL": "http://172.20.7.131:30000/v1",
-        "apiKey": "dummy"
+        "extraBody": {
+          "bad_words": [
+            "$\\",
+            " $\\",
+            "$$\\",
+            " $$\\"
+          ]
+        }
       },
       "models": {
         "gemma-4-31b-it": {
           "name": "Gemma 4 31B",
-          "attachment": true,
-          "modalities": {
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 200000,
+            "output": 32768
+          }
+        },
+        "gemma-4-26b-a4b-it": {
+          "name": "Gemma 4 26B-A4B",
+          "capabilities": {
+            "tools": true,
             "input": [
               "text",
               "image"
@@ -30,47 +55,191 @@
       }
     }
   },
-  "permission": {
-    "edit": "allow",
-    "doom_loop": "ask",
-    "read": {
-      "*": "allow",
-      "*.env": "ask",
-      "*.env.example": "allow"
+  "permissions": [
+    {
+      "action": "edit",
+      "resource": "*",
+      "effect": "allow"
     },
-    "external_directory": {
-      "*": "ask",
-      "~/repos/sir3/*": "allow"
+    {
+      "action": "doom_loop",
+      "resource": "*",
+      "effect": "ask"
     },
-    "bash": {
-      "*": "allow",
-      "git push*": "ask",
-      "git commit*": "ask",
-      "git reset --hard*": "ask",
-      "git clean*": "ask",
-      "git checkout -- *": "ask",
-      "git restore *": "ask",
-      "git rebase*": "ask",
-      "git branch -D*": "ask",
-      "git stash drop*": "ask",
-      "git stash clear*": "ask",
-      "rm -r*": "ask",
-      "rm -rf*": "ask",
-      "sudo *": "ask",
-      "docker system prune*": "ask",
-      "docker volume rm*": "ask",
-      "kubectl *": "ask",
-      "kubectl get *": "allow",
-      "kubectl describe *": "allow",
-      "kubectl logs *": "allow",
-      "helm *": "ask",
-      "aspire run -lp *": "ask",
-      "sir-db *": "ask",
-      "sir-db *--profile local*": "allow",
-      "gh *": "ask",
-      "curl * -X POST*": "ask",
-      "curl * -X PUT*": "ask",
-      "curl * -X DELETE*": "ask"
+    {
+      "action": "execute",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "opencode_*",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "read",
+      "resource": "*.env",
+      "effect": "ask"
+    },
+    {
+      "action": "read",
+      "resource": "*.env.example",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/repos/sir3/*",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git push*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git commit*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git reset --hard*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git clean*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git checkout -- *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git restore *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git rebase*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git branch -D*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git stash drop*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git stash clear*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -r*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "sudo *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "docker system prune*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "docker volume rm*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "kubectl *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "kubectl get *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "kubectl describe *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "kubectl logs *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "helm *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "aspire run -lp *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "sir-db *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "sir-db *--profile local*",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "curl * -X POST*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "curl * -X PUT*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "curl * -X DELETE*",
+      "effect": "ask"
     }
-  }
+  ]
 }

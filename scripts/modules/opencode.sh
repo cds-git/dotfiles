@@ -11,7 +11,7 @@ install_opencode_config() {
 
     ensure_link "$src/AGENTS.md"    "$dst/AGENTS.md"    "OpenCode AGENTS.md"
     ensure_link "$src/opencode.json" "$dst/opencode.json" "OpenCode opencode.json"
-    ensure_link "$src/tui.json"     "$dst/tui.json"     "OpenCode tui.json"
+    ensure_link "$src/cli.json"     "$dst/cli.json"     "OpenCode cli.json"
     ensure_link "$src/skills"       "$dst/skills"       "OpenCode skills"
     ensure_link "$src/agents"       "$dst/agents"       "OpenCode agents"
 }
