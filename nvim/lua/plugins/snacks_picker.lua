@@ -30,20 +30,6 @@ return {
 	keys = {
 		-- LSP
 		{
-			"gd",
-			function()
-				Snacks.picker.lsp_definitions()
-			end,
-			desc = "Goto Definition",
-		},
-		{
-			"gi",
-			function()
-				Snacks.picker.lsp_implementations()
-			end,
-			desc = "Goto Implementation",
-		},
-		{
 			"gy",
 			function()
 				Snacks.picker.lsp_type_definitions()
